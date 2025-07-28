@@ -1,0 +1,68 @@
+# 🚀 MPM Project Deployment Guide (Ubuntu)
+
+# 🛠️ Step 1: Update & Upgrade System Packages
+sudo apt update && sudo apt upgrade -y
+
+# 📦 Step 2: Install Required Dependencies
+sudo apt install -y curl git apt-transport-https ca-certificates software-properties-common gnupg lsb-release
+
+# 🐳 Step 3: Install Docker and Docker Compose
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y docker.io docker-compose git
+sudo apt update && sudo apt upgrade -y
+
+# Enable and Start Docker Service
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Verify Docker Installation
+docker --version
+docker-compose --version
+
+# Create Project Directory
+sudo mkdir -p /var/www
+sudo chown -R $USER:$USER /var/www
+
+# 📁 Step 4: Clone the MPM Project
+cd /var/www
+git clone https://github.com/EnAccess/micropowermanager.git
+cd micropowermanager
+
+# ⚙️ Step 5: Configure Environment Files
+sudo cp .env.example .env
+
+cd src/backend
+sudo cp .env.example .env
+
+cd ../frontend
+sudo cp .env.example .env
+
+# 🐳 Step 6: Launch with Docker Compose
+cd /var/www/micropowermanager
+docker-compose -f docker-compose-dockerhub.yml up -d
+
+# ⚠️ If any error occurs (like worker issues),
+# ➤ Comment out the "worker" service section in docker-compose-dockerhub.yml
+
+# 🌐 Application URLs
+# 👉 http://139.59.181.1:8001 → MPM UI
+# 👉 http://139.59.181.1:8000/api → API
+
+# ------------------------------------------------------------------------------
+# 🌱 Seed Initial Data (Run Migrations)
+
+# List running containers to confirm backend container name
+docker ps
+
+# Example output:
+# CONTAINER ID   IMAGE                             COMMAND                  NAMES
+# abcdef123456   enaccess/micropowermanager-backend:latest  "..."        backend
+
+# Enter the backend container
+docker exec -it backend bash
+
+# Inside the container, run:
+php artisan migrate-tenant:drop-demo-company
+php artisan migrate:fresh --seed
+
+# Done ✅
