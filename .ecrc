@@ -1,0 +1,10 @@
+{
+  "Exclude": [
+    "src/backend/packages/inensus/",
+    "src/backend/bootstrap/cache/",
+    "composer.phar",
+    "vendor",
+    "node_modules",
+    "debugbar"
+  ]
+}

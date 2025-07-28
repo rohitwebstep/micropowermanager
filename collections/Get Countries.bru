@@ -1,0 +1,11 @@
+meta {
+  name: Get Countries
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{mpm_backend_url}}/api/countries
+  body: none
+  auth: inherit
+}

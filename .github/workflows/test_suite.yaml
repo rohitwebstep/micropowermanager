@@ -1,0 +1,64 @@
+name: Code Test Suite
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-version: ["8.2"]
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: micro_power_manager
+          MYSQL_ROOT_PASSWORD: wF9zLp2qRxaS2e
+        ports:
+          - 3306:3306
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, dom, fileinfo, mysql
+          coverage: xdebug
+
+      - name: Config environment file
+        uses: c-py/action-dotenv-to-setenv@v5
+        with:
+          env-file: ./dev/.env.micropowermanager-ci
+
+      - name: Install Composer Dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
+        working-directory: ./src/backend
+      - name: Generate autoload files
+        run: |
+          OUTPUT=$(composer dump-autoload 2>&1)
+          echo "$OUTPUT"
+
+          if echo "$OUTPUT" | grep -q "does not comply with psr-4 autoloading standard"; then
+            echo "❌ PSR-4 autoloading violation detected."
+            exit 1
+          fi
+        working-directory: ./src/backend
+
+      - name: Run Migrations
+        run: |
+          php artisan migrate:fresh --seed
+        working-directory: ./src/backend
+
+      - name: Execute tests
+        run: php artisan test
+        working-directory: ./src/backend
+        continue-on-error: true

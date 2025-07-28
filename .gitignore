@@ -1,0 +1,78 @@
+
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+.idea/**
+
+# Logs and databases #
+######################
+*.log
+*.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+NginxProxy/conf.d/default.conf
+node_modules/
+
+# PHP related
+vendor/
+.php-cs-fixer.cache
+
+redis/dump.rdb
+/redis/dump.rdb
+
+
+src/backend/public/vendor/
+InternalApi
+
+*.xlsx
+
+src/backend/.env_production
+src/backend/.env_staging
+
+# docs related
+
+## Sphinx documentation
+docs/_build/
+docs/build/
+
+## ERD
+dist/
+
+## OpenAPI docs (scribe)
+.scribe
+
+# deployment related
+
+## secret files
+*-secrets.yaml
+aws-auth.yaml
+# Ignore generated credentials from google-github-actions/auth
+gha-creds-*.json

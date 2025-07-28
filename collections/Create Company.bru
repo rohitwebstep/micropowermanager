@@ -1,0 +1,40 @@
+meta {
+  name: Create Company
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{mpm_backend_url}}/api/companies
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "My Company HTTP Test",
+    "address": "An Address",
+    "phone": "255123456789",
+    "email": "demo_company@example.com",
+    "protected_page_password": "123123",
+    "user": {
+      "name": "A user",
+      "email": "{{username}}@example.com",
+      "password": "123123",
+      "confirmPassword": "123123"
+    },
+    "usage_type": "mini-grid&shs&e-bike",
+    "plugins": []
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.data: isJson
+}
+
+script:pre-request {
+  const { v4: uuidv4 } = require('uuid');
+  const inputName=uuidv4();
+  bru.setVar("username", inputName);
+}

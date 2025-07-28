@@ -1,0 +1,20 @@
+# .git-blame-ignore-revs
+# Apply EditorConfig lint
+9fd9a5a991b9a33e7a91b0a3c9753f61555a9ced
+# Apply ESLint fixes to `ui`
+e7b5fd09e3531896ae308469697a494040061ba8
+527029941adbe125c49dbaf86dfe772f1624ed2f
+# Apply Prettier to `ui`
+b534c22dd341d1d2b35c8e0b7d5419f56e3dd6b1
+# Apply `PSR12`
+f424854667e15daf0ad59d5fc68cc3eba6ea152e
+# Apply `Symfony` Code Style to `app/` directory
+3929b03030d64a2fe9ce9ac25b52fec2da6d1391
+# Apply `Symfony` Code Style to entire PHP code base
+f5a93ae18ec8e036cb47bb05b71f40d49049a505
+# Apply Prettier after updated config
+bc92390b1fb7a7b16e88d7afd88ba5372afe4e51
+# Update PHP-CS-Fixer to `v3.64.0`
+7e5de40aa261fd2dad0d8de09c6929719e044d96
+# Update PHP-CS-Fixer ruleset
+5a1765a68bce555f6df67b2cdb2e442d099beca3
