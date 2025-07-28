@@ -72,3 +72,10 @@ php artisan migrate:fresh --seed
 
 # List all containers (including stopped)
 docker ps -a
+
+# Force remove all containers
+docker rm -f $(docker ps -aq)
+
+# Clean up volumes and networks
+docker volume prune -f
+docker network prune -f

@@ -64,8 +64,8 @@ cp -r src/backend/dist/laravel-erd/ docs/.public/schemas/
 
 Go to each
 
-- [laravel-erd](http://localhost:8000/laravel-erd/central_database)
-- [laravel-erd](http://localhost:8000/laravel-erd/tenant_database)
+- [laravel-erd](http://139.59.181.1:8000/laravel-erd/central_database)
+- [laravel-erd](http://139.59.181.1:8000/laravel-erd/tenant_database)
 
 and export PNG by either
 

@@ -8,8 +8,8 @@ This document will guide you on how to setup a local development environment of 
 
 In a local development environment
 
-- the backend is served under <http://localhost:8000>
-- the frontend is served under <http://localhost:8001>
+- the backend is served under <http://139.59.181.1:8000>
+- the frontend is served under <http://139.59.181.1:8001>
 
 ## Preamble
 
@@ -43,7 +43,7 @@ Before proceeding, ensure you can open a terminal (Terminal app on macOS, termin
 
 1. `git`-clone the repository
 2. Build and run the Docker containers with `docker compose up`
-3. To access the local development instance of MicroPowerManager open <http://localhost:8001/> in a web browser.
+3. To access the local development instance of MicroPowerManager open <http://139.59.181.1:8001/> in a web browser.
 
 ## Seeding the database
 
