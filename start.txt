@@ -66,3 +66,9 @@ php artisan migrate-tenant:drop-demo-company
 php artisan migrate:fresh --seed
 
 # Done ✅
+
+# ------------------------------------------------------------------------------
+# 🧹 Delete All Containers (if needed for reset)
+
+# List all containers (including stopped)
+docker ps -a

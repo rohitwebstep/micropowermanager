@@ -47,23 +47,23 @@ services:
       - mysql:db
       - redis:redis
 
-  worker:
-    container_name: worker
-    restart: unless-stopped
-    build:
-      dockerfile: docker/DockerfileQueueWorker
-    env_file: ./dev/.env.micropowermanager-backend
-    volumes:
-      - ./src/backend:/var/www/laravel
-      - ./docker/config/php/php.ini:/usr/local/etc/php/php.ini
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    links:
-      - mysql:db
-      - redis:redis
+  # worker:
+  #   container_name: worker
+  #   restart: unless-stopped
+  #   build:
+  #     dockerfile: docker/DockerfileQueueWorker
+  #   env_file: ./dev/.env.micropowermanager-backend
+  #   volumes:
+  #     - ./src/backend:/var/www/laravel
+  #     - ./docker/config/php/php.ini:/usr/local/etc/php/php.ini
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_started
+  #   links:
+  #     - mysql:db
+  #     - redis:redis
 
   redis:
     container_name: redis
