@@ -25,7 +25,7 @@ sudo chown -R $USER:$USER /var/www
 
 # 📁 Step 4: Clone the MPM Project
 cd /var/www
-git clone https://github.com/EnAccess/micropowermanager.git
+git clone https://github.com/rohitwebstep/micropowermanager.git
 cd micropowermanager
 
 # ⚙️ Step 5: Configure Environment Files
