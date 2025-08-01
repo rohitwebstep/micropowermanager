@@ -73,7 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $errorMessages = method_exists($e, 'errors') ? $e->errors() : [$e->getMessage()];
 
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Validation failed 1',
                 'errors' => $errorMessages,
                 'validation_errors' => $e->errors(),
                 'summary' => $e->getMessage(),
