@@ -1,39 +1,34 @@
 # 🚀 MPM Project Deployment Guide (Ubuntu)
 
-# 🛠️ Step 1: Update & Upgrade System Packages
+# 🛠️ Step 1: Update Your System
 sudo apt update && sudo apt upgrade -y
 
-# 📦 Step 2: Install Required Dependencies
+# 📦 Step 2: Install Required Tools
 sudo apt install -y curl git apt-transport-https ca-certificates software-properties-common gnupg lsb-release
 
-# 🐳 Step 3: Install Docker and Docker Compose
+# 🐳 Step 3: Install Docker & Docker Compose
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y docker.io docker-compose git
-sudo apt update && sudo apt upgrade -y
 
-# Enable and Start Docker Service
+# Enable Docker service on boot and start now
 sudo systemctl enable docker
 sudo systemctl start docker
 
-# Verify Docker Installation
+# ✅ Verify Docker installation
 docker --version
 docker-compose --version
 
-# Create Project Directory
+# 📂 Step 4: Setup Project Directory
 sudo mkdir -p /var/www
 sudo chown -R $USER:$USER /var/www
-
-# 📁 Step 4: Clone the MPM Project
 cd /var/www
 
-# Remove any existing 'micropowermanager' directory to avoid conflicts
+# ❌ Remove old folder (if exists) and clone new project
 rm -rf micropowermanager
-
-# Clone the latest MPM project from GitHub
 git clone https://github.com/rohitwebstep/micropowermanager.git
 cd micropowermanager
 
-# ⚙️ Step 5: Configure Environment Files
+# ⚙️ Step 5: Copy Environment Files
 sudo cp .env.example .env
 
 cd src/backend
@@ -42,52 +37,54 @@ sudo cp .env.example .env
 cd ../frontend
 sudo cp .env.example .env
 
-# 🐳 Step 6: Launch with Docker Compose
+# 🐳 Step 6: Build & Run Docker Containers
 cd /var/www/micropowermanager
+docker-compose -f docker-compose-dockerhub.yml build --no-cache
 docker-compose -f docker-compose-dockerhub.yml up -d
 
-# ⚠️ If any error occurs (like worker issues),
-# ➤ Comment out the "worker" service section in docker-compose-dockerhub.yml
+# ⚠️ If you face errors (e.g., with "worker" service):
+# Edit docker-compose-dockerhub.yml and comment out the "worker" service.
 
-# 🌐 Application URLs
-# 👉 http://139.59.181.1:8001 → MPM UI
-# 👉 http://139.59.181.1:8000/api → API
+# 🌐 Application Access:
+# UI  → http://139.59.181.1:8001
+# API → http://139.59.181.1:8000/api
 
-# ------------------------------------------------------------------------------
-# 🌱 Seed Initial Data (Run Migrations)
+# ------------------------------------------------------------------
+# 🌱 Seed Initial Data (Fresh Migrations)
 
-# List running containers to confirm backend container name
+# 1️⃣ Check running containers
 docker ps
 
-# Example output:
-# CONTAINER ID   IMAGE                             COMMAND                  NAMES
-# abcdef123456   enaccess/micropowermanager-backend:latest  "..."        backend
-
-# Enter the backend container
+# 2️⃣ Access the backend container
 docker exec -it backend bash
 
-# Inside the container, run:
+# 3️⃣ Inside the container:
 php artisan migrate-tenant:drop-demo-company
 php artisan migrate:fresh --seed
 
+# 🔄 Clear all Laravel caches
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear
 php artisan cache:clear
 php artisan clear-compiled
+php artisan optimize:clear
 
+# 🔚 Exit container
 exit
-# Done ✅
 
-# ------------------------------------------------------------------------------
-# 🧹 Delete All Containers (if needed for reset)
+# ------------------------------------------------------------------
+# 🧹 Reset Docker Environment (Optional Cleanup)
 
-# List all containers (including stopped)
-docker ps -a
+# Stop all services
+docker-compose -f docker-compose-dockerhub.yml down
 
-# Force remove all containers
+# Remove all containers
 docker rm -f $(docker ps -aq)
 
-# Clean up volumes and networks
+# Remove Docker volumes and networks
 docker volume prune -f
 docker network prune -f
+
+# Restart Docker service
+sudo systemctl restart docker
