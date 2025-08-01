@@ -25,6 +25,11 @@ sudo chown -R $USER:$USER /var/www
 
 # 📁 Step 4: Clone the MPM Project
 cd /var/www
+
+# Remove any existing 'micropowermanager' directory to avoid conflicts
+rm -rf micropowermanager
+
+# Clone the latest MPM project from GitHub
 git clone https://github.com/rohitwebstep/micropowermanager.git
 cd micropowermanager
 
