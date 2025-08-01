@@ -58,8 +58,19 @@ return Application::configure(basePath: dirname(__DIR__))
                 'status_code' => 404,
             ]);
         });
+        /*
         $exceptions->render(function (ValidationException $e, Request $request) {
             $errorMessages = ($e instanceof Illuminate\Support\MessageBag) ? $e->toArray() : [$e];
+
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $errorMessages,
+                'status_code' => 422,
+            ]);
+        });
+        */
+        $exceptions->render(function (ValidationException $e, Request $request) {
+            $errorMessages = method_exists($e, 'errors') ? $e->errors() : [$e->getMessage()];
 
             return response()->json([
                 'message' => 'Validation failed',
