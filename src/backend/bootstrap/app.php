@@ -62,7 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $errorMessages = ($e instanceof Illuminate\Support\MessageBag) ? $e->toArray() : [$e];
 
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Validation failed 1',
                 'errors' => $errorMessages,
                 'status_code' => 422,
             ]);
