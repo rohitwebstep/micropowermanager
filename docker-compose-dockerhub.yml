@@ -2,10 +2,7 @@
 services:
   backend:
     container_name: backend
-    # image: enaccess/micropowermanager-backend:latest
-    build:
-      context: .
-      dockerfile: docker/DockerfileBackendDev
+    image: enaccess/micropowermanager-backend:latest
     env_file: ./dev/.env.micropowermanager-backend
     depends_on:
       mysql:
@@ -27,10 +24,7 @@ services:
 
   frontend:
     container_name: frontend
-    # image: enaccess/micropowermanager-frontend:latest
-    build:
-      context: .
-      dockerfile: docker/DockerfileFrontendDev
+    image: enaccess/micropowermanager-frontend:latest
     env_file: ./dev/.env.micropowermanager-frontend
     ports:
       - 8001:80

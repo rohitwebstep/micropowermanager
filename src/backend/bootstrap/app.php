@@ -19,10 +19,10 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__ . '/../routes/web.php',
-        api: __DIR__ . '/../routes/api.php',
-        commands: __DIR__ . '/../routes/console.php',
-        channels: __DIR__ . '/../routes/channels.php',
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
+        channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
@@ -50,33 +50,20 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (JWTException $e, Request $request) {
-            return response()->json(['error' => 'Unauthorized. ' . $e->getMessage() . ' Make sure you are logged in.'], 401);
+            return response()->json(['error' => 'Unauthorized. '.$e->getMessage().' Make sure you are logged in.'], 401);
         });
         $exceptions->render(function (ModelNotFoundException $e, Request $request) {
             return response()->json([
-                'message' => 'model not found ' . implode(' ', $e->getIds()),
+                'message' => 'model not found '.implode(' ', $e->getIds()),
                 'status_code' => 404,
             ]);
         });
-        /*
         $exceptions->render(function (ValidationException $e, Request $request) {
             $errorMessages = ($e instanceof Illuminate\Support\MessageBag) ? $e->toArray() : [$e];
 
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $errorMessages,
-                'status_code' => 422,
-            ]);
-        });
-        */
-        $exceptions->render(function (ValidationException $e, Request $request) {
-            $errorMessages = method_exists($e, 'errors') ? $e->errors() : [$e->getMessage()];
-
-            return response()->json([
-                'message' => 'Validation failed 1',
-                'errors' => $errorMessages,
-                'validation_errors' => $e->errors(),
-                'summary' => $e->getMessage(),
                 'status_code' => 422,
             ]);
         });
