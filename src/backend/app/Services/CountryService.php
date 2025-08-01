@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Country;
 use App\Services\Interfaces\IBaseService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * @implements IBaseService<Country>
@@ -16,10 +17,9 @@ class CountryService implements IBaseService
     ) {}
 
     /*
-        public function getByCode(?string $countryCode): Country
-        {
-            return $countryCode !== null ? $this->country->where('country_code', $countryCode)->first() : $countryCode;
-        }
+    public function getByCode(?string $countryCode): Country {
+        return $countryCode !== null ? $this->country->where('country_code', $countryCode)->first() : $countryCode;
+    }
     */
 
     public function getByCode(?string $countryCode): Country
@@ -31,7 +31,7 @@ class CountryService implements IBaseService
 
     public function getById(int $id): Country
     {
-        throw new \Exception('Method getById() not yet implemented.');
+        return $this->country->findOrFail($id);
     }
 
     /**
@@ -39,7 +39,10 @@ class CountryService implements IBaseService
      */
     public function create(array $data): Country
     {
-        throw new \Exception('Method create() not yet implemented.');
+        return $this->country->create([
+            'country_code' => $data['country_code'],
+            'country_name' => $data['country_name'],
+        ]);
     }
 
     /**
@@ -47,12 +50,17 @@ class CountryService implements IBaseService
      */
     public function update($model, array $data): Country
     {
-        throw new \Exception('Method update() not yet implemented.');
+        $model->update([
+            'country_code' => $data['country_code'] ?? $model->country_code,
+            'country_name' => $data['country_name'] ?? $model->country_name,
+        ]);
+
+        return $model;
     }
 
     public function delete($model): ?bool
     {
-        throw new \Exception('Method delete() not yet implemented.');
+        return $model->delete();
     }
 
     /**
@@ -60,6 +68,12 @@ class CountryService implements IBaseService
      */
     public function getAll(?int $limit = null): Collection
     {
-        throw new \Exception('Method getAll() not yet implemented.');
+        $query = $this->country->query();
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 }
