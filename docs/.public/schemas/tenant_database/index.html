@@ -51,11 +51,11 @@
       if (checkModuleSupport()) {
         const scripts = [
           [
-            "http://localhost:8000/vendor/laravel-erd/erd-editor.esm.js",
+            "http://139.59.181.1:8000/vendor/laravel-erd/erd-editor.esm.js",
             "https://cdn.jsdelivr.net/npm/@dineug/erd-editor/+esm",
           ],
           [
-            "http://localhost:8000/vendor/laravel-erd/erd-editor-shiki-worker.esm.js",
+            "http://139.59.181.1:8000/vendor/laravel-erd/erd-editor-shiki-worker.esm.js",
             "https://cdn.jsdelivr.net/npm/@dineug/erd-editor-shiki-worker/+esm",
           ],
         ].map(([src, fallback]) => loader(src, fallback))
@@ -68,7 +68,7 @@
       } else {
         const scripts = [
           [
-            "http://localhost:8000/vendor/laravel-erd/vuerd.min.js",
+            "http://139.59.181.1:8000/vendor/laravel-erd/vuerd.min.js",
             "https://cdn.jsdelivr.net/npm/vuerd/dist/vuerd.min.js",
           ],
         ].map(([src, fallback]) => loader(src, fallback))

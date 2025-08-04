@@ -44,7 +44,7 @@ export default withMermaid(
       publicDir: ".public",
     },
     srcExclude: ["README.md"],
-    ignoreDeadLinks: "localhostLinks",
+    ignoreDeadLinks: "139.59.181.1Links",
 
     markdown: {
       math: true,
