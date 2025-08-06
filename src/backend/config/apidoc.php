@@ -53,7 +53,7 @@ return [
      * The base URL to be used in examples and the Postman collection.
      * By default, this will be the value of config('app.url').
      */
-    'base_url' => 'http://139.59.181.1:8000',
+    'base_url' => 'http://139.59.181:8000',
 
     /*
      * Generate a Postman collection in addition to HTML docs.

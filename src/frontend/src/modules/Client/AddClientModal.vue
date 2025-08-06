@@ -26,7 +26,11 @@
                 </div>
               </div>
               <div class="md-layout-item md-size-50 md-small-size-100">
-                <md-field>
+                <md-field
+                  :class="{
+                    'md-invalid': errors.has('customer-add-form.title'),
+                  }"
+                >
                   <label for="title">
                     {{ $tc("words.title") }}
                   </label>
@@ -34,6 +38,7 @@
                     type="text"
                     name="title"
                     id="title"
+                    v-validate="'required'"
                     v-model="personService.person.title"
                   />
                   <span class="md-error">
@@ -135,7 +140,7 @@
                   <md-input
                     type="text"
                     name="email"
-                    v-validate="'email'"
+                    v-validate="'required|email'"
                     id="email"
                     v-model="personService.person.address.email"
                   />
@@ -149,6 +154,7 @@
                   <vue-tel-input
                     id="phone"
                     name="phone"
+                    ref="phoneInput"
                     :validCharactersOnly="true"
                     mode="international"
                     invalidMsg="invalid phone number"
@@ -161,6 +167,7 @@
                     enabledCountryCode="true"
                     v-model="personService.person.address.phone"
                     @validate="validatePhone"
+                    @input="onPhoneInput"
                   ></vue-tel-input>
                   <span
                     v-if="!phone.valid && firstStepClicked"
@@ -273,6 +280,7 @@ export default {
       phone: {
         valid: true,
       },
+      firstStepClicked: false,
     }
   },
   beforeMount() {
@@ -280,8 +288,11 @@ export default {
   },
   methods: {
     async save() {
+      this.firstStepClicked = true
       const validator = await this.$validator.validateAll("customer-add-form")
       if (!validator) return
+
+      if (!this.phone.valid) return
       try {
         const personParams = {
           email: this.personService.person.address.email,
@@ -291,6 +302,7 @@ export default {
           street: this.personService.person.address.street,
           cityId: this.personService.person.address.cityId,
           isPrimary: true,
+          country_code: this.phone.countryCode,
           title: this.personService.person.title,
           education: this.personService.person.education,
           birthDate: moment(this.personService.person.birthDate).format(
@@ -315,6 +327,9 @@ export default {
       this.$emit("hideAddCustomer")
     },
     validatePhone(phone) {
+      this.phone = phone
+    },
+    onPhoneInput(_, phone) {
       this.phone = phone
     },
   },

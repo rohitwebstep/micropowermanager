@@ -13,7 +13,10 @@ class MailHelper implements MailHelperInterface {
      */
     private $mailer;
 
-    private $mailSettings;
+    /**
+     * @var array<string, mixed>
+     */
+    private array $mailSettings;
 
     public function __construct(PHPMailer $mailer) {
         $this->mailer = $mailer;
@@ -35,8 +38,8 @@ class MailHelper implements MailHelperInterface {
         };
         $this->mailer->isSMTP();
         // When debugging Email sending locally it might helpful to explicitly set a Hostname
-        // as certain mail providers might block traffic with Hostname `139.59.181.1`.
-        // And `$_SERVER['SERVER_NAME']` is `139.59.181.1` in our local development setup.
+        // as certain mail providers might block traffic with Hostname `139.59.181`.
+        // And `$_SERVER['SERVER_NAME']` is `139.59.181` in our local development setup.
         // https://phpmailer.github.io/PHPMailer/classes/PHPMailer-PHPMailer-PHPMailer.html#property_Hostname
         // $this->mailer->Hostname = gethostname();
     }

@@ -19,7 +19,7 @@ npm install
 npm run docs:dev
 ```
 
-Then open [docs](http://139.59.181.1:5173/) in a local web browser.
+Then open [docs](http://139.59.181:5173/) in a local web browser.
 This command starts a local development server and opens up a browser window.
 Most changes are reflected live without having to restart the server.
 
@@ -64,8 +64,8 @@ cp -r src/backend/dist/laravel-erd/ docs/.public/schemas/
 
 Go to each
 
-- [laravel-erd](http://139.59.181.1:8000/laravel-erd/central_database)
-- [laravel-erd](http://139.59.181.1:8000/laravel-erd/tenant_database)
+- [laravel-erd](http://139.59.181:8000/laravel-erd/central_database)
+- [laravel-erd](http://139.59.181:8000/laravel-erd/tenant_database)
 
 and export PNG by either
 
