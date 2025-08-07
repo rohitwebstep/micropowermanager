@@ -22,10 +22,6 @@ docker-compose --version
 # Create Project Directory
 sudo mkdir -p /var/www
 sudo chown -R $USER:$USER /var/www
-
-# 📂 Step 4: Setup Project Directory
-sudo mkdir -p /var/www
-sudo chown -R $USER:$USER /var/www
 cd /var/www
 
 # ❌ Remove old folder (if exists) and clone new project
