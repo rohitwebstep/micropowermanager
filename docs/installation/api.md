@@ -9,5 +9,5 @@ order: 11
 
 To generate the API documentation, jump in the `laravel` container and type `php artisan apidoc:generate`.
 That will create a new **docs** folder under **public** folder.
-The API documentation should be available under `http://139.59.181:8000/docs/`.
+The API documentation should be available under `http://139.59.181.1:8000/docs/`.
 The whole API documentation will be migrated to third-party tools like Postman or Swagger.
