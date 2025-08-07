@@ -79,12 +79,28 @@ exit
 # Stop all services
 docker-compose -f docker-compose-dockerhub.yml down
 
-# Remove all containers
+# ⛔ Stop all running containers
+docker stop $(docker ps -aq)
+
+# 🗑️ Remove all containers
 docker rm -f $(docker ps -aq)
 
-# Remove Docker volumes and networks
+# 🗑️ Remove all images (optional but useful for full refresh)
+docker rmi -f $(docker images -aq)
+
+# 🧹 Remove all unused volumes
 docker volume prune -f
+
+# 🧹 Remove all unused networks
 docker network prune -f
 
-# Restart Docker service
+# 🧹 Remove all build cache
+docker builder prune -f
+
+# 🔄 Restart Docker service
 sudo systemctl restart docker
+
+# ✅ Verify clean state
+docker ps -a
+docker images
+
