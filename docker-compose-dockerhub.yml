@@ -1,7 +1,7 @@
 # Local setup using MicroPowerManager containers from DockerHub in production mode
 services:
   backend:
-    containlocalhost:er_name: backend
+    container_name: backend
     image: enaccess/micropowermanager-backend:latest
     env_file: ./dev/.env.micropowermanager-backend
     depends_on:
