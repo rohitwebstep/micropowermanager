@@ -5,7 +5,7 @@ order: 2
 # Backend
 
 The backend is built with [Laravel](https://laravel.com/).
-The backend is served under <http://139.59.181.1:8000/api>.
+The backend is served under <http://localhost:8000/api>.
 You can find backend files under `src/backend`.
 After the first run with `docker-compose up`, dependencies will be installed automatically.
 If you prefer to install dependencies manually or need to add additional packages, follow these steps:
@@ -80,6 +80,14 @@ $person->save();
 > [!NOTE]
 > The schema of the central database is massive.
 > In `erd-editor` you can use `Right Click => Automatic Table Placement` to get nicer overview.
+
+### Cluster, MiniGrid, Village relations
+
+![Transaction abstractions](images/cluster_minigrid_village.excalidraw.svg)
+
+### Connection Groups and Types
+
+![Transaction abstractions](images/connection_groups_types.excalidraw.svg)
 
 ### Transactions abstractions
 

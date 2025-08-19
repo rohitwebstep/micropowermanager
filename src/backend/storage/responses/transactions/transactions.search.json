@@ -46,12 +46,12 @@
             }
         }
     ],
-    "first_page_url": "http:\/\/139.59.181.1:8000\/api\/transactions\/advanced?page=1",
+    "first_page_url": "http:\/\/localhost:8000\/api\/transactions\/advanced?page=1",
     "from": 1,
     "last_page": 1,
-    "last_page_url": "http:\/\/139.59.181.1:8000\/api\/transactions\/advanced?page=1",
+    "last_page_url": "http:\/\/localhost:8000\/api\/transactions\/advanced?page=1",
     "next_page_url": null,
-    "path": "http:\/\/139.59.181.1:8000\/api\/transactions\/advanced",
+    "path": "http:\/\/localhost:8000\/api\/transactions\/advanced",
     "per_page": 15,
     "prev_page_url": null,
     "to": 5,
