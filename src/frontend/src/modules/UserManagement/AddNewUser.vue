@@ -82,7 +82,7 @@ export default {
       this.registerUserFlag = true
     },
     saveUser() {
-      axios.post("http://139.59.181.1:8000/register", {
+      axios.post("http://localhost:8000/register", {
         name: "Ali KEmal Özkan",
         email: "hebele@hubele.com",
         password: "3242353434543543",
