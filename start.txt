@@ -103,3 +103,18 @@ sudo systemctl restart docker
 # ✅ Verify clean state
 docker ps -a
 docker images
+
+# ------------------------------------------------------------------------------
+⚙️ OUR Configure
+
+Replace all occurrences of:
+http://localhost: ➤ http://139.59.181.1:
+
+Comment unnecessary services (like worker) in:
+docker-compose-dockerhub.yml
+
+Configure DB credentials in:
+
+dev/.env.micropowermanager-backend
+
+src/backend/.env.example
