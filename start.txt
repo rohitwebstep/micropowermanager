@@ -116,5 +116,5 @@ docker-compose-dockerhub.yml
 Configure DB credentials in:
 
 dev/.env.micropowermanager-backend
-
+src/backend/app/Utils/DemoCompany.php
 src/backend/.env.example
