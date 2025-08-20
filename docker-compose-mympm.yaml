@@ -3,6 +3,7 @@ services:
   backend-prod:
     container_name: backend-prod
     build:
+      context: .
       dockerfile: docker/DockerfileBackendProd
     env_file: ./dev/.env.micropowermanager-backend-mympm
     depends_on:
@@ -23,6 +24,7 @@ services:
   frontend-prod:
     container_name: frontend-prod
     build:
+      context: .
       dockerfile: docker/DockerfileFrontendProd
     env_file: ./dev/.env.micropowermanager-frontend-mympm
     ports:
@@ -31,6 +33,7 @@ services:
   scheduler-prod:
     container_name: scheduler-prod
     build:
+      context: .
       dockerfile: docker/DockerfileSchedulerProd
     # micropowermanager-scheduler is a backend service and uses the same configuration as micropowermanager-backend
     env_file: ./dev/.env.micropowermanager-backend-mympm
@@ -43,6 +46,7 @@ services:
   queue-worker-prod:
     container_name: queue-worker-prod
     build:
+      context: .
       dockerfile: docker/DockerfileQueueWorkerProd
     # micropowermanager-queue-worker is a backend service and uses the same configuration as micropowermanager-backend
     env_file: ./dev/.env.micropowermanager-backend-mympm

@@ -42,6 +42,7 @@ sudo cp .env.example .env
 cd /var/www/micropowermanager
 docker-compose -f docker-compose-dockerhub.yml up -d
 
+
 # ⚠️ If any error occurs (like worker issues),
 # ➤ Comment out the "worker" service section in docker-compose-dockerhub.yml
 
