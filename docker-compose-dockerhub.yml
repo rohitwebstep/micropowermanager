@@ -5,12 +5,9 @@ services:
     image: enaccess/micropowermanager-backend:latest
     env_file: ./dev/.env.micropowermanager-backend
     depends_on:
-      mysql:
-        condition: service_healthy
       redis:
         condition: service_started
     links:
-      - mysql:db
       - redis:redis
     ports:
       - 8000:80
@@ -37,12 +34,9 @@ services:
     # micropowermanager-scheduler is a backend service and uses the same configuration as micropowermanager-backend
     env_file: ./dev/.env.micropowermanager-backend
     depends_on:
-      mysql:
-        condition: service_healthy
       redis:
         condition: service_started
     links:
-      - mysql:db
       - redis:redis
     volumes:
       - storage_data:/var/www/html/storage
@@ -72,23 +66,7 @@ services:
     ports:
       - 6379:6379
 
-  mysql:
-    container_name: mysql
-    image: mysql:8.4
-    env_file: ./dev/.env.mysql
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - 3306:3306
-    healthcheck:
-      test: [CMD, mysqladmin, ping, -h, localhost]
-      start_period: 10s
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
 volumes:
-  mysql_data:
   redis_data:
   # storage volume is shared between services
   storage_data:
