@@ -56,7 +56,7 @@ For more details see [`jwt-auth` documentation](https://jwt-auth.readthedocs.io/
 
 | Environment Variable | Default               | Description                                                                                                                                              |
 | -------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DB_CONNECTION`      | `mysql` | Name of the laravel default connection. Should almost never be changed.                                                                                  |
+| `DB_CONNECTION`      | `micro_power_manager` | Name of the laravel default connection. Should almost never be changed.                                                                                  |
 | `DB_HOST`            | **Required**          | Network host name the database is accessible from. For example `db` (for local) or `long-url.my-cloud-provider.com/region/db` (for dedicated databases). |
 | `DB_PORT`            | `3306`                | Database port.                                                                                                                                           |
 | `DB_DATABASE`        | `micro_power_manager` | Database name.                                                                                                                                           |

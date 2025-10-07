@@ -19,7 +19,7 @@ npm install
 npm run docs:dev
 ```
 
-Then open [docs](http://139.59.181.1:5173/) in a local web browser.
+Then open [docs](http://localhost:5173/) in a local web browser.
 This command starts a local development server and opens up a browser window.
 Most changes are reflected live without having to restart the server.
 
