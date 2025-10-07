@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'micro_power_manager'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PersonRequest;
 use App\Http\Resources\ApiResource;
+use App\Models\Country;
 use App\Models\Person\Person;
 use App\Services\AddressesService;
 use App\Services\CountryService;
@@ -38,8 +39,6 @@ class PersonController extends Controller {
      * @urlParam active_customer int optional. To get a list of active customers. Default: 0
      *
      * @responseFile responses/people/people.list.json
-     *
-     * @return ApiResource
      */
     public function index(Request $request): ApiResource {
         $customerType = $request->input('is_customer', 1);
@@ -58,10 +57,6 @@ class PersonController extends Controller {
      * - Role
      * - Meter list.
      *
-     * @param int $personId
-     *
-     * @return ApiResource
-     *
      * @apiResourceModel App\Models\Person\Person
      *
      * @responseFile     responses/people/people.detail.json
@@ -72,10 +67,6 @@ class PersonController extends Controller {
 
     /**
      * Create.
-     *
-     * @param PersonRequest $request
-     *
-     * @return JsonResponse
      */
     public function store(PersonRequest $request): JsonResponse {
         try {
@@ -95,12 +86,11 @@ class PersonController extends Controller {
                 $country = $this->countryService->getByCode($request->get('country_code'));
                 $person = $this->personService->create($personData);
 
-                if ($country !== null) {
+                if ($country instanceof Country) {
                     $person = $this->personService->addCitizenship($person, $country);
                 }
             }
 
-            /** @var Person $person */
             $address = $this->addressService->make($addressData);
             $this->personAddressService->setAssignee($person);
             $this->personAddressService->setAssigned($address);
@@ -111,7 +101,7 @@ class PersonController extends Controller {
             return ApiResource::make($person)->response()->setStatusCode(201);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            throw new \Exception($e->getMessage());
+            throw new \Exception($e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -127,10 +117,6 @@ class PersonController extends Controller {
      * @bodyParam birth_date string. The title of the person. Example: Dr.
      * @bodyParam sex string. The title of the person. Example: Dr.
      * @bodyParam education string. The title of the person. Example: Dr.
-     *
-     * @param int $personId
-     *
-     * @return ApiResource
      *
      * @apiResourceModel App\Models\Person\Person
      *
@@ -150,10 +136,6 @@ class PersonController extends Controller {
      * Transactions
      * The list of all transactions(paginated) which belong to that person.
      * Each page contains 7 entries of the last transaction.
-     *
-     * @param $personId
-     *
-     * @return ApiResource
      *
      * @bodyParam    person_id int required the ID of the person. Example: 2
      *
@@ -179,8 +161,6 @@ class PersonController extends Controller {
      * @urlParam term  The ID of the post. Example: John Doe
      * @urlParam paginage int The page number. Example:1
      *
-     * @return ApiResource
-     *
      * @responseFile responses/people/people.search.json
      */
     public function search(
@@ -198,10 +178,6 @@ class PersonController extends Controller {
      * That means the orinal record wont be deleted but all mentioned relations will be removed permanently.
      *
      * @urlParam person required The ID of the person. Example:1
-     *
-     * @param int $personId
-     *
-     * @return ApiResource
      *
      * @throws \Exception
      *

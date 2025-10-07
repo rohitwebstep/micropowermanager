@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use App\Helpers\MailHelper;
-use App\Helpers\MailHelperInterface;
-use App\Helpers\MailHelperMock;
+use App\Lib\DummyManufacturerApis\DummyCalinSmartMeterApi;
+use App\Lib\DummyManufacturerApis\DummyKelinMeterApi;
+use App\Lib\DummyManufacturerApis\DummySunKingSHSApi;
 use App\Misc\LoanDataContainer;
 use App\Models\AccessRate\AccessRate;
 use App\Models\Address\Address;
@@ -38,6 +38,7 @@ use App\Utils\ApplianceInstallmentPayer;
 use App\Utils\MinimumPurchaseAmountValidator;
 use App\Utils\TariffPriceCalculator;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -48,10 +49,8 @@ use MPM\User\UserListener;
 class AppServiceProvider extends ServiceProvider {
     /**
      * Bootstrap any application services.
-     *
-     * @return void
      */
-    public function boot() {
+    public function boot(): void {
         // Maria DB work-around
         Schema::defaultStringLength(191);
 
@@ -90,23 +89,35 @@ class AppServiceProvider extends ServiceProvider {
 
     /**
      * Register any application services.
-     *
-     * @return void
      */
     public function register(): void {
-        if ($this->app->environment('development') || $this->app->environment('local')) {
-            $this->app->singleton(MailHelperInterface::class, MailHelperMock::class);
-        } else {
-            $this->app->singleton(MailHelperInterface::class, MailHelper::class);
-        }
+        // Aliases here added for backwards-compatibility
+        $this->app->singleton(AndroidGateway::class);
+        $this->app->alias(AndroidGateway::class, 'AndroidGateway');
+        $this->app->singleton(LoanDataContainer::class);
+        $this->app->alias(LoanDataContainer::class, 'LoanDataContainerProvider');
+        $this->app->singleton(AgentTransactionProvider::class);
+        $this->app->alias(AgentTransactionProvider::class, 'AgentPaymentProvider');
 
-        $this->app->singleton('AndroidGateway', AndroidGateway::class);
-        $this->app->singleton('LoanDataContainerProvider', LoanDataContainer::class);
-        $this->app->singleton('AgentPaymentProvider', AgentTransactionProvider::class);
-        $this->app->bind('MinimumPurchaseAmountValidator', MinimumPurchaseAmountValidator::class);
-        $this->app->bind('TariffPriceCalculator', TariffPriceCalculator::class);
-        $this->app->bind('ApplianceInstallmentPayer', ApplianceInstallmentPayer::class);
-        $this->app->bind('AccessRatePayer', AccessRatePayer::class);
+        $this->app->bind(MinimumPurchaseAmountValidator::class);
+        $this->app->alias(MinimumPurchaseAmountValidator::class, 'MinimumPurchaseAmountValidator');
+        $this->app->bind(TariffPriceCalculator::class);
+        $this->app->alias(TariffPriceCalculator::class, 'TariffPriceCalculator');
+        $this->app->bind(ApplianceInstallmentPayer::class);
+        $this->app->alias(ApplianceInstallmentPayer::class, 'ApplianceInstallmentPayer');
+        $this->app->bind(AccessRatePayer::class);
+        $this->app->alias(AccessRatePayer::class, 'AccessRatePayer');
+
+        // Register dummy manufacturer APIs for demo purposes
+        // Future plans with https://github.com/EnAccess/micropowermanager/issues/881
+        $this->app->bind(DummySunKingSHSApi::class);
+        $this->app->alias(DummySunKingSHSApi::class, 'DummySunKingSHSApi');
+
+        $this->app->bind(DummyCalinSmartMeterApi::class);
+        $this->app->alias(DummyCalinSmartMeterApi::class, 'DummyCalinSmartMeterApi');
+
+        $this->app->bind(DummyKelinMeterApi::class);
+        $this->app->alias(DummyKelinMeterApi::class, 'DummyKelinMeterApi');
 
         // Register custom MPM Events
 

@@ -16,6 +16,8 @@ use App\Models\PaymentHistory;
 use App\Models\Role\RoleInterface;
 use App\Models\Role\Roles;
 use Carbon\Carbon;
+use Database\Factories\Person\PersonFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,21 +32,22 @@ use Inensus\Ticket\Models\Ticket;
 /**
  * Class Person.
  *
- * @property int    $id
- * @property string $title
- * @property string $education
- * @property string $name
- * @property string $surname
- * @property mixed  $birth_date
- * @property string $sex                  TODO: replace with gender
- * @property int    $nationality
- * @property int    $is_customer
- * @property mixed  $agent_sold_appliance
- *
- * @implements HasAddressesInterface<Person>
+ * @property int                      $id
+ * @property string                   $title
+ * @property string                   $education
+ * @property string                   $name
+ * @property string                   $surname
+ * @property mixed                    $birth_date
+ * @property string                   $sex                  TODO: replace with gender
+ * @property int                      $nationality
+ * @property int                      $is_customer
+ * @property Collection<int, Ticket>  $tickets
+ * @property mixed                    $agent_sold_appliance
+ * @property Collection<int, Device>  $devices
+ * @property Collection<int, Address> $addresses
  */
-class Person extends BaseModel implements HasAddressesInterface /* <Person> */ , RoleInterface {
-    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<static>> */
+class Person extends BaseModel implements HasAddressesInterface, RoleInterface {
+    /** @use HasFactory<PersonFactory> */
     use HasFactory;
     use SoftDeletes;
 
@@ -53,10 +56,6 @@ class Person extends BaseModel implements HasAddressesInterface /* <Person> */ ,
     protected $guarded = [];
 
     protected $appends = ['is_active'];
-
-    protected $casts = [
-        'additional_json' => 'array',
-    ];
 
     /** @var array<string, string> */
     protected $dispatchesEvents = [
@@ -75,13 +74,10 @@ class Person extends BaseModel implements HasAddressesInterface /* <Person> */ ,
     }
 
     /**
-     * @return MorphMany<Address, self>
+     * @return MorphMany<Address, $this>
      */
     public function addresses(): MorphMany {
-        /** @var MorphMany<Address, self> $relation */
-        $relation = $this->morphMany(Address::class, 'owner');
-
-        return $relation;
+        return $this->morphMany(Address::class, 'owner');
     }
 
     /**
@@ -166,7 +162,7 @@ class Person extends BaseModel implements HasAddressesInterface /* <Person> */ ,
         return $this->id;
     }
 
-    public function getIsActiveAttribute(): bool {
+    protected function getIsActiveAttribute(): bool {
         $lastPayment = $this->latestPayment;
 
         if (!$lastPayment) {
@@ -181,5 +177,11 @@ class Person extends BaseModel implements HasAddressesInterface /* <Person> */ ,
      */
     public function latestPayment(): HasOne {
         return $this->hasOne(PaymentHistory::class, 'payer_id')->latestOfMany('created_at');
+    }
+
+    protected function casts(): array {
+        return [
+            'additional_json' => 'array',
+        ];
     }
 }

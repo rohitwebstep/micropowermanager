@@ -9,17 +9,10 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ReportController {
-    /**
-     * @var Report
-     */
-    private Report $report;
-
-    public function __construct(Report $report) {
-        $this->report = $report;
-    }
+    public function __construct(private Report $report) {}
 
     public function download(int $id): ?BinaryFileResponse {
-        if (!$id) {
+        if ($id === 0) {
             return null;
         }
         $report = $this->report->find($id);
@@ -33,37 +26,37 @@ class ReportController {
 
     public function index(Request $request): ApiResource {
         $type = $request->get('type');
-        $startDate = $request->get('startDate');
-        $endDate = $request->get('endDate');
+        $request->get('startDate');
+        $request->get('endDate');
 
         $reports = match ($type) {
-            'weekly' => $this->getWeeklyReports($startDate, $endDate),
-            'monthly' => $this->getMonthlyReports($startDate, $endDate),
-            default => $this->getAllReports($startDate, $endDate),
+            'weekly' => $this->getWeeklyReports(),
+            'monthly' => $this->getMonthlyReports(),
+            default => $this->getAllReports(),
         };
 
         return new ApiResource($reports);
     }
 
     /**
-     * @return LengthAwarePaginator<Report>
+     * @return LengthAwarePaginator<int, Report>
      */
-    private function getWeeklyReports(?string $startDate, ?string $endDate): LengthAwarePaginator {
+    private function getWeeklyReports(): LengthAwarePaginator {
         return $this->report->where('type', 'weekly')->paginate(15);
     }
 
     /**
-     * @return LengthAwarePaginator<Report>
+     * @return LengthAwarePaginator<int, Report>
      */
-    private function getMonthlyReports(?string $startDate, ?string $endDate): LengthAwarePaginator {
+    private function getMonthlyReports(): LengthAwarePaginator {
         return $this->report->where('type', 'monthly')
             ->paginate(15);
     }
 
     /**
-     * @return LengthAwarePaginator<Report>
+     * @return LengthAwarePaginator<int, Report>
      */
-    private function getAllReports(?string $startDate, ?string $endDate): LengthAwarePaginator {
+    private function getAllReports(): LengthAwarePaginator {
         return $this->report->paginate(15);
     }
 }

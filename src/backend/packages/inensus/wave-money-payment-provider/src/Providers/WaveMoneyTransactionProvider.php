@@ -9,6 +9,8 @@ use App\Sms\Senders\SmsConfigs;
 use App\Sms\SmsTypes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
+use Inensus\SwiftaPaymentProvider\Models\SwiftaTransaction;
+use Inensus\WavecomPaymentProvider\Models\WaveComTransaction;
 use Inensus\WaveMoneyPaymentProvider\Models\WaveMoneyTransaction;
 use Inensus\WaveMoneyPaymentProvider\Modules\Transaction\WaveMoneyTransactionService;
 use MPM\Transaction\Provider\ITransactionProvider;
@@ -34,7 +36,7 @@ class WaveMoneyTransactionProvider implements ITransactionProvider {
             // We need to make sure that the payment is fully processable from our end .
             $this->waveMoneyTransactionService->imitateTransactionForValidation($waveMoneyTransactionData);
         } catch (\Exception $exception) {
-            throw new \Exception($exception->getMessage());
+            throw new \Exception($exception->getMessage(), $exception->getCode(), $exception);
         }
 
         $this->setValidData($waveMoneyTransactionData);
@@ -46,13 +48,18 @@ class WaveMoneyTransactionProvider implements ITransactionProvider {
 
     public function sendResult(bool $requestType, Transaction $transaction): void {
         if ($requestType) {
+            /** @var WaveMoneyTransaction */
             $waveMoneyTransaction = $transaction->originalTransaction()->first();
             $updateData = [
                 'status' => WaveMoneyTransaction::STATUS_SUCCESS,
             ];
             $this->waveMoneyTransactionService->update($waveMoneyTransaction, $updateData);
             $smsService = app()->make(SmsService::class);
-            $smsService->sendSms($transaction, SmsTypes::TRANSACTION_CONFIRMATION, SmsConfigs::class);
+            $smsService->sendSms(
+                $transaction->toArray(),
+                SmsTypes::TRANSACTION_CONFIRMATION,
+                SmsConfigs::class
+            );
         } else {
             Log::critical(
                 'WaveMoney transaction is been cancelled from MicroPowerManager.',
@@ -70,6 +77,7 @@ class WaveMoneyTransactionProvider implements ITransactionProvider {
 
     public function getMessage(): string {
         // TODO: Implement getMessage() method.
+        throw new \BadMethodCallException('Method getMessage() not yet implemented.');
     }
 
     public function getAmount(): int {
@@ -82,6 +90,7 @@ class WaveMoneyTransactionProvider implements ITransactionProvider {
 
     public function saveCommonData(): Model {
         // TODO: Implement saveCommonData() method.
+        throw new \BadMethodCallException('Method saveCommonData() not yet implemented.');
     }
 
     public function init($transaction): void {
@@ -101,7 +110,7 @@ class WaveMoneyTransactionProvider implements ITransactionProvider {
         return $this->transaction;
     }
 
-    public function setValidData($waveMoneyTransactionData) {
+    public function setValidData($waveMoneyTransactionData): void {
         $this->validData = $waveMoneyTransactionData;
     }
 
@@ -109,7 +118,7 @@ class WaveMoneyTransactionProvider implements ITransactionProvider {
         return $this->validData;
     }
 
-    public function getSubTransaction() {
+    public function getSubTransaction(): SwiftaTransaction|WaveMoneyTransaction|WaveComTransaction {
         return $this->waveMoneyTransactionService->getWaveMoneyTransaction();
     }
 }

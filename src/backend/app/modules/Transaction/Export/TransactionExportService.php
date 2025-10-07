@@ -30,7 +30,7 @@ class TransactionExportService extends AbstractExportService {
     }
 
     public function setExportingData(): void {
-        $this->exportingData = $this->transactionData->map(function ($transaction) {
+        $this->exportingData = $this->transactionData->map(function ($transaction): array {
             $status = $transaction->originalTransaction->status == 1 ? 'Success' : ($transaction->status == 0 ? 'Pending' : 'Failed');
             $readableAmount = $this->readable($transaction->amount);
 
@@ -49,12 +49,12 @@ class TransactionExportService extends AbstractExportService {
     /**
      * @param Collection<int,  mixed> $transactionData
      */
-    public function setTransactionData($transactionData): void {
+    public function setTransactionData(Collection $transactionData): void {
         $this->transactionData = $transactionData;
     }
 
     public function getTemplatePath(): string {
-        return storage_path('transaction/export_transactions_template.xlsx');
+        return resource_path('templates/export_transactions_template.xlsx');
     }
 
     public function getPrefix(): string {

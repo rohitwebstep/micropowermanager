@@ -12,7 +12,7 @@ class AgentPerformanceMetricsRequest extends FormRequest {
         return [
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'period' => 'nullable|in:weekly,monthly',
+            'period' => 'nullable|in:daily,weekly,monthly,yearly',
         ];
     }
 
@@ -22,9 +22,9 @@ class AgentPerformanceMetricsRequest extends FormRequest {
     public function getValidatedData(): array {
         $data = $this->validated();
 
-        $data['start_date'] = $data['start_date'] ?? null;
-        $data['end_date'] = $data['end_date'] ?? null;
-        $data['period'] = $data['period'] ?? 'monthly';
+        $data['start_date'] ??= null;
+        $data['end_date'] ??= null;
+        $data['period'] ??= 'monthly';
 
         return $data;
     }

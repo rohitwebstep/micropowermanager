@@ -19,9 +19,7 @@ class PaymentHistoryService implements IAssociative {
     ) {}
 
     /**
-     * @param array<int>      $customerIds
-     * @param CarbonImmutable $startDate
-     * @param CarbonImmutable $endDate
+     * @param array<int> $customerIds
      *
      * @return Collection<int, PaymentHistory>
      */
@@ -41,7 +39,7 @@ class PaymentHistoryService implements IAssociative {
     }
 
     /**
-     * @return LengthAwarePaginator<PaymentHistory>
+     * @return LengthAwarePaginator<int, PaymentHistory>
      */
     public function getBySerialNumber(string $serialNumber, int $paginate): LengthAwarePaginator {
         return $this->paymentHistory->newQuery()->with(['transaction', 'paidFor'])

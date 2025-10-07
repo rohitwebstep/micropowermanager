@@ -18,7 +18,7 @@ class TransactionDataContainer {
     public int $accessRateDebt;
     public Transaction $transaction;
     public Device $device;
-    public ?MeterTariff $tariff;
+    public ?MeterTariff $tariff = null;
     public Manufacturer $manufacturer;
     public Token $token;
     /** @var array<int, array<string, float|int>> */
@@ -27,16 +27,14 @@ class TransactionDataContainer {
     public float $amount;
     public float $totalAmount;
     public float $rawAmount;
-    public ?AssetPerson $appliancePerson;
-    public ?Meter $meter;
+    public ?AssetPerson $appliancePerson = null;
+    public ?Meter $meter = null;
     public float $installmentCost;
     public float $dayDifferenceBetweenTwoInstallments;
     public bool $applianceInstallmentsFullFilled;
 
     public static function initialize(Transaction $transaction): TransactionDataContainer {
-        /** @var TransactionDataContainer $container */
         $container = app()->make(TransactionDataContainer::class);
-        /** @var DeviceService $deviceService */
         $deviceService = app()->make(DeviceService::class);
 
         // Initialize base properties
@@ -54,7 +52,6 @@ class TransactionDataContainer {
             $container->device = $deviceService->getBySerialNumber($transaction->message);
 
             // Get the associated device model (Meter or SHS)
-            /** @var Meter|SolarHomeSystem $deviceModel */
             $deviceModel = $container->device->device;
             $container->manufacturer = $deviceModel->manufacturer ?? null;
 
@@ -68,7 +65,7 @@ class TransactionDataContainer {
             // Handle appliance payments if any
             $container->handleAppliancePayments($transaction);
         } catch (ModelNotFoundException $e) {
-            throw new \Exception('Unexpected error occurred while processing transaction. '.$e->getMessage());
+            throw new \Exception('Unexpected error occurred while processing transaction. '.$e->getMessage(), $e->getCode(), $e);
         }
 
         return $container;

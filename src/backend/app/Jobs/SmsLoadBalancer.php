@@ -7,7 +7,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
@@ -22,19 +21,12 @@ class SmsLoadBalancer extends AbstractJob {
     public mixed $gateways;
 
     /**
-     * @var array<mixed>
-     */
-    public array $smsBody;
-
-    /**
      * @param array<mixed> $smsBody
      */
-    public function __construct(array $smsBody) {
+    public function __construct(public array $smsBody) {
         $this->onConnection('redis');
         $this->onQueue('sms_gateway');
-
-        $this->smsBody = $smsBody;
-        parent::__construct(get_class($this));
+        parent::__construct();
     }
 
     public function executeJob(): void {
@@ -53,7 +45,6 @@ class SmsLoadBalancer extends AbstractJob {
      * @param array<mixed> $data
      */
     private function sendSms(array $data): string {
-        /** @var Collection<int, mixed> $smsCollection */
         $smsCollection = collect($data);
         $smsCollection = $smsCollection->chunk(3);
         $httpClient = new Client();

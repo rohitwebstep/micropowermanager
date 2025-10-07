@@ -5,10 +5,16 @@ namespace Inensus\SwiftaPaymentProvider\Http\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Tymon\JWTAuth\JWTGuard;
+
+// Test
 
 class SwiftaMiddleware {
     public function handle(Request $request, \Closure $next) {
-        if (auth()->payload()->get('usr') !== 'swifta-token') {
+        /** @var JWTGuard $guard */
+        $guard = auth();
+
+        if ($guard->payload()->get('usr') !== 'swifta-token') {
             $data = collect([
                 'success' => 0,
                 'message' => 'Authentication field.',
@@ -30,7 +36,7 @@ class SwiftaMiddleware {
         return $next($request);
     }
 
-    private function checkCipherIsValid(Request $request) {
+    private function checkCipherIsValid(Request $request): void {
         $hash = md5('Inensus'.$request->input('timestamp').$request->input('amount').'Swifta');
         if ($request->input('cipher') != $hash) {
             Log::warning('Swifta Transaction Validation Failed', [

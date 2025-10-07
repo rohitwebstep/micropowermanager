@@ -3,16 +3,15 @@
 namespace App\Models;
 
 use App\Models\Base\BaseModel;
+use Database\Factories\SmsAndroidSettingFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * @property int $id
- *
- * @use HasFactory<\Database\Factories\SmsAndroidSettingFactory>
  */
 class SmsAndroidSetting extends BaseModel {
-    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<static>> */
+    /** @use HasFactory<SmsAndroidSettingFactory> */
     use HasFactory;
     protected $table = 'sms_android_settings';
 
@@ -22,7 +21,7 @@ class SmsAndroidSetting extends BaseModel {
             try {
                 $lastSms = Sms::query()->latest()->select('id')->take(1)->firstOrFail()->id;
                 $responsibleGateway = $smsAndroidSettings[$lastSms % $smsAndroidSettings->count()];
-            } catch (ModelNotFoundException $e) {
+            } catch (ModelNotFoundException) {
                 $responsibleGateway = $smsAndroidSettings[0];
             }
 

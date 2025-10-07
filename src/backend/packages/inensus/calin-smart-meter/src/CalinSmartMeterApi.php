@@ -4,10 +4,8 @@ namespace Inensus\CalinSmartMeter;
 
 use App\Lib\IManufacturerAPI;
 use App\Models\Device;
-use App\Models\Meter\Meter;
 use App\Models\Token;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use Inensus\CalinSmartMeter\Exceptions\CalinSmartCreadentialsNotFoundException;
@@ -16,17 +14,9 @@ use Inensus\CalinSmartMeter\Models\CalinSmartCredential;
 use Inensus\CalinSmartMeter\Models\CalinSmartTransaction;
 
 class CalinSmartMeterApi implements IManufacturerAPI {
-    protected $api;
-    private $rootUrl = '/POS_Purchase/';
+    private string $rootUrl = '/POS_Purchase/';
 
-    public function __construct(
-        Client $httpClient,
-        private CalinSmartTransaction $calinSmartTransaction,
-        private CalinSmartCredential $credentials,
-        private CalinSmartMeterApiRequests $calinSmartMeterApiRequests,
-    ) {
-        $this->api = $httpClient;
-    }
+    public function __construct(protected Client $api, private CalinSmartTransaction $calinSmartTransaction, private CalinSmartCredential $credentials, private CalinSmartMeterApiRequests $calinSmartMeterApiRequests) {}
 
     public function chargeDevice($transactionContainer): array {
         $meter = $transactionContainer->device->device;
@@ -73,13 +63,11 @@ class CalinSmartMeterApi implements IManufacturerAPI {
     }
 
     /**
-     * @param Meter $meter
+     * @return array<string,mixed>|null
      *
-     * @throws GuzzleException
-     *
-     * @psalm-return array{result_code: mixed}
+     * @throws CalinSmartCreadentialsNotFoundException
      */
-    public function clearDevice(Device $device) {
+    public function clearDevice(Device $device): ?array {
         $meter = $device->device;
         $root = '/Maintenance_ClearCredit/';
         try {

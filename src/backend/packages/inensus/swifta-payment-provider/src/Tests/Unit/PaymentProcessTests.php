@@ -23,33 +23,36 @@ use Tests\TestCase;
 class PaymentProcessTests extends TestCase {
     use RefreshDatabase;
 
-    public function testProcessPaymentStartsEnergyTransactionProcessor() {
+    public function testProcessPaymentStartsEnergyTransactionProcessor(): void {
         Queue::fake();
         $this->initializeData();
         $transaction = $this->initializeTransaction();
-        ProcessPayment::dispatchSync($transaction->id);
+        $companyId = 1;
+        ProcessPayment::dispatchSync($companyId, $transaction->id);
         Queue::assertPushed(EnergyTransactionProcessor::class);
     }
 
-    public function testEnergyTransactionProcessorStartsTokenProcessor() {
+    public function testEnergyTransactionProcessorStartsTokenProcessor(): void {
         Queue::fake();
         $this->initializeData();
         $transaction = $this->initializeTransaction();
-        EnergyTransactionProcessor::dispatchSync($transaction);
+        $companyId = 1;
+        EnergyTransactionProcessor::dispatchSync($companyId, $transaction->id);
         Queue::assertPushed(TokenProcessor::class);
     }
 
-    public function testTokenProcessorChargesMeter() {
+    public function testTokenProcessorChargesMeter(): void {
         Queue::fake();
         $this->initializeData();
         $transaction = $this->initializeTransaction();
         $transactionData = TransactionDataContainer::initialize($transaction);
-        TokenProcessor::dispatchSync($transactionData);
-        $tokensCount = Token::query()->get()->count();
+        $companyId = 1;
+        TokenProcessor::dispatchSync($companyId, $transactionData);
+        $tokensCount = Token::query()->count();
         $this->assertEquals(1, $tokensCount);
         $mesombPaymentCount = PaymentHistory::query()
             ->where('payment_service', 'mesomb_transaction')
-            ->where('payment_type', 'energy')->get()->count();
+            ->where('payment_type', 'energy')->count();
         $this->assertEquals(1, $mesombPaymentCount);
     }
 
@@ -76,7 +79,7 @@ class PaymentProcessTests extends TestCase {
         );
     }
 
-    private function initializeData() {
+    private function initializeData(): void {
         // create person
         Person::factory()->create();
         // create meter-tariff
@@ -96,7 +99,7 @@ class PaymentProcessTests extends TestCase {
             'api_name' => 'CalinApi',
         ]);
         // create meter
-        $meter = Meter::query()->create([
+        Meter::query()->create([
             'serial_number' => '4700005646',
             'meter_type_id' => 1,
             'in_use' => 1,

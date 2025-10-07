@@ -4,6 +4,7 @@ namespace Inensus\Ticket\Services;
 
 use App\Models\Agent;
 use App\Services\Interfaces\IAssociative;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Collection;
 use Inensus\Ticket\Models\Ticket;
 
@@ -48,7 +49,7 @@ class TicketService implements IAssociative {
         return $ticket;
     }
 
-    public function getBatch($tickets) {
+    public function getBatch(array|Arrayable $tickets): array {
         foreach ($tickets as $index => $ticket) {
             $tickets[$index]['comments'] = $ticket->comments()->with('ticketUser')->get();
         }
@@ -105,11 +106,7 @@ class TicketService implements IAssociative {
 
         $query->orderBy('created_at', 'desc');
 
-        if ($limit) {
-            $tickets = $query->paginate($limit);
-        } else {
-            $tickets = $query->paginate();
-        }
+        $tickets = $limit ? $query->paginate($limit) : $query->paginate();
 
         $ticketData = $this->getBatch($tickets);
         $tickets->setCollection(Collection::make($ticketData));

@@ -40,13 +40,11 @@ class SocialTariffService implements IBaseService {
      * @param SocialTariffData $socialTariffData
      */
     public function update(Model $socialTariff, array $socialTariffData): SocialTariff {
+        // Parameter types must be compatible (contravariant).
         /* @var SocialTariff $socialTariff */
         $socialTariff->update($socialTariffData);
 
-        /** @var SocialTariff $freshTariff */
-        $freshTariff = $socialTariff->fresh();
-
-        return $freshTariff;
+        return $socialTariff->fresh();
     }
 
     public function deleteByTariffId(int $meterTariffId): void {
@@ -58,7 +56,7 @@ class SocialTariffService implements IBaseService {
     }
 
     /**
-     * @return Collection<int, SocialTariff>|LengthAwarePaginator<SocialTariff>
+     * @return Collection<int, SocialTariff>|LengthAwarePaginator<int, SocialTariff>
      */
     public function getAll(?int $limit = null): Collection|LengthAwarePaginator {
         throw new \Exception('Method getAll() not yet implemented.');

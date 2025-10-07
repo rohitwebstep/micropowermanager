@@ -7,8 +7,6 @@ use Illuminate\Foundation\Http\FormRequest;
 class TicketingUserExternalRequest extends FormRequest {
     /**
      * Describes the rules which should be fulfilled by the request.
-     *
-     * @return array
      */
     public function rules(): array {
         return [
@@ -22,6 +20,6 @@ class TicketingUserExternalRequest extends FormRequest {
     }
 
     public function getPhone(): string {
-        return (int) $this->input('phone');
+        return $this->input('phone');
     }
 }

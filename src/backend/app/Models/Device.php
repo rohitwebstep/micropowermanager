@@ -4,22 +4,29 @@ namespace App\Models;
 
 use App\Models\Address\Address;
 use App\Models\Base\BaseModel;
+use App\Models\Meter\Meter;
 use App\Models\Person\Person;
+use App\Models\Transaction\Transaction;
+use Carbon\Carbon;
+use Database\Factories\DeviceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
- * @property int            $connection_group_id
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * @property Device         $device
- * @property Manufacturer   $manufacturer
+ * @property int                         $connection_group_id
+ * @property Carbon                      $created_at
+ * @property Carbon                      $updated_at
+ * @property Meter|SolarHomeSystem|EBike $device
+ * @property Person                      $person
+ * @property Address                     $address
+ * @property string                      $device_type
  */
 class Device extends BaseModel {
-    /** @use HasFactory<\Database\Factories\DeviceFactory> */
+    /** @use HasFactory<DeviceFactory> */
     use HasFactory;
 
     public const RELATION_NAME = 'device';
@@ -30,9 +37,11 @@ class Device extends BaseModel {
     // `id` is this device's... well... id, which it can be referenced with in the `device` table
     // `device_id` is the `id` in the target table depending on type. For example `meter` or `solar_home_system`.
     /**
-     * @return MorphTo<\Illuminate\Database\Eloquent\Model, $this>
+     * @return MorphTo<Meter|SolarHomeSystem|EBike, $this>
      */
     public function device(): MorphTo {
+        // https://github.com/larastan/larastan/issues/1223
+        // @phpstan-ignore return.type
         return $this->morphTo();
     }
 
@@ -55,5 +64,12 @@ class Device extends BaseModel {
      */
     public function appliance(): HasOne {
         return $this->hasOne(Asset::class, 'device_serial', 'device_serial');
+    }
+
+    /**
+     * @return HasMany<Transaction, $this>
+     */
+    public function transactions(): HasMany {
+        return $this->hasMany(Transaction::class, 'message', 'device_serial');
     }
 }

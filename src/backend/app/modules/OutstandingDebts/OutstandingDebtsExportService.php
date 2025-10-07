@@ -41,15 +41,13 @@ class OutstandingDebtsExportService extends AbstractExportService {
     }
 
     public function setExportingData(): void {
-        $this->exportingData = $this->outstandingDebtsData->map(function (AssetRate $applianceRate): array {
-            return [
-                $applianceRate->assetPerson->person->name.' '.$applianceRate->assetPerson->person->surname,
-                $applianceRate->assetPerson->asset->name,
-                $applianceRate->assetPerson->device_serial,
-                $applianceRate->due_date,
-                $applianceRate->remaining,
-            ];
-        });
+        $this->exportingData = $this->outstandingDebtsData->map(fn (AssetRate $applianceRate): array => [
+            $applianceRate->assetPerson->person->name.' '.$applianceRate->assetPerson->person->surname,
+            $applianceRate->assetPerson->asset->name,
+            $applianceRate->assetPerson->device_serial,
+            $applianceRate->due_date,
+            $applianceRate->remaining,
+        ]);
     }
 
     /**
@@ -60,13 +58,12 @@ class OutstandingDebtsExportService extends AbstractExportService {
     }
 
     public function getTemplatePath(): string {
-        return storage_path('appliance/export_outstanding_debts_template.xlsx');
+        return resource_path('templates/export_outstanding_debts_template.xlsx');
     }
 
     public function createReport(CarbonImmutable $toDate): string {
         $currency = $this->applianceRateService->getCurrencyFromMainSettings();
 
-        /** @var Collection<int, AssetRate> $data */
         $data = $this->applianceService->queryOutstandingDebtsByApplianceRates($toDate)->get();
         $this->createSpreadSheetFromTemplate($this->getTemplatePath());
         $this->setCurrency($currency);

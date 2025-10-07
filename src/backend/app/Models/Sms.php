@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Models\Address\Address;
 use App\Models\Base\BaseModel;
+use Database\Factories\SmsFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
@@ -22,7 +24,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property int    $sender_id
  */
 class Sms extends BaseModel {
-    /** @use HasFactory<\Illuminate\Database\Eloquent\Factories\Factory<static>> */
+    /** @use HasFactory<SmsFactory> */
     use HasFactory;
 
     public const DIRECTION_INCOMING = 0;
@@ -34,7 +36,7 @@ class Sms extends BaseModel {
     public const STATUS_FAILED = -1;
 
     /**
-     * @return MorphTo<\Illuminate\Database\Eloquent\Model, $this>
+     * @return MorphTo<Model, $this>
      */
     public function trigger(): MorphTo {
         return $this->morphTo();

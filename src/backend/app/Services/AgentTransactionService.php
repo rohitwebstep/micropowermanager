@@ -17,7 +17,7 @@ class AgentTransactionService implements IAgentTransactionService {
     ) {}
 
     /**
-     * @return Collection<int, Transaction>|LengthAwarePaginator<Transaction>
+     * @return Collection<int, Transaction>|LengthAwarePaginator<int, Transaction>
      */
     public function getAll(
         ?int $limit = null,
@@ -40,13 +40,11 @@ class AgentTransactionService implements IAgentTransactionService {
             }
         );
 
-        $transactions = $limit ? $query->paginate($limit) : $query->get();
-
-        return $transactions;
+        return $limit ? $query->paginate($limit) : $query->get();
     }
 
     /**
-     * @return Collection<int, Transaction>|LengthAwarePaginator<Transaction>
+     * @return Collection<int, Transaction>|LengthAwarePaginator<int, Transaction>
      */
     public function getByCustomerId(int $agentId, ?int $customerId = null): Collection|LengthAwarePaginator {
         $customerDeviceSerials = $this->device->newQuery()->where('person_id', $customerId)
@@ -56,7 +54,7 @@ class AgentTransactionService implements IAgentTransactionService {
             return new Collection();
         }
 
-        $transactions = $this->transaction->newQuery()
+        return $this->transaction->newQuery()
             ->with(['originalTransaction', 'device' => fn ($q) => $q->whereHas('person')->with(['device', 'person'])])
             ->whereHasMorph(
                 'originalTransaction',
@@ -66,8 +64,6 @@ class AgentTransactionService implements IAgentTransactionService {
             ->whereHas('device', fn ($q) => $q->whereIn('device_serial', $customerDeviceSerials))
             ->latest()
             ->paginate();
-
-        return $transactions;
     }
 
     public function getById(int $id): AgentTransaction {

@@ -39,9 +39,10 @@ For more details see the corresponding plugin's documentation.
 
 These environment variables control how the MicroPowerManager behaves as an application.
 
-| Environment Variable | Default | Description                                                                                                                                                                                        |
-| -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MPM_LOAD_DEMO_DATA` | `false` | Whether or not the demo data should be loaded when the MicroPowerManager starts for the first time. Recommended for local development and demo environments. Optional for production environments. |
+| Environment Variable | Default      | Description                                                                                                                                                                                        |
+| -------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MPM_FRONTEND_URL`   | **Required** | The URL where MicroPowerManager frontend is located, this is **required** for email password reset and other related functionality that requires Knowledge of the frontend.                        |
+| `MPM_LOAD_DEMO_DATA` | `false`      | Whether or not the demo data should be loaded when the MicroPowerManager starts for the first time. Recommended for local development and demo environments. Optional for production environments. |
 
 ### JSON Web Token Authentication (jwt-auth)
 
@@ -55,7 +56,7 @@ For more details see [`jwt-auth` documentation](https://jwt-auth.readthedocs.io/
 
 | Environment Variable | Default               | Description                                                                                                                                              |
 | -------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DB_CONNECTION`      | `micro_power_manager` | Name of the laravel default connection. Should almost never be changed.                                                                                  |
+| `DB_CONNECTION`      | `mysql` | Name of the laravel default connection. Should almost never be changed.                                                                                  |
 | `DB_HOST`            | **Required**          | Network host name the database is accessible from. For example `db` (for local) or `long-url.my-cloud-provider.com/region/db` (for dedicated databases). |
 | `DB_PORT`            | `3306`                | Database port.                                                                                                                                           |
 | `DB_DATABASE`        | `micro_power_manager` | Database name.                                                                                                                                           |
@@ -112,29 +113,45 @@ Set of environment variables that can be used to configure logging and logging p
 
 Slack
 
-| Environment Variable    | Default                                 | Description                                                                                                                                                                 |
-| ----------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LOG_SLACK_LEVEL`       | `critical`                              | The log level sent to Slack. URL                                                                                                                                            |
-| `LOG_SLACK_WEBHOOK_URL` | **Required** (When using Slack Logging) | Slack Webhook URL. This require a [Slack incoming webhook](https://api.slack.com/messaging/webhooks). If `LOG_SLACK_WEBHOOK_URL` is provided Slack logging will be enabled. |
-| `LOG_SLACK_USERNAME`    | `Laravel Log`                           | Slack Webhook Username                                                                                                                                                      |
-| `LOG_SLACK_EMOJI`       | `:boom:`                                | Slack Webhook Emoji                                                                                                                                                         |
+| Environment Variable    | Default                                 | Description                                                                                                                                                                              |
+| ----------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LOG_SLACK_LEVEL`       | `critical`                              | The log level sent to Slack. URL                                                                                                                                                         |
+| `LOG_SLACK_WEBHOOK_URL` | **Required** (When using Slack Logging) | Slack Webhook URL for logging. This requires a [Slack incoming webhook](https://api.slack.com/messaging/webhooks). If `LOG_SLACK_WEBHOOK_URL` is provided Slack logging will be enabled. |
+| `LOG_SLACK_USERNAME`    | `Laravel Log`                           | Slack Webhook Username                                                                                                                                                                   |
+| `LOG_SLACK_EMOJI`       | `:boom:`                                | Slack Webhook Emoji                                                                                                                                                                      |
 
 #### Email
 
 Configure the following environment variable to enable MicroPowerManager to send email via SMTP.
 These configure instance level email sent to tenants, for example signup confirmation, password reset, etc...
 
-| Environment Variable        | Default                                        | Description                                                                                                                                                                 |
-| --------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MAIL_SMTP_HOST`            | `smtp.mailgun.org`                             | Mail server hostname. For example `smtp.mailserver.com`.                                                                                                                    |
-| `MAIL_SMTP_PORT`            | `587`                                          | Mail server port.                                                                                                                                                           |
-| `MAIL_SMTP_ENCRYPTION`      | `tls`                                          | Mail encryption.                                                                                                                                                            |
-| `MAIL_SMTP_AUTH`            | `false`                                        | Whether to use SMTP Auth.                                                                                                                                                   |
-| `MAIL_USERNAME`             | **Required** (when `MAIL_SMTP_AUTH` is `true`) | The username used in SMTP Auth.                                                                                                                                             |
-| `MAIL_PASSWORD`             | **Required** (when `MAIL_SMTP_AUTH` is `true`) | The password used in SMTP Auth.                                                                                                                                             |
-| `MAIL_SMTP_DEFAULT_SENDER`  | **Required**                                   | The email used in `from` and `replyTo` fields of sent email. Note: Depending on the mailserver this might be different from SMTP Auth username.                             |
-| `MAIL_SMTP_DEFAULT_MESSAGE` | `Please do not reply to this email`            | Default message body of emails.                                                                                                                                             |
-| `MAIL_SMTP_DEBUG_LEVEL`     | `0`                                            | Debug level used in [PHPMailer](https://github.com/PHPMailer/PHPMailer/blob/master/src/SMTP.php#L116-L126). `0` No output, `4` Noisy, low-level data output, rarely needed. |
+| Environment Variable | Default             | Description                                                   |
+| -------------------- | ------------------- | ------------------------------------------------------------- |
+| `MAIL_FROM_ADDRESS`  | `hello@example.com` | Global "from" address for all emails sent by the application. |
+| `MAIL_FROM_NAME`     | `Example`           | Global "from" name for all emails sent by the application.    |
+
+Using SMTP Email Service
+
+To Configure email with SMTP follow the official [guidge](https://laravel.com/docs/12.x/mail#driver-prerequisites).
+
+#### Laravel Horizon and Horizon Dashboard
+
+MicroPowerManager internally uses [Laravel Horizon](https://laravel.com/docs/12.x/horizon) to manage it's queue workers.
+
+By default Horizon Dashboard will not be accessible in non-development environments.
+Configure the below environment variables to enable HTTP Basic Auth.
+Only if both `HORIZON_BASIC_AUTH_USERNAME` and `HORIZON_BASIC_AUTH_PASSWORD` are set, HTTP Basic Auth is enabled.
+
+| Environment Variable          | Default | Description                                      |
+| ----------------------------- | ------- | ------------------------------------------------ |
+| `HORIZON_BASIC_AUTH_USERNAME` | `null`  | HTTP Basic Auth Username for Horizon Dashboard.  |
+| `HORIZON_BASIC_AUTH_PASSWORD` | `null`  | HTTP Basic Auth Username for Horizon Dashboard.. |
+
+Configure Horizon notifications
+
+| Environment Variable        | Default | Description                                                                                                                                                                                                                                                                            |
+| --------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `HORIZON_SLACK_WEBHOOK_URL` | `null`  | Slack Webhook URL for Horizon notifications. This requires a [Slack incoming webhook](https://api.slack.com/messaging/webhooks). If `HORIZON_SLACK_WEBHOOK_URL` is provided Horizon Slack notifications will be enabled. **Note:** Can be the same webhook as `LOG_SLACK_WEBHOOK_URL`. |
 
 ### MPM Plugins
 

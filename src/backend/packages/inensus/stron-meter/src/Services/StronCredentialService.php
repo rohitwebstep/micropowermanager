@@ -2,23 +2,15 @@
 
 namespace Inensus\StronMeter\Services;
 
-use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Log;
 use Inensus\StronMeter\Http\Requests\StronMeterApiRequests;
 use Inensus\StronMeter\Models\StronCredential;
 
 class StronCredentialService {
-    private $rootUrl = '/login/';
-    private $credential;
-    private $stronApi;
+    private string $rootUrl = '/login/';
 
-    public function __construct(
-        StronCredential $credentialModel,
-        StronMeterApiRequests $stronApi,
-    ) {
-        $this->credential = $credentialModel;
-        $this->stronApi = $stronApi;
-    }
+    public function __construct(private StronCredential $credential, private StronMeterApiRequests $stronApi) {}
 
     /**
      * This function uses one time on installation of the package.
@@ -37,7 +29,7 @@ class StronCredentialService {
         return $this->credential->newQuery()->first();
     }
 
-    public function updateCredentials($data) {
+    public function updateCredentials(array $data) {
         $credential = $this->credential->newQuery()->firstOrFail();
 
         $credential->update([
@@ -58,14 +50,9 @@ class StronCredentialService {
                 'api_token' => $result,
                 'is_authenticated' => true,
             ]);
-        } catch (GuzzleException $gException) {
-            if ($gException->getResponse()->getStatusCode() === 400) {
-                $credential->is_authenticated = false;
-                $credential->api_token = null;
-            } else {
-                $credential->is_authenticated = null;
-                $credential->api_token = null;
-            }
+        } catch (ClientException) {
+            $credential->is_authenticated = false;
+            $credential->api_token = null;
         } catch (\Exception $exception) {
             Log::critical(
                 'Unknown exception while authenticating StronMeter',
