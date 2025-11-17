@@ -1,0 +1,8 @@
+cd /var/www
+rm -rf micropowermanager
+git clone https://github.com/rohitwebstep/micropowermanager.git
+cd micropowermanager
+cd backend
+sudo cp .env.example .env
+cd ../frontend
+sudo cp .env.example .env
