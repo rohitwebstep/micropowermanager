@@ -41,7 +41,7 @@ class CompanyDatabaseService implements IBaseService {
         $this->databaseProxyManagerService->runForCompany(
             $company_id,
             function () {
-                Artisan::call('migrate', [
+                Artisan::call('migrate:fresh', [
                     '--database' => 'tenant',
                     '--path' => '/database/migrations/tenant',
                     '--force' => true,
