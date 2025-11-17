@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Models\Meter;
+
+use App\Models\AccessRate\AccessRate;
+use App\Models\AccessRate\AccessRatePayment;
+use App\Models\Base\BaseModel;
+use App\Models\ConnectionGroup;
+use App\Models\ConnectionType;
+use App\Models\Device;
+use App\Models\Manufacturer;
+use App\Models\Token;
+use App\Models\Transaction\Transaction;
+use Database\Factories\Meter\MeterFactory;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Support\Carbon;
+
+/**
+ * @property      int                               $id
+ * @property      string                            $serial_number
+ * @property      int                               $meter_type_id
+ * @property      bool                              $in_use
+ * @property      int                               $manufacturer_id
+ * @property      Carbon|null                       $created_at
+ * @property      Carbon|null                       $updated_at
+ * @property      int                               $connection_type_id
+ * @property      int                               $connection_group_id
+ * @property      int                               $tariff_id
+ * @property-read AccessRatePayment|null            $accessRatePayment
+ * @property-read ConnectionGroup|null              $connectionGroup
+ * @property-read ConnectionType|null               $connectionType
+ * @property-read Collection<int, MeterConsumption> $consumptions
+ * @property-read Device|null                       $device
+ * @property-read Manufacturer|null                 $manufacturer
+ * @property-read MeterType|null                    $meterType
+ * @property-read MeterTariff|null                  $tariff
+ * @property-read Collection<int, Token>            $tokens
+ * @property-read Collection<int, Transaction>      $transactions
+ */
+class Meter extends BaseModel {
+    /** @use HasFactory<MeterFactory> */
+    use HasFactory;
+
+    public const RELATION_NAME = 'meter';
+    protected $guarded = [];
+
+    /** @var array<string, string> */
+    public static $rules = [
+        'serial_number' => 'required|min:1|unique:meters',
+        'meter_type_id' => 'exists:tenant.meter_types,id',
+        'manufacturer_id' => 'exists:tenant.manufacturers,id',
+    ];
+
+    /** @return BelongsTo<MeterType, $this> */
+    public function meterType(): BelongsTo {
+        return $this->belongsTo(MeterType::class);
+    }
+
+    /** @return MorphOne<Device, $this> */
+    public function device(): MorphOne {
+        return $this->morphOne(Device::class, 'device');
+    }
+
+    /** @return BelongsTo<Manufacturer, $this> */
+    public function manufacturer(): BelongsTo {
+        return $this->belongsTo(Manufacturer::class);
+    }
+
+    /** @return BelongsTo<MeterTariff, $this> */
+    public function tariff(): BelongsTo {
+        return $this->belongsTo(MeterTariff::class);
+    }
+
+    /** @return BelongsTo<ConnectionType, $this> */
+    public function connectionType(): BelongsTo {
+        return $this->belongsTo(ConnectionType::class, 'connection_type_id', 'id');
+    }
+
+    /** @return BelongsTo<ConnectionGroup, $this> */
+    public function connectionGroup(): BelongsTo {
+        return $this->belongsTo(ConnectionGroup::class);
+    }
+
+    /** @return HasOne<AccessRatePayment, $this> */
+    public function accessRatePayment(): HasOne {
+        return $this->hasOne(AccessRatePayment::class);
+    }
+
+    public function accessRate(): AccessRate {
+        return $this->tariff->accessRate;
+    }
+
+    /** @return HasManyThrough<Token, Device, $this> */
+    public function tokens(): HasManyThrough {
+        return $this->hasManyThrough(
+            Token::class,
+            Device::class,
+            'device_id',
+            'device_id',
+            'id',
+            'id'
+        )->where('device_type', 'meter');
+    }
+
+    /** @return HasMany<MeterConsumption, $this> */
+    public function consumptions(): HasMany {
+        return $this->hasMany(MeterConsumption::class);
+    }
+
+    /** @return HasMany<Transaction, $this> */
+    public function transactions(): HasMany {
+        return $this->hasMany(Transaction::class, 'message', 'serial_number');
+    }
+
+    public function findBySerialNumber(string $meterSerialNumber): ?self {
+        return $this->newQuery()->where('serial_number', '=', $meterSerialNumber)->first();
+    }
+
+    public function getId(): int {
+        return $this->id;
+    }
+}

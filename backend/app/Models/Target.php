@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Models;
+
+use App\Models\Base\BaseModel;
+use Database\Factories\TargetFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Class Target.
+ *
+ * @property      int                        $id
+ * @property      Carbon                     $target_date
+ * @property      string                     $type
+ * @property      string                     $owner_type
+ * @property      int                        $owner_id
+ * @property      Carbon|null                $created_at
+ * @property      Carbon|null                $updated_at
+ * @property-read City|null                  $city
+ * @property-read Model                      $owner
+ * @property-read Collection<int, SubTarget> $subTargets
+ */
+class Target extends BaseModel {
+    /** @use HasFactory<TargetFactory> */
+    use HasFactory;
+
+    /**
+     * @return BelongsTo<City, $this>
+     */
+    public function city(): BelongsTo {
+        return $this->belongsTo(City::class);
+    }
+
+    /**
+     * @return HasMany<SubTarget, $this>
+     */
+    public function subTargets(): HasMany {
+        return $this->hasMany(SubTarget::class);
+    }
+
+    /**
+     * @return Builder<Target>
+     */
+    public function targetForMiniGrid(int|string $cityId, string $endDate): Builder {
+        return $this::with('subTargets.connectionType', 'city')
+            ->where('owner_id', $cityId)
+            ->where('owner_type', 'mini-grid')
+            ->where('target_date', '>=', $endDate)
+            ->oldest('target_date')
+            ->limit(1);
+    }
+
+    /**
+     * @param array<int|string> $miniGridIds
+     *
+     * @return Builder<Target>
+     */
+    public function targetForCluster(array $miniGridIds, string $endDate): Builder {
+        return $this::query()
+            ->select(DB::raw('*, YEARWEEK(target_date,3) as period'))
+            ->with('subTargets.connectionType', 'city')
+            ->whereIn('owner_id', $miniGridIds)
+            ->where('owner_type', 'mini-grid')
+            ->where('target_date', '>=', $endDate)
+            ->orderBy('target_date', 'asc');
+    }
+
+    /**
+     * @return MorphTo<Model, $this>
+     */
+    public function owner(): MorphTo {
+        return $this->morphTo();
+    }
+
+    /**
+     * @return Builder<Target>
+     */
+    public function periodTargetAlternative(int|string $cityId, string $startDate): Builder {
+        return $this::query()
+            ->select(DB::raw('*, YEARWEEK(target_date,3) as period'))->with(
+                'subTargets.connectionType',
+                'city'
+            )
+            ->where('owner_id', $cityId)
+            ->where('owner_type', 'mini-grid')
+            ->where('target_date', '<', $startDate)
+            ->orderBy('target_date', 'desc')->limit(1);
+    }
+}

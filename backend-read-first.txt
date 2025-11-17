@@ -1,0 +1,27 @@
+Laravel Tenant Migration Notes:
+
+1. Install dependencies (ignoring platform requirements):
+
+```
+composer install --ignore-platform-reqs
+```
+
+2. Run tenant migrations:
+
+```php
+Artisan::call('migrate', [
+    '--database' => 'tenant',
+    '--path' => '/database/migrations/tenant',
+    '--force' => true,
+]);
+```
+
+3. Run fresh tenant migrations (resets database):
+
+```php
+Artisan::call('migrate:fresh', [
+    '--database' => 'tenant',
+    '--path' => '/database/migrations/tenant',
+    '--force' => true,
+]);
+```
