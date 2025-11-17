@@ -35,7 +35,7 @@ return [
     'connections' => [
         'micro_power_manager' => [
             'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
+            'host' => env('DB_HOST', '139.59.181.1'),
             'port' => env('DB_PORT', '3306'),
             'database' => env('DB_DATABASE', 'micro_power_manager'),
             'username' => env('DB_USERNAME', 'root'),
@@ -50,7 +50,7 @@ return [
 
         'tenant' => env('APP_ENV') == 'development' ? [
             'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
+            'host' => env('DB_HOST', '139.59.181.1'),
             'port' => env('DB_PORT', '3306'),
             'database' => DemoCompany::DEMO_COMPANY_DATABASE_NAME,
             'username' => env('DB_USERNAME', 'root'),
@@ -92,7 +92,7 @@ return [
         'client' => 'predis',
 
         'default' => [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'host' => env('REDIS_HOST', '139.59.181.1'),
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', 6379),
             'database' => 0,
