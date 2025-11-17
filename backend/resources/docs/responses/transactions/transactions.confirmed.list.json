@@ -48,12 +48,12 @@
             }
         }
     ],
-    "first_page_url": "http:\/\/localhost:8000\/api\/transactions\/cancelled?page=1",
+    "first_page_url": "http:\/\/127.0.0.1:8000\/api\/transactions\/cancelled?page=1",
     "from": 1,
     "last_page": 521,
-    "last_page_url": "http:\/\/localhost:8000\/api\/transactions\/cancelled?page=521",
-    "next_page_url": "http:\/\/localhost:8000\/api\/transactions\/cancelled?page=2",
-    "path": "http:\/\/localhost:8000\/api\/transactions\/cancelled",
+    "last_page_url": "http:\/\/127.0.0.1:8000\/api\/transactions\/cancelled?page=521",
+    "next_page_url": "http:\/\/127.0.0.1:8000\/api\/transactions\/cancelled?page=2",
+    "path": "http:\/\/127.0.0.1:8000\/api\/transactions\/cancelled",
     "per_page": 15,
     "prev_page_url": null,
     "to": 15,
