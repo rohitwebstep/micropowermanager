@@ -1,0 +1,117 @@
+# 🚀 MPM Project Deployment Guide (Ubuntu) 
+
+# 🛠️ Step 1: Update & Upgrade System Packages
+sudo apt update && sudo apt upgrade -y
+
+# 📦 Step 2: Install Required Dependencies
+sudo apt install -y curl git apt-transport-https ca-certificates software-properties-common gnupg lsb-release
+
+# 🐳 Step 3: Install Docker and Docker Compose
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y docker.io docker-compose git
+sudo apt update && sudo apt upgrade -y
+
+# Enable and Start Docker Service
+sudo systemctl enable docker
+sudo systemctl start docker
+
+# Verify Docker Installation
+docker --version
+docker-compose --version
+
+# Create Project Directory
+sudo mkdir -p /var/www
+sudo chown -R $USER:$USER /var/www
+cd /var/www
+
+# ❌ Remove old folder (if exists) and clone new project
+rm -rf micropowermanager
+git clone https://github.com/rohitwebstep/micropowermanager.git
+cd micropowermanager
+
+# ⚙️ Step 5: Configure Environment Files
+sudo cp .env.example .env
+
+cd src/backend
+sudo cp .env.example .env
+
+cd ../frontend
+sudo cp .env.example .env
+
+# 🐳 Step 6: Launch with Docker Compose
+cd /var/www/micropowermanager
+docker-compose -f docker-compose-dockerhub.yml up -d
+
+
+# ⚠️ If any error occurs (like worker issues),
+# ➤ Comment out the "worker" service section in docker-compose-dockerhub.yml
+
+# 🌐 Application URLs
+# 👉 http://139.59.181.1:8001 → MPM UI
+# 👉 http://139.59.181.1:8000/api → API
+
+# ------------------------------------------------------------------------------
+# 🌱 Seed Initial Data (Fresh Migrations)
+
+# 1️⃣ Check running containers
+docker ps
+
+# 2️⃣ Access the backend container
+docker exec -it backend bash
+
+# 🔄 Clear all Laravel caches
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+php artisan clear-compiled
+php artisan optimize:clear
+
+# 🔚 Exit container
+exit
+
+# ------------------------------------------------------------------------------
+# 🧹 Reset Docker Environment (Optional Cleanup)
+
+# Stop all services
+docker-compose -f docker-compose-dockerhub.yml down
+
+# ⛔ Stop all running containers
+docker stop $(docker ps -aq)
+
+# 🗑️ Remove all containers
+docker rm -f $(docker ps -aq)
+
+# 🗑️ Remove all images (optional but useful for full refresh)
+docker rmi -f $(docker images -aq)
+
+# 🧹 Remove all unused volumes
+docker volume prune -f
+
+# 🧹 Remove all unused networks
+docker network prune -f
+
+# 🧹 Remove all build cache
+docker builder prune -f
+
+# 🔄 Restart Docker service
+sudo systemctl restart docker
+
+# ✅ Verify clean state
+docker ps -a
+docker images
+
+# ------------------------------------------------------------------------------
+⚙️ OUR Configure
+
+Replace all occurrences of:
+http://localhost: ➤ http://139.59.181.1:
+
+Comment unnecessary services (like worker) in:
+docker-compose-dockerhub.yml
+
+Configure DB credentials in:
+
+dev/.env.micropowermanager-backend      ------   DB
+src/backend/app/Utils/DemoCompany.php   ------   Demo Company
+src/backend/.env.example                ------   DB
