@@ -6,3 +6,9 @@ cd backend
 sudo cp .env.example .env
 cd ../frontend
 sudo cp .env.example .env
+
+
+sudo systemctl daemon-reload
+sudo systemctl enable micropowermanager.service
+sudo systemctl start micropowermanager.service
+pm2 restart all
