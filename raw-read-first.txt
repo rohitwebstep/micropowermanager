@@ -2,16 +2,25 @@ cd /var/www
 rm -rf micropowermanager
 git clone https://github.com/rohitwebstep/micropowermanager.git
 cd micropowermanager
+
+
 cd backend
 sudo cp .env.example .env
 composer install --ignore-platform-reqs
 php artisan migrate:refresh
-cd ../frontend
-sudo cp .env.example .env
-npm install
-
-
 sudo systemctl daemon-reload
 sudo systemctl enable micropowermanager.service
 sudo systemctl start micropowermanager.service
-pm2 restart all
+
+sudo journalctl -u micropowermanager.service -f
+
+
+------------- frontend
+
+cd ../frontend
+sudo cp .env.example .env
+npm install
+pm2 stop micropower-frontend
+pm2 delete micropower-frontend
+pm2 start "npm run serve -- --port 8001" --name micropower-frontend
+pm2 logs micropower-frontend
