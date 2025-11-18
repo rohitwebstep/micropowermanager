@@ -15,7 +15,7 @@ return [
         ],
         'tenant' => [
             'driver' => 'mysql',
-            'host' => env('DB_HOST', '139.59.181.1'),
+            'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
             'database' => 'erd', // <-- this is a fake database, don't set this to your production database or development database
             'username' => env('DB_USERNAME', 'forge'),
