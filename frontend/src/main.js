@@ -4,8 +4,6 @@
  * building robust, powerful web applications using Vue and Laravel.
  */
 
-import { EventBus } from "@/shared/eventbus"
-
 require("./bootstrap")
 import router from "./routes"
 import App from "./App"
@@ -16,35 +14,39 @@ import Default from "./layouts/Default"
 import i18n from "./i18n"
 import { MapSettingsService } from "./services/MapSettingsService"
 import { MainSettingsService } from "./services/MainSettingsService"
-import Steamaco from "@/plugins/steama-meter/js/modules/Overview/Credential"
-import Spark from "@/plugins/spark-meter/js/modules/Overview/Credential"
-import Calin from "@/plugins/calin-meter/js/modules/Overview/Credential"
-import CalinSmart from "@/plugins/calin-smart-meter/js/modules/Overview/Credential"
-import Kelin from "@/plugins/kelin-meter/js/modules/Overview/Credential"
-import Stron from "@/plugins/stron-meter/js/modules/Overview/Credential"
+import Steamaco from "@/plugins/steama-meter/modules/Overview/Credential"
+import Spark from "@/plugins/spark-meter/modules/Overview/Credential"
+import Calin from "@/plugins/calin-meter/modules/Overview/Credential"
+import CalinSmart from "@/plugins/calin-smart-meter/modules/Overview/Credential"
+import Kelin from "@/plugins/kelin-meter/modules/Overview/Credential"
+import Stron from "@/plugins/stron-meter/modules/Overview/Credential"
 import Settings from "@/modules/Settings/Configuration/MainSettings"
-import Viber from "@/plugins/viber-messaging/js/modules/Overview/Credential"
-import MicroStar from "@/plugins/micro-star-meter/js/modules/Overview/Credential"
-import SunKing from "@/plugins/sun-king-shs/js/modules/Overview/Credential"
-import WaveMoney from "@/plugins/wave-money-payment-provider/js/modules/Overview/Credential"
-import GomeLong from "@/plugins/gome-long-meter/js/modules/Overview/Credential"
-import WaveComTransaction from "@/plugins/wavecom-payment-provider/js/modules/Component"
+import Viber from "@/plugins/viber-messaging/modules/Overview/Credential"
+import MicroStar from "@/plugins/micro-star-meter/modules/Overview/Credential"
+import SunKing from "@/plugins/sun-king-shs/modules/Overview/Credential"
+import WaveMoney from "@/plugins/wave-money-payment-provider/modules/Overview/Credential"
+import GomeLong from "@/plugins/gome-long-meter/modules/Overview/Credential"
+import WaveComTransaction from "@/plugins/wavecom-payment-provider/modules/Component"
 import PaystackPaymentProvider from "@/plugins/paystack-payment-provider/Component"
 import WaveComTransactionDetail from "@/modules/Transactions/WaveComTransactionDetail"
-import AirtelTransactionDetail from "@/modules/Transactions/AirtelTransactionDetail"
 import SwiftaTransactionDetail from "@/modules/Transactions/SwiftaTransactionDetail"
 import ThirdPartyTransactionDetail from "@/modules/Transactions/ThirdPartyTransactionDetail"
 import VodacomTransactionDetail from "@/modules/Transactions/VodacomTransactionDetail"
 import WaveMoneyTransactionDetail from "@/modules/Transactions/WaveMoneyTransactionDetail"
 import PaystackTransactionDetail from "@/modules/Transactions/PaystackTransactionDetail"
 import AgentTransactionDetail from "@/modules/Agent/AgentTransactionDetail"
-import Angaza from "@/plugins/angaza-shs/js/modules/Overview/Credential"
-import DalyBms from "@/plugins/daly-bms/js/modules/Overview/Credential"
-import AfricasTalking from "@/plugins/africas-talking/js/modules/Overview/Credential"
+import Angaza from "@/plugins/angaza-shs/modules/Overview/Credential"
+import DalyBms from "@/plugins/daly-bms/modules/Overview/Credential"
+import AfricasTalking from "@/plugins/africas-talking/modules/Overview/Credential"
 import Snackbar from "@/shared/Snackbar.vue"
-import ChintMeter from "@/plugins/chint-meter/js/modules/Overview/Credential"
-import Prospect from "@/plugins/prospect/js/modules/Overview/Credential"
+import ChintMeter from "@/plugins/chint-meter/modules/Overview/Credential"
+import Prospect from "@/plugins/prospect/modules/Overview/Credential"
 import Paystack from "@/plugins/paystack-payment-provider/modules/Overview/Credential.vue"
+import TextbeeSmsGateway from "@/plugins/textbee-sms-gateway/modules/Overview/Credential"
+import {
+  getPermissionsForRoute,
+  userHasPermissions,
+} from "@/Helpers/PermissionGuard"
 
 Vue.component("default", Default)
 Vue.component("Spark-Meter", Spark)
@@ -61,7 +63,6 @@ Vue.component("SunKing-SHS", SunKing)
 Vue.component("GomeLong-Meter", GomeLong)
 Vue.component("WaveComTransaction", WaveComTransaction)
 Vue.component("WaveComTransactionDetail", WaveComTransactionDetail)
-Vue.component("AirtelTransactionDetail", AirtelTransactionDetail)
 Vue.component("SwiftaTransactionDetail", SwiftaTransactionDetail)
 Vue.component("ThirdPartyTransactionDetail", ThirdPartyTransactionDetail)
 Vue.component("VodacomTransactionDetail", VodacomTransactionDetail)
@@ -76,43 +77,77 @@ Vue.component("Snackbar", Snackbar)
 Vue.component("Chint-Meter", ChintMeter)
 Vue.component("Prospect", Prospect)
 Vue.component("Paystack", Paystack)
+Vue.component("TextbeeSmsGateway", TextbeeSmsGateway)
 
-const unauthorizedPaths = [
+const toArray = (value) => {
+  if (!value) {
+    return []
+  }
+  return Array.isArray(value) ? value : [value]
+}
+
+Vue.mixin({
+  computed: {
+    $permissions() {
+      return store.getters["auth/getPermissions"] || []
+    },
+  },
+  methods: {
+    $can(required) {
+      return userHasPermissions(this.$permissions, toArray(required))
+    },
+    $canAny(required) {
+      const permissions = toArray(required)
+      if (!permissions.length) {
+        return true
+      }
+      return permissions.some((permission) =>
+        this.$permissions.includes(permission),
+      )
+    },
+  },
+})
+
+const publicRouteNames = new Set([
   "login",
   "forgot-password",
   "reset-password",
-  "reset-protected-password",
   "welcome",
   "register",
   "/wave-money/payment",
   "/wave-money/result",
   "/paystack/public/payment",
   "/paystack/public/result",
-]
+])
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authToken = store.getters["auth/getToken"]
   const intervalId = store.getters["auth/getIntervalId"]
-  if (unauthorizedPaths.includes(to.name)) {
-    EventBus.$emit("checkPageProtection", to)
+  if (publicRouteNames.has(to.name) || publicRouteNames.has(to.path)) {
     return next()
   }
-  if (authToken === undefined || authToken === "") {
+  if (!authToken) {
     return next({ name: "welcome" })
   }
 
-  store
-    .dispatch("auth/refreshToken", authToken, intervalId)
-    .then((result) => {
-      if (result) {
-        EventBus.$emit("checkPageProtection", to)
-        return next()
-      }
-      next({ name: "login" })
-    })
-    .catch(() => {
-      return next({ name: "welcome" })
-    })
+  try {
+    const result = await store.dispatch(
+      "auth/refreshToken",
+      authToken,
+      intervalId,
+    )
+    if (!result) {
+      return next({ name: "login" })
+    }
+    const userPermissions = store.getters["auth/getPermissions"] || []
+    const requiredPermissions = getPermissionsForRoute(to)
+    if (!userHasPermissions(userPermissions, requiredPermissions)) {
+      return next({ path: "/unauthorized" })
+    }
+    return next()
+  } catch (error) {
+    return next({ name: "welcome" })
+  }
 })
 
 /*eslint-disable */

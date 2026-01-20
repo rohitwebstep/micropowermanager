@@ -1,9 +1,13 @@
 <?php
 
 use App\Console\Commands\MailApplianceDebtsCommand;
+use App\Exceptions\CompanyAlreadyExistsException;
+use App\Exceptions\OwnerEmailAlreadyExistsException;
+use App\Exceptions\SmsGatewayNotConfiguredException;
 use App\Http\Middleware\AdminJWT;
 use App\Http\Middleware\AgentBalanceMiddleware;
 use App\Http\Middleware\JwtMiddleware;
+use App\Http\Middleware\TelescopeBasicAuthMiddleware;
 use App\Http\Middleware\Transaction;
 use App\Http\Middleware\TransactionRequest;
 use App\Http\Middleware\UserDefaultDatabaseConnectionMiddleware;
@@ -15,6 +19,9 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Validation\ValidationException;
 use Psr\Log\LogLevel;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -34,6 +41,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => AdminJWT::class,
             'jwt.verify' => JwtMiddleware::class,
             'agent.balance' => AgentBalanceMiddleware::class,
+            'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'telescope.auth' => TelescopeBasicAuthMiddleware::class,
         ]);
 
         // additional middleware group to `web` and `api` default groups
@@ -58,15 +69,29 @@ return Application::configure(basePath: dirname(__DIR__))
             'errors' => $e->errors(),
             'status_code' => 422,
         ], 422));
+        $exceptions->render(fn (SmsGatewayNotConfiguredException $e) => response()->json([
+            'message' => 'No active SMS provider is configured. Please configure an SMS gateway in Main Settings like AfricasTalking or TextBee.',
+            'status_code' => 422,
+        ], 422));
+        $exceptions->render(fn (CompanyAlreadyExistsException $e) => response()->json([
+            'message' => $e->getMessage(),
+            'status_code' => 422,
+        ], 422));
+        $exceptions->render(fn (OwnerEmailAlreadyExistsException $e) => response()->json([
+            'message' => $e->getMessage(),
+            'status_code' => 422,
+        ], 422));
     })
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('reports:city-revenue weekly')->weeklyOn(1, '3:00');
         $schedule->command('reports:city-revenue monthly')->monthlyOn(1, '3:00');
-        $schedule->command('reports:outsource')->monthlyOn(1, '3:30');
+        $schedule->command('reports:ticket-outsource-payout')->monthlyOn(1, '3:30');
         $schedule->command('sms:resend-rejected 5')->everyMinute();
         $schedule->command('update:cachedClustersDashboardData')->everyFifteenMinutes();
-        $schedule->command('asset-rate:check')->dailyAt('00:00');
+        $schedule->command('appliance-rate:check')->dailyAt('00:00');
         // will run on the last day of the month
         $schedule->command(MailApplianceDebtsCommand::class)->weeklyOn(1, '6:00');
+        // prune telescope data based on configured retention period
+        $schedule->command('telescope:prune --hours='.config('telescope.prune_hours'))->daily();
     })
     ->create();

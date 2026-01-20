@@ -7,7 +7,6 @@ use App\Services\Interfaces\IBaseService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use MPM\DatabaseProxy\DatabaseProxyManagerService;
 
 /**
  * @implements IBaseService<CompanyDatabase>
@@ -41,7 +40,7 @@ class CompanyDatabaseService implements IBaseService {
         $this->databaseProxyManagerService->runForCompany(
             $company_id,
             function () {
-                Artisan::call('migrate:fresh', [
+                Artisan::call('migrate', [
                     '--database' => 'tenant',
                     '--path' => '/database/migrations/tenant',
                     '--force' => true,
@@ -50,6 +49,16 @@ class CompanyDatabaseService implements IBaseService {
         );
 
         return $company_database;
+    }
+
+    /**
+     * Creates only the CompanyDatabase record without setting up the physical database.
+     * Use this when you need more control over the database creation process (e.g., within transactions).
+     *
+     * @param array<string, mixed> $data
+     */
+    public function createRecord(array $data): CompanyDatabase {
+        return $this->companyDatabase->newQuery()->create($data);
     }
 
     /**

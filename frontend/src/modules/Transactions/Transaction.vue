@@ -9,7 +9,7 @@
             <widget
               :title="$tc('phrases.providerSpecificInformation')"
               :show-spinner="false"
-              color="green"
+              color="primary"
             >
               <md-card>
                 <md-card-content>
@@ -174,7 +174,7 @@
             <widget
               title="Transaction Processing"
               :show-spinner="false"
-              color="green"
+              color="primary"
             >
               <md-card>
                 <div
@@ -348,8 +348,6 @@ export default {
       switch (transactionType) {
         case "vodacom_transaction":
           return "VodacomTransactionDetail"
-        case "airtel_transaction":
-          return "AirtelTransactionDetail"
         case "agent_transaction":
           return "AgentTransactionDetail"
         case "third_party_transaction":
@@ -378,7 +376,15 @@ export default {
           )
         }
       } catch (e) {
-        this.alertNotify("error", e.message)
+        if (e.response && e.response.status === 403) {
+          this.alertNotify(
+            "error",
+            "You do not have permission to view this transaction",
+          )
+          this.$router.push({ path: "/transactions" })
+        } else {
+          this.alertNotify("error", e.message)
+        }
       }
     },
     async getRelatedPerson(personId) {
@@ -387,7 +393,11 @@ export default {
         this.personName = person.name + " " + person.surname
         this.personId = person.id
       } catch (e) {
-        this.alertNotify("error", e.message)
+        if (e.response && e.response.status === 403) {
+          console.warn("Customer details: Insufficient permissions")
+        } else {
+          this.alertNotify("error", e.message)
+        }
       }
     },
   },

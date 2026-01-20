@@ -5,7 +5,7 @@
       :title="$tc('words.address', 1)"
       :button="true"
       :button-text="$tc('phrases.newAddress')"
-      color="green"
+      color="primary"
       @widgetAction="addNewAddress"
       :paginator="addresses.paginator"
       :subscriber="subscriber"
@@ -115,6 +115,7 @@
                 enabledCountryCode="true"
                 v-model="newAddress.phone"
                 @validate="validatePhone"
+                @input="onPhoneInput"
               ></vue-tel-input>
               <span
                 v-if="!phone.valid && firstStepClicked"
@@ -250,6 +251,9 @@ export default {
       }
     },
     validatePhone(phone) {
+      this.phone = phone
+    },
+    onPhoneInput(_, phone) {
       this.phone = phone
     },
     validateNewAddress() {

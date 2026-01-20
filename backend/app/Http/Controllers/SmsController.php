@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\DTO\SmsDataContainer;
 use App\Events\SmsStoredEvent;
+use App\Exceptions\SmsGatewayNotConfiguredException;
 use App\Http\Requests\SmsRequest;
 use App\Http\Requests\StoreSmsRequest;
 use App\Http\Resources\ApiResource;
@@ -11,7 +13,9 @@ use App\Models\Address\Address;
 use App\Models\Meter\Meter;
 use App\Models\Person\Person;
 use App\Models\Sms;
+use App\Services\SmsGatewayResolverService;
 use App\Services\SmsService;
+use App\Services\TicketCommentService;
 use App\Sms\Senders\SmsConfigs;
 use App\Sms\SmsTypes;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -19,7 +23,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Inensus\Ticket\Services\TicketCommentService;
 
 class SmsController extends Controller {
     public function __construct(
@@ -28,7 +31,14 @@ class SmsController extends Controller {
         private Meter $meter,
         private SmsService $smsService,
         private TicketCommentService $commentService,
+        private SmsGatewayResolverService $smsGatewayResolverService,
     ) {}
+
+    private function ensureSmsGatewayIsConfigured(): void {
+        if (!$this->smsGatewayResolverService->isSmsGatewayConfigured()) {
+            throw new SmsGatewayNotConfiguredException();
+        }
+    }
 
     public function index(): ApiResource {
         $list = $this->sms::with('address.owner')
@@ -36,10 +46,14 @@ class SmsController extends Controller {
             ->groupBy('receiver')
             ->paginate(20);
 
-        return new ApiResource($list);
+        $transformedData = $list->through(fn (object $item): array => SmsDataContainer::fromQuery($item)->toArray());
+
+        return new ApiResource($transformedData);
     }
 
     public function storeBulk(Request $request): void {
+        $this->ensureSmsGatewayIsConfigured();
+
         $type = $request->get('type');
         $receivers = $request->get('receivers');
         $message = $request->get('message');
@@ -178,6 +192,8 @@ class SmsController extends Controller {
     }
 
     public function storeAndSend(SmsRequest $request): ApiResource {
+        $this->ensureSmsGatewayIsConfigured();
+
         $personId = $request->get('person_id');
         $message = $request->get('message');
         $senderId = $request->get('senderId');

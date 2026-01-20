@@ -108,7 +108,7 @@ class PersonController extends Controller {
      * @bodyParam name string. The title of the person. Example: Dr.
      * @bodyParam surname string. The title of the person. Example: Dr.
      * @bodyParam birth_date string. The title of the person. Example: Dr.
-     * @bodyParam sex string. The title of the person. Example: Dr.
+     * @bodyParam gender string. The title of the person. Example: Dr.
      * @bodyParam education string. The title of the person. Example: Dr.
      *
      * @apiResourceModel App\Models\Person\Person
@@ -161,8 +161,9 @@ class PersonController extends Controller {
     ): ApiResource {
         $term = $request->input('term');
         $paginate = $request->input('paginate', 1);
+        $per_page = $request->input('per_page', 15);
 
-        return ApiResource::make($this->personService->searchPerson($term, $paginate));
+        return ApiResource::make($this->personService->searchPerson($term, $paginate, $per_page));
     }
 
     /**
@@ -178,9 +179,20 @@ class PersonController extends Controller {
      */
     public function destroy(
         int $personId,
-    ): ApiResource {
+    ): JsonResponse {
         $person = $this->personService->getById($personId);
 
-        return ApiResource::make($this->personService->delete($person));
+        $deleted = $this->personService->delete($person);
+
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Failed to delete person',
+            ], 500);
+        }
+
+        return ApiResource::make([
+            'message' => 'Person deleted successfully',
+            'data' => $person,
+        ])->response()->setStatusCode(200);
     }
 }

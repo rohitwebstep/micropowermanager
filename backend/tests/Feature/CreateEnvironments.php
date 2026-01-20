@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Events\PaymentSuccessEvent;
 use App\Models\Address\Address;
 use App\Models\GeographicalInformation;
+use App\Services\TicketUserService;
 use Database\Factories\AgentAssignedAppliancesFactory;
 use Database\Factories\AgentBalanceHistoryFactory;
 use Database\Factories\AgentCommissionFactory;
@@ -13,14 +14,13 @@ use Database\Factories\AgentReceiptFactory;
 use Database\Factories\AgentSoldApplianceFactory;
 use Database\Factories\AgentTransactionFactory;
 use Database\Factories\AppliancePersonFactory;
-use Database\Factories\AssetTypeFactory;
+use Database\Factories\ApplianceTypeFactory;
 use Database\Factories\CityFactory;
 use Database\Factories\ClusterFactory;
 use Database\Factories\CompanyDatabaseFactory;
 use Database\Factories\CompanyFactory;
 use Database\Factories\ConnectionGroupFactory;
 use Database\Factories\ConnectionTypeFactory;
-use Database\Factories\Inensus\Ticket\Models\TicketCategoryFactory;
 use Database\Factories\ManufacturerFactory;
 use Database\Factories\Meter\MeterFactory;
 use Database\Factories\Meter\MeterTariffFactory;
@@ -32,13 +32,13 @@ use Database\Factories\Person\PersonFactory;
 use Database\Factories\SubConnectionTypeFactory;
 use Database\Factories\SubTargetFactory;
 use Database\Factories\TargetFactory;
-use Database\Factories\TicketFactory;
+use Database\Factories\Ticket\TicketCategoryFactory;
+use Database\Factories\Ticket\TicketFactory;
 use Database\Factories\TicketUserFactory;
 use Database\Factories\TimeOfUsageFactory;
 use Database\Factories\TransactionFactory;
 use Database\Factories\UserFactory;
 use Illuminate\Foundation\Testing\WithFaker;
-use Inensus\Ticket\Services\TicketUserService;
 use Tests\RefreshMultipleDatabases;
 
 trait CreateEnvironments {
@@ -70,7 +70,7 @@ trait CreateEnvironments {
     private $companyDatabase;
     private $meterToken;
     private $paymentHistory;
-    private $assetType;
+    private $applianceType;
     private $assignedAppliance;
     private $soldAppliance;
     private $agentReceipt;
@@ -101,7 +101,7 @@ trait CreateEnvironments {
     private $transactions = [];
     private $paymentHistories = [];
     private $meters = [];
-    private $assetTypes = [];
+    private $applianceTypes = [];
     private $soldAppliances = [];
     private $agentReceipts = [];
     private $agentTransactions = [];
@@ -450,24 +450,24 @@ trait CreateEnvironments {
         }
     }
 
-    protected function createAssetType($assetTypeCount = 1) {
-        while ($assetTypeCount > 0) {
-            $assetType = AssetTypeFactory::new()->create();
-            $this->assetTypes[] = $assetType;
+    protected function createApplianceType($applianceTypeCount = 1) {
+        while ($applianceTypeCount > 0) {
+            $applianceType = ApplianceTypeFactory::new()->create();
+            $this->applianceTypes[] = $applianceType;
 
-            --$assetTypeCount;
+            --$applianceTypeCount;
         }
-        if (count($this->assetTypes) > 0) {
-            $this->assetType = $this->assetTypes[0];
+        if (count($this->applianceTypes) > 0) {
+            $this->applianceType = $this->applianceTypes[0];
         }
     }
 
     protected function createAssignedAppliances($applianceCount = 1) {
-        $this->createAssetType($applianceCount);
+        $this->createApplianceType($applianceCount);
         while ($applianceCount > 0) {
             $assignedAppliance = AgentAssignedAppliancesFactory::new()->create([
                 'agent_id' => $this->getRandomIdFromList($this->agents),
-                'appliance_type_id' => $this->getRandomIdFromList($this->assetTypes),
+                'appliance_type_id' => $this->getRandomIdFromList($this->applianceTypes),
                 'user_id' => $this->user->id,
                 'cost' => $this->faker->randomFloat(2, 1, 100),
             ]);
@@ -497,7 +497,7 @@ trait CreateEnvironments {
                 'rate_count' => 10,
                 'total_cost' => $assignedAppliance->cost,
                 'down_payment' => request()->input('down_payment'),
-                'asset_type_id' => $assignedAppliance->applianceType->id,
+                'appliance_type_id' => $assignedAppliance->applianceType->id,
                 'creator_type' => 'agent',
                 'creator_id' => $assignedAppliance->agent_id,
             ]);

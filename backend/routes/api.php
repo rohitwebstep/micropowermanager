@@ -2,13 +2,15 @@
 
 use App\Http\Controllers\AgentPerformanceMetricsController;
 use App\Http\Controllers\ApiKeyController;
+use App\Http\Controllers\ApplianceController;
+use App\Http\Controllers\ApplianceExportController;
 use App\Http\Controllers\AppliancePaymentController;
-use App\Http\Controllers\AssetController;
-use App\Http\Controllers\AssetPersonController;
-use App\Http\Controllers\AssetRateController;
-use App\Http\Controllers\AssetTypeController;
+use App\Http\Controllers\AppliancePersonController;
+use App\Http\Controllers\ApplianceRateController;
+use App\Http\Controllers\ApplianceTypeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClusterController;
+use App\Http\Controllers\ClusterExportController;
 use App\Http\Controllers\ClusterMiniGridRevenueController;
 use App\Http\Controllers\ClusterRevenueAnalysisController;
 use App\Http\Controllers\ClusterRevenueController;
@@ -19,6 +21,7 @@ use App\Http\Controllers\ConnectionTypeController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DeviceAddressController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceExportController;
 use App\Http\Controllers\EBikeController;
 use App\Http\Controllers\MainSettingsController;
 use App\Http\Controllers\MaintenanceUserController;
@@ -38,11 +41,10 @@ use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PersonExportController;
 use App\Http\Controllers\PersonMeterController;
 use App\Http\Controllers\PluginController;
-use App\Http\Controllers\ProtectedPageController;
-use App\Http\Controllers\ProtectedPagePasswordResetController;
 use App\Http\Controllers\RegistrationTailController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RevenueController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SmsAndroidSettingController;
 use App\Http\Controllers\SmsApplianceRemindRateController;
 use App\Http\Controllers\SmsBodyController;
@@ -78,6 +80,8 @@ require __DIR__.'/resources/AgentApp.php';
 require __DIR__.'/resources/AgentWeb.php';
 // Routes for CustomerRegistrationApp resource
 require __DIR__.'/resources/CustomerRegistrationApp.php';
+// Routes for Ticket Web panel routes
+require __DIR__.'/resources/TicketWeb.php';
 
 // JWT authentication
 Route::group(['middleware' => 'api', 'prefix' => 'auth'], static function () {
@@ -88,60 +92,57 @@ Route::group(['middleware' => 'api', 'prefix' => 'auth'], static function () {
 });
 // user
 Route::group(['prefix' => 'users', 'middleware' => 'jwt.verify'], static function () {
-    Route::post('/', [UserController::class, 'store']);
-    Route::put('/{user}', [UserController::class, 'update']);
-    Route::get('/{user}', [UserController::class, 'show']);
-    Route::get('/', [UserController::class, 'index']);
+    Route::post('/', [UserController::class, 'store'])->middleware('permission:users');
+    Route::put('/{user}', [UserController::class, 'update'])->middleware('can:update,user');
+    Route::get('/{user}', [UserController::class, 'show'])->middleware('can:view,user');
+    Route::get('/', [UserController::class, 'index'])->middleware('permission:users');
 
     Route::group(['prefix' => '/{user}/addresses'], static function () {
-        Route::post('/', [UserAddressController::class, 'store']);
-        Route::put('/', [UserAddressController::class, 'update']);
-        Route::get('/', [UserAddressController::class, 'show']);
+        Route::post('/', [UserAddressController::class, 'store'])->middleware('permission:users');
+        Route::put('/', [UserAddressController::class, 'update'])->middleware('can:update,user');
+        Route::get('/', [UserAddressController::class, 'show'])->middleware('can:view,user');
     });
     Route::group(['prefix' => '/password'], static function () {
-        Route::put('/{user}', [UserPasswordController::class, 'update']);
+        Route::put('/{user}', [UserPasswordController::class, 'update'])->middleware('permission:users');
     });
 });
 Route::post('users/password', [UserPasswordController::class, 'forgotPassword']);
 Route::get('users/password/validate/{token}', [UserPasswordController::class, 'validateResetToken']);
 Route::post('users/password/confirm', [UserPasswordController::class, 'confirmReset']);
 
-// Protected Pages Password reset routes
-Route::post('protected-page-password/reset', [ProtectedPagePasswordResetController::class, 'sendResetEmail']);
-Route::get('protected-page-password/validate/{token}', [ProtectedPagePasswordResetController::class, 'validateToken']);
-Route::post('protected-page-password/confirm', [ProtectedPagePasswordResetController::class, 'resetPassword']);
-
-// Assets
-Route::group(['prefix' => 'assets', 'middleware' => 'jwt.verify'], function () {
-    Route::get('/', [AssetController::class, 'index']);
-    Route::post('/', [AssetController::class, 'store']);
-    Route::put('/{asset}', [AssetController::class, 'update']);
-    Route::delete('/{asset}', [AssetController::class, 'destroy']);
+// Appliances
+Route::group(['prefix' => 'appliances', 'middleware' => 'jwt.verify'], function () {
+    Route::get('/', [ApplianceController::class, 'index'])->middleware('permission:appliances');
+    Route::post('/', [ApplianceController::class, 'store'])->middleware('permission:appliances');
+    Route::put('/{appliance}', [ApplianceController::class, 'update'])->middleware('permission:appliances');
+    Route::delete('/{appliance}', [ApplianceController::class, 'destroy'])->middleware('permission:appliances');
     Route::group(['prefix' => 'person'], function () {
-        Route::post('/{asset}/people/{person}', [AssetPersonController::class, 'store']);
-        Route::get('/people/{person}', [AssetPersonController::class, 'index']);
-        Route::get('/people/detail/{applianceId}', [AssetPersonController::class, 'show']);
+        Route::post('/{appliance}/people/{person}', [AppliancePersonController::class, 'store'])->middleware('permission:appliances');
+        Route::get('/people/{person}', [AppliancePersonController::class, 'index'])->middleware('permission:appliances');
+        Route::get('/people/detail/{applianceId}', [AppliancePersonController::class, 'show'])->middleware('permission:appliances');
+        Route::get('/{appliancePersonId}/rates', [AppliancePersonController::class, 'getRates'])->middleware('permission:appliances');
+        Route::get('/{appliancePersonId}/logs', [AppliancePersonController::class, 'getLogs'])->middleware('permission:appliances');
     });
     Route::group(['prefix' => 'types'], function () {
-        Route::get('/', [AssetTypeController::class, 'index']);
-        Route::post('/', [AssetTypeController::class, 'store']);
-        Route::put('/{asset_type}', [AssetTypeController::class, 'update']);
-        Route::delete('/{asset_type}', [AssetTypeController::class, 'destroy']);
+        Route::get('/', [ApplianceTypeController::class, 'index'])->middleware('permission:appliances');
+        Route::post('/', [ApplianceTypeController::class, 'store'])->middleware('permission:appliances');
+        Route::put('/{appliance_type}', [ApplianceTypeController::class, 'update'])->middleware('permission:appliances');
+        Route::delete('/{appliance_type}', [ApplianceTypeController::class, 'destroy'])->middleware('permission:appliances');
     });
 
     Route::group(['prefix' => 'rates'], static function () {
-        Route::put('/{appliance_rate}', [AssetRateController::class, 'update']);
+        Route::put('/{appliance_rate}', [ApplianceRateController::class, 'update'])->middleware('permission:appliances');
     });
 
     Route::group(['prefix' => 'payment'], static function () {
-        Route::post('/{appliance_person}', [AppliancePaymentController::class, 'store']);
+        Route::post('/{appliance_person}', [AppliancePaymentController::class, 'store'])->middleware('permission:payments');
     });
 });
 // Clusters
 Route::group(['prefix' => '/clusters', 'middleware' => 'jwt.verify'], static function () {
     Route::get('/', [ClusterController::class, 'index']);
     Route::get('/{clusterId}', [ClusterController::class, 'show'])->where('clusterId', '[0-9]+');
-    Route::post('/', [ClusterController::class, 'store']);
+    Route::post('/', [ClusterController::class, 'store'])->middleware('permission:settings');
     Route::get('/{clusterId}/geo', [ClusterController::class, 'showGeo']);
     Route::get('/revenue', [ClusterRevenueController::class, 'index']);
     Route::get('/{clusterId}/revenue', [ClusterRevenueController::class, 'show']);
@@ -159,14 +160,14 @@ Route::group(['prefix' => '/dashboard', 'middleware' => 'jwt.verify'], static fu
     Route::get('/agents', [AgentPerformanceMetricsController::class, 'index']);
 });
 // Connection-Groups
-Route::group(['prefix' => 'connection-groups', 'middleware' => 'jwt.verify'], static function () {
+Route::group(['prefix' => 'connection-groups', 'middleware' => ['jwt.verify', 'permission:settings']], static function () {
     Route::get('/', [ConnectionGroupController::class, 'index']);
     Route::post('/', [ConnectionGroupController::class, 'store']);
     Route::put('/{connectionGroupId}', [ConnectionGroupController::class, 'update']);
     Route::get('/{connectionGroupId}', [ConnectionGroupController::class, 'show']);
 });
 // Connection-Types
-Route::group(['prefix' => 'connection-types', 'middleware' => 'jwt.verify'], static function () {
+Route::group(['prefix' => 'connection-types', 'middleware' => ['jwt.verify', 'permission:settings']], static function () {
     Route::get('/', [ConnectionTypeController::class, 'index']);
     Route::post('/', [ConnectionTypeController::class, 'store']);
     Route::get('/{connectionTypeId?}', [ConnectionTypeController::class, 'show']);
@@ -186,7 +187,7 @@ Route::group(['prefix' => 'manufacturers', 'middleware' => 'jwt.verify'], static
 // Mini-Grids
 Route::group(['prefix' => 'mini-grids', 'middleware' => 'jwt.verify'], static function () {
     Route::get('/', [MiniGridController::class, 'index']);
-    Route::post('/', [MiniGridController::class, 'store']);
+    Route::post('/', [MiniGridController::class, 'store'])->middleware('permission:settings');
     Route::get('/{miniGridId}', [MiniGridController::class, 'show']);
 
     Route::post('/{miniGridId}/transactions', [MiniGridRevenueController::class, 'show']);
@@ -200,33 +201,33 @@ Route::group(['prefix' => 'mini-grids', 'middleware' => 'jwt.verify'], static fu
 });
 // PaymentHistories
 Route::group(['prefix' => 'paymenthistories', 'middleware' => 'jwt.verify'], function () {
-    Route::get('/{personId}/flow/{year?}', [PaymentHistoryController::class, 'byYear'])->where('personId', '[0-9]+');
-    Route::get('/{person}/period', [PaymentHistoryController::class, 'getPaymentPeriod'])->where('personId', '[0-9]+');
-    Route::get('/debt/{personId}', [PaymentHistoryController::class, 'debts'])->where('personId', '[0-9]+');
-    Route::post('/overview', [PaymentHistoryController::class, 'getPaymentRange']);
+    Route::get('/{personId}/flow/{year?}', [PaymentHistoryController::class, 'byYear'])->where('personId', '[0-9]+')->middleware('permission:payments');
+    Route::get('/{person}/period', [PaymentHistoryController::class, 'getPaymentPeriod'])->where('personId', '[0-9]+')->middleware('permission:payments');
+    Route::get('/debt/{personId}', [PaymentHistoryController::class, 'debts'])->where('personId', '[0-9]+')->middleware('permission:payments');
+    Route::post('/overview', [PaymentHistoryController::class, 'getPaymentRange'])->middleware('permission:payments');
     Route::get('/{personId}/payments/{period}/{limit?}/{order?}', [PaymentHistoryController::class, 'show'])->where(
         'personId',
         '[0-9]+'
-    );
+    )->middleware('permission:payments');
 });
 // People
 Route::group(['prefix' => 'people', 'middleware' => 'jwt.verify'], static function () {
-    Route::get('/{personId}/meters', [PersonMeterController::class, 'show']);
-    Route::get('/{personId}/meters/geo', [MeterGeographicalInformationController::class, 'show']);
+    Route::get('/{personId}/meters', [PersonMeterController::class, 'show'])->middleware('permission:customers');
+    Route::get('/{personId}/meters/geo', [MeterGeographicalInformationController::class, 'show'])->middleware('permission:customers');
 
-    Route::get('/', [PersonController::class, 'index']);
+    Route::get('/', [PersonController::class, 'index'])->middleware('permission:customers');
     // https://github.com/EnAccess/micropowermanager-customer-registration-app/issues/5
-    Route::get('/all', [PersonController::class, 'index']);
-    Route::post('/', [PersonController::class, 'store']);
-    Route::get('/search', [PersonController::class, 'search']);
-    Route::get('/{personId}', [PersonController::class, 'show']);
-    Route::get('/{personId}/transactions', [PersonController::class, 'transactions']);
-    Route::put('/{personId}', [PersonController::class, 'update']);
-    Route::delete('/{personId}', [PersonController::class, 'destroy']);
+    Route::get('/all', [PersonController::class, 'index'])->middleware('permission:customers');
+    Route::post('/', [PersonController::class, 'store'])->middleware('permission:customers');
+    Route::get('/search', [PersonController::class, 'search'])->middleware('permission:customers');
+    Route::get('/{personId}', [PersonController::class, 'show'])->middleware('permission:customers');
+    Route::get('/{personId}/transactions', [PersonController::class, 'transactions'])->middleware('permission:transactions');
+    Route::put('/{personId}', [PersonController::class, 'update'])->middleware('permission:customers');
+    Route::delete('/{personId}', [PersonController::class, 'destroy'])->middleware('permission:customers');
 
-    Route::get('/{personId}/addresses', [PersonAddressesController::class, 'show']);
-    Route::post('/{personId}/addresses', [PersonAddressesController::class, 'store']);
-    Route::put('/{personId}/addresses', [PersonAddressesController::class, 'update']);
+    Route::get('/{personId}/addresses', [PersonAddressesController::class, 'show'])->middleware('permission:customers');
+    Route::post('/{personId}/addresses', [PersonAddressesController::class, 'store'])->middleware('permission:customers');
+    Route::put('/{personId}/addresses', [PersonAddressesController::class, 'update'])->middleware('permission:customers');
 });
 // Map Settings
 Route::group(['prefix' => 'map-settings'], static function () {
@@ -238,10 +239,21 @@ Route::group(['prefix' => 'map-settings'], static function () {
 
 // Settings
 Route::group(['prefix' => 'settings'], static function () {
-    Route::get('/main', [MainSettingsController::class, 'index']);
+    Route::get('/main', [MainSettingsController::class, 'index'])->middleware('jwt.verify');
+    // update requires auth and permission
     Route::put('/main/{mainSettings}', [MainSettingsController::class, 'update'])
-        ->middleware('jwt.verify');
+        ->middleware(['jwt.verify', 'permission:settings']);
+    Route::get('/sms-gateways', [MainSettingsController::class, 'getAvailableSmsGateways'])
+        ->middleware('permission:settings');
     Route::get('/currency-list', [CurrencyController::class, 'index']);
+});
+
+// Roles (read-only role management)
+Route::group(['prefix' => 'roles', 'middleware' => ['jwt.verify']], static function () {
+    Route::get('/', [RoleController::class, 'index'])->middleware('permission:roles');
+    Route::get('/permissions', [RoleController::class, 'permissions'])->middleware('permission:roles');
+    Route::get('/details', [RoleController::class, 'details'])->middleware('permission:roles');
+    Route::get('/user/{userId}', [RoleController::class, 'userRoles'])->middleware('permission:roles');
 });
 // Sms
 Route::group(['prefix' => 'sms-body'], static function () {
@@ -268,8 +280,8 @@ Route::group(['prefix' => 'sms-variable-default-value'], static function () {
 });
 // Reports
 Route::group(['prefix' => 'reports', 'middleware' => 'jwt.verify'], function () {
-    Route::get('/', [ReportController::class, 'index']);
-    Route::get('/download/{id}', [ReportController::class, 'download']);
+    Route::get('/', [ReportController::class, 'index'])->middleware('permission:reports');
+    Route::get('/download/{id}', [ReportController::class, 'download'])->middleware('permission:reports');
 });
 // Revenue
 Route::group(['prefix' => 'revenue', 'middleware' => 'jwt.verify'], static function () {
@@ -301,14 +313,14 @@ Route::group(['prefix' => 'sub-connection-types', 'middleware' => 'jwt.verify'],
     Route::put('/{subConnectionTypeId}', [SubConnectionTypeController::class, 'update']);
 });
 // Targets
-Route::group(['prefix' => 'targets', 'middleware' => 'jwt.verify'], static function () {
+Route::group(['prefix' => 'targets', 'middleware' => ['jwt.verify', 'permission:settings']], static function () {
     Route::get('/', [TargetController::class, 'index']);
     Route::post('/', [TargetController::class, 'store']);
     Route::get('/{targetId}', [TargetController::class, 'show']);
     Route::post('/slots', [TargetController::class, 'getSlotsForDate']);
 });
 // Tariffs
-Route::group(['middleware' => 'jwt.verify', 'prefix' => 'tariffs'], static function () {
+Route::group(['middleware' => ['jwt.verify', 'permission:settings'], 'prefix' => 'tariffs'], static function () {
     Route::get('/', [MeterTariffController::class, 'index']);
     Route::get('/{meterTariffId}', [MeterTariffController::class, 'show']);
     Route::post('/', [MeterTariffController::class, 'store']);
@@ -343,23 +355,18 @@ Route::group(['prefix' => 'registration-tails'], static function () {
     Route::put('/{registrationTail}', [RegistrationTailController::class, 'update']);
 });
 Route::group(['prefix' => 'plugins'], static function () {
-    Route::get('/', [PluginController::class, 'index']);
-    Route::put('/{mpmPluginId}', [PluginController::class, 'update']);
+    Route::get('/', [PluginController::class, 'index'])->middleware('permission:plugins');
+    Route::put('/{mpmPluginId}', [PluginController::class, 'update'])->middleware('permission:plugins');
 });
 
-// API Keys management (requires web client auth token)
-Route::group(['middleware' => 'auth:api'], static function () {
+// API Keys management (requires web client auth token and admin permission)
+Route::group(['middleware' => ['auth:api', 'permission:settings.api-keys']], static function () {
     Route::get('/api-keys', [ApiKeyController::class, 'index']);
     Route::post('/api-keys', [ApiKeyController::class, 'store']);
     Route::delete('/api-keys/{id}', [ApiKeyController::class, 'destroy']);
 });
 
 Route::get('/clusterlist', [ClusterController::class, 'index']);
-
-Route::group(['prefix' => 'protected-pages'], static function () {
-    Route::get('/', [ProtectedPageController::class, 'index']);
-    Route::post('/compare', [ProtectedPageController::class, 'compareProtectedPagePassword']);
-});
 
 Route::group(['prefix' => 'companies'], static function () {
     Route::post('/', [CompanyController::class, 'store']);
@@ -387,9 +394,12 @@ Route::group(['prefix' => 'e-bikes'], static function () {
     Route::post('/switch', [EBikeController::class, 'switch']);
 });
 Route::group(['prefix' => 'export', 'middleware' => 'api'], static function () {
-    Route::get('/transactions', [TransactionExportController::class, 'download']);
-    Route::get('/debts', [OutstandingDebtsExportController::class, 'download']);
-    Route::get('/customers', [PersonExportController::class, 'download']);
+    Route::get('/transactions', [TransactionExportController::class, 'download'])->middleware('permission:exports');
+    Route::get('/debts', [OutstandingDebtsExportController::class, 'download'])->middleware('permission:exports');
+    Route::get('/customers', [PersonExportController::class, 'download'])->middleware('permission:exports');
+    Route::get('/devices', [DeviceExportController::class, 'download'])->middleware('permission:exports');
+    Route::get('/appliances', [ApplianceExportController::class, 'download'])->middleware('permission:exports');
+    Route::get('/clusters', [ClusterExportController::class, 'download'])->middleware('permission:exports');
 });
 Route::group(['prefix' => 'usage-types'], static function () {
     Route::get('/', [UsageTypeController::class, 'index']);
