@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\DTO\MiniGridDashboardData;
 use App\Models\City;
 use App\Models\ConnectionGroup;
 use App\Models\Target;
-use App\Models\Ticket\Ticket;
-use App\Models\Ticket\TicketCategory;
 use Illuminate\Support\Facades\Cache;
+use Inensus\Ticket\Models\Ticket;
+use Inensus\Ticket\Models\TicketCategory;
+use MPM\Device\MiniGridDeviceService;
 use Nette\Utils\DateTime;
 
 class MiniGridDashboardCacheDataService extends AbstractDashboardCacheDataService {
@@ -46,20 +46,18 @@ class MiniGridDashboardCacheDataService extends AbstractDashboardCacheDataServic
 
         $miniGrids = $this->miniGridService->getAll();
 
-        $miniGridDashboardData = [];
-        foreach ($miniGrids as $miniGrid) {
+        foreach ($miniGrids as $index => $miniGrid) {
             $connections = $this->connectionGroupService->getAll();
             $connectionsTypes = $this->connectionTypeService->getAll();
             $connectionNames = $connectionsTypes->pluck('name')->toArray();
             $miniGridId = $miniGrid->id;
-
-            $soldEnergy = $this->miniGridRevenueService->getSoldEnergyById(
+            $miniGrids[$index]->soldEnergy = $this->miniGridRevenueService->getSoldEnergyById(
                 $miniGridId,
                 $startDate,
                 $endDate,
                 $this->miniGridDeviceService
             );
-            $transactions = $this->miniGridRevenueService->getById(
+            $miniGrids[$index]->transactions = $this->miniGridRevenueService->getById(
                 $miniGridId,
                 $startDate,
                 $endDate,
@@ -91,7 +89,7 @@ class MiniGridDashboardCacheDataService extends AbstractDashboardCacheDataServic
             }
             // get all types of connections
             $connectionGroups = $this->connectionGroup->select('id', 'name')->get();
-            $connectionsData = [];
+            $connections = [];
             $revenues = [];
             $totalConnections = [];
             foreach ($connectionGroups as $connectionGroup) {
@@ -109,13 +107,13 @@ class MiniGridDashboardCacheDataService extends AbstractDashboardCacheDataServic
                 $totalConnections[$connectionGroup->name] = $totalConnectionsData[0]['registered_connections'] ?? 0;
                 $revenues[$connectionGroup->name] = $revenue[0]['total'] ?? 0;
 
-                $connectionData = $this->meterRevenueService->getRegisteredMetersByConnectionGroupInWeeklyPeriodForMiniGrid(
+                $connectionsData = $this->meterRevenueService->getRegisteredMetersByConnectionGroupInWeeklyPeriodForMiniGrid(
                     $miniGridId,
                     $connectionGroup->id,
                     $startDate,
                     $endDate
                 );
-                $connectionsData[$connectionGroup->name] = $connectionData[0]['registered_connections'] ?? 0;
+                $connections[$connectionGroup->name] = $connectionsData[0]['registered_connections'] ?? 0;
             }
 
             $cities = $this->city::where('mini_grid_id', $miniGridId)->get();
@@ -172,21 +170,15 @@ class MiniGridDashboardCacheDataService extends AbstractDashboardCacheDataServic
                 $result[$date][$openedTicketsWithCategory['label_name']]['opened']
                     = $openedTicketsWithCategory['new_tickets'];
             }
-
-            $miniGridDashboardData[] = new MiniGridDashboardData(
-                miniGrid: $miniGrid,
-                soldEnergy: $soldEnergy,
-                transactions: $transactions,
-                period: $response,
-                tickets: $result,
-                revenueList: [
-                    'totalConnections' => $totalConnections,
-                    'revenue' => $revenues,
-                    'newConnections' => $connectionsData,
-                    'target' => ['targets' => $formattedTarget],
-                ],
-            );
+            $miniGrids[$index]->period = $response;
+            $miniGrids[$index]->tickets = $result;
+            $miniGrids[$index]->revenueList = [
+                'totalConnections' => $totalConnections,
+                'revenue' => $revenues,
+                'newConnections' => $connections,
+                'target' => ['targets' => $formattedTarget],
+            ];
         }
-        Cache::put(self::cacheKeyGenerator(), $miniGridDashboardData, DateTime::from('+ 1 day'));
+        Cache::put(self::cacheKeyGenerator(), $miniGrids, DateTime::from('+ 1 day'));
     }
 }

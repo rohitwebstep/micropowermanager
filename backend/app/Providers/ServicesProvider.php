@@ -9,6 +9,8 @@ use App\Models\AgentCharge;
 use App\Models\AgentReceipt;
 use App\Models\Country;
 use App\Models\Person\Person;
+use App\Models\Role\RoleDefinition;
+use App\Models\Role\Roles;
 use App\Observers\AddressesObserver;
 use App\Observers\AgentBalanceHistoryObserver;
 use App\Observers\AgentChargeObserver;
@@ -16,6 +18,7 @@ use App\Observers\AgentObserver;
 use App\Observers\AgentReceiptObserver;
 use App\Observers\PersonObserver;
 use App\Services\CountryService;
+use App\Services\RolesService;
 use Illuminate\Support\ServiceProvider;
 
 class ServicesProvider extends ServiceProvider {
@@ -35,6 +38,11 @@ class ServicesProvider extends ServiceProvider {
      * Register services.
      */
     public function register(): void {
+        $this->app->bind(
+            RolesService::class,
+            fn ($app): RolesService => new RolesService($this->app->make(Roles::class), $this->app->make(RoleDefinition::class))
+        );
+
         $this->app->bind(
             CountryService::class,
             fn ($app): CountryService => new CountryService($this->app->make(Country::class))

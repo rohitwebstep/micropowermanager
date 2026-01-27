@@ -1,6 +1,7 @@
 import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
-const resource = `/api/devices`
+const resource = `${baseUrl}/api/devices`
 
 export default {
   update(deviceId, params) {

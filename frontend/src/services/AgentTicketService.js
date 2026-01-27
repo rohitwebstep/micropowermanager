@@ -9,7 +9,7 @@ export class AgentTicketService {
 
   async updateList(data) {
     this.list = []
-    this.list = data?.map((ticket) => {
+    this.list = data?.data?.map((ticket) => {
       return {
         created: ticket.created_at,
         id: ticket.id,

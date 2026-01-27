@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Services\CompanyService;
 use App\Utils\DemoCompany;
+use Illuminate\Console\View\Components\Info;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder {
@@ -26,8 +27,6 @@ class DatabaseSeeder extends Seeder {
                 CustomerSeeder::class,
                 MeterSeeder::class,
                 SolarHomeSystemSeeder::class,
-                ApplianceSkuSeeder::class,
-                EbikeSeeder::class,
                 AgentSeeder::class,
                 TicketSeeder::class,
                 TransactionSeeder::class,
@@ -45,7 +44,7 @@ class DatabaseSeeder extends Seeder {
                 == DemoCompany::DEMO_COMPANY_NAME
             );
             if ($demo_data_already_loaded) {
-                $this->command->outputComponents()->success(
+                (new Info($this->command->getOutput()))->render(
                     'Demo data has been loaded previously. Nothing to seed.'
                 );
             } else {

@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ExportServices\PersonExportService;
+use App\People\Export\PersonExportService;
 use App\Services\PersonService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -15,84 +14,52 @@ class PersonExportController extends Controller {
         private PersonExportService $peopleExportService,
     ) {}
 
-    public function download(Request $request): BinaryFileResponse|JsonResponse {
+    public function download(Request $request): BinaryFileResponse {
         $format = $request->get('format', 'excel');
 
         if ($format === 'csv') {
             return $this->downloadCsv($request);
         }
 
-        if ($format === 'json') {
-            return $this->downloadJson($request);
-        }
-
         return $this->downloadExcel($request);
     }
 
     public function downloadExcel(Request $request): BinaryFileResponse {
-        $miniGridName = $request->get('miniGrid');
-        $villageName = $request->get('village');
+        $miniGrid = $request->get('miniGrid');
+        $village = $request->get('village');
         $deviceType = $request->get('deviceType');
         $isActive = $request->get('isActive');
         $isActive = $isActive === 'true' ? true : ($isActive === 'false' ? false : null);
 
-        $people = $this->personService->getAllForExport($miniGridName, $villageName, $deviceType, $isActive);
+        $people = $this->personService->getAllForExport($miniGrid, $village, $deviceType, $isActive);
         $this->peopleExportService->createSpreadSheetFromTemplate($this->peopleExportService->getTemplatePath());
         $this->peopleExportService->setPeopleData($people);
         $this->peopleExportService->setExportingData();
         $this->peopleExportService->writePeopleData();
         $pathToSpreadSheet = $this->peopleExportService->saveSpreadSheet();
 
-        $path = Storage::path($pathToSpreadSheet);
+        $path = Storage::disk('local')->path($pathToSpreadSheet);
 
         return response()->download($path, 'customer_export_'.now()->format('Ymd_His').'.xlsx');
     }
 
     public function downloadCsv(Request $request): BinaryFileResponse {
-        $miniGridName = $request->get('miniGrid');
-        $villageName = $request->get('village');
+        $miniGrid = $request->get('miniGrid');
+        $village = $request->get('village');
         $deviceType = $request->get('deviceType');
         $isActive = $request->get('isActive');
 
         $isActive = $isActive === 'true' ? true : ($isActive === 'false' ? false : null);
 
-        $people = $this->personService->getAllForExport($miniGridName, $villageName, $deviceType, $isActive);
+        $people = $this->personService->getAllForExport($miniGrid, $village, $deviceType, $isActive);
 
         $this->peopleExportService->setPeopleData($people);
         $this->peopleExportService->setExportingData();
-        $headers = ['Title', 'Name', 'Surname', 'Birth Date', 'Gender', 'Email', 'Phone', 'City', 'Device Serial', 'Agent Name'];
+        $headers = ['Title', 'Name', 'Surname', 'Birth Date', 'Sex', 'Email', 'Phone', 'City', 'Device Serial', 'Agent Name'];
         $csvPath = $this->peopleExportService->saveCsv($headers);
 
-        $path = Storage::path($csvPath);
+        $path = Storage::disk('local')->path($csvPath);
 
         return response()->download($path, 'customer_export_'.now()->format('Ymd_His').'.csv');
-    }
-
-    public function downloadJson(Request $request): JsonResponse {
-        $miniGridName = $request->get('miniGrid');
-        $villageName = $request->get('village');
-        $deviceType = $request->get('deviceType');
-        $isActive = $request->get('isActive');
-
-        $isActive = $isActive === 'true' ? true : ($isActive === 'false' ? false : null);
-
-        $people = $this->personService->getAllForExport($miniGridName, $villageName, $deviceType, $isActive);
-
-        $this->peopleExportService->setPeopleData($people);
-        $jsonData = $this->peopleExportService->exportDataToArray();
-
-        return response()->json([
-            'data' => $jsonData,
-            'meta' => [
-                'total' => count($jsonData),
-                'filters' => [
-                    'mini_grid' => $miniGridName,
-                    'village' => $villageName,
-                    'device_type' => $deviceType,
-                    'is_active' => $isActive,
-                ],
-                'exported_at' => now()->toISOString(),
-            ],
-        ]);
     }
 }

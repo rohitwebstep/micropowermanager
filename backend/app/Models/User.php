@@ -3,9 +3,6 @@
 namespace App\Models;
 
 use App\Models\Address\Address;
-use App\Models\Auth\Permission;
-use App\Models\Auth\Role;
-use App\Models\Ticket\TicketUser;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Traits\HasRoles;
+use Inensus\Ticket\Models\TicketUser;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
@@ -35,23 +32,15 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property-read Collection<int, AgentAssignedAppliances> $assignedAppliance
  * @property-read Collection<int, AgentBalanceHistory>     $balanceHistory
  * @property-read Company|null                             $company
- * @property-read Collection<int, Permission>              $permissions
  * @property-read TicketUser|null                          $relationTicketUser
- * @property-read Collection<int, Role>                    $roles
  */
 class User extends Authenticatable implements JWTSubject {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
-    use HasRoles;
 
     public const RELATION_NAME = 'users';
     public const COL_ID = 'id';
     public const COL_COMPANY_ID = 'company_id';
-
-    /**
-     * Guard name for Spatie Permission.
-     */
-    protected string $guard_name = 'api';
 
     /**
      * @param array<string, mixed> $attributes

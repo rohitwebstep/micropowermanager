@@ -40,11 +40,8 @@
         </md-button>
       </md-dialog-actions>
     </md-dialog>
-    <tail-wizard
-      v-if="hasSettingsPermission"
-      :show-wizard="showWizard"
-      :tail="tail"
-    />
+    <tail-wizard :show-wizard="showWizard" :tail="tail" />
+    <password-protection />
   </div>
 </template>
 <script>
@@ -55,10 +52,12 @@ import SideBar from "@/modules/Sidebar/SideBar"
 import MobileTopNavbar from "./MobileTopNavbar"
 import TailWizard from "@/shared/TailWizard"
 import { mapGetters } from "vuex"
+import PasswordProtection from "@/shared/PasswordProtection"
 
 export default {
   name: "default",
   components: {
+    PasswordProtection,
     TopNavbar,
     FooterBar,
     SideBar,
@@ -66,9 +65,6 @@ export default {
     TailWizard,
   },
   created() {
-    if (!this.hasSettingsPermission) {
-      return
-    }
     if (this.status !== "") {
       const tail = JSON.parse(this.registrationTail.tail)
       for (const tailElement of tail) {
@@ -89,7 +85,7 @@ export default {
     showed: false,
     confirmed: false,
     expires_in: null,
-    sidebarBackground: "primary",
+    sidebarBackground: "green",
     sidebarBackgroundImage: null,
     showWizard: false,
     tail: [],
@@ -119,11 +115,7 @@ export default {
       status: "auth/getStatus",
       registrationTail: "registrationTail/getTail",
       isWizardShown: "registrationTail/getIsWizardShown",
-      permissions: "auth/getPermissions",
     }),
-    hasSettingsPermission() {
-      return (this.permissions || []).includes("settings")
-    },
   },
 }
 </script>

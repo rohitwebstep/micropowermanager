@@ -61,18 +61,12 @@
 
     <md-card>
       <md-card-content>
-        <div
-          v-if="chartData.length > 0"
-          style="height: 400px; width: 100%; position: relative"
-        >
-          <v-chart
-            v-if="
-              echartsOption && echartsOption.series && echartsOption.series[0]
-            "
-            :option="echartsOption"
-            :autoresize="true"
-            style="height: 400px; width: 100%; min-height: 400px"
-          />
+        <div v-if="chartData.length > 0">
+          <GChart
+            type="LineChart"
+            :data="chartData"
+            :options="chartOptions"
+          ></GChart>
         </div>
 
         <div
@@ -109,6 +103,14 @@ export default {
   data() {
     return {
       chartData: [],
+      chartOptions: {
+        chart: {
+          title: "Company Performance",
+          subtitle: "Sales, Expenses, and Profit: 2014-2017",
+        },
+        height: 400,
+        colors: ["#1b9e77", "#d95f02", "#7570b3"],
+      },
       dates: {
         dateTwo: null,
         dateOne: null,
@@ -120,59 +122,8 @@ export default {
       consumptions: null,
     }
   },
-  computed: {
-    echartsOption() {
-      if (
-        !this.chartData ||
-        !Array.isArray(this.chartData) ||
-        this.chartData.length < 2
-      ) {
-        return null
-      }
-
-      const headers = this.chartData[0] || []
-      const seriesNames = headers.slice(1)
-      const categories = this.chartData.slice(1).map((row) => row[0] || "")
-
-      const series = seriesNames.map((name, index) => {
-        const seriesIndex = index + 1
-        return {
-          name: String(name || `Series ${index + 1}`),
-          type: "line",
-          data: this.chartData
-            .slice(1)
-            .map((row) => parseFloat(row[seriesIndex]) || 0),
-          smooth: true,
-        }
-      })
-
-      return {
-        tooltip: {
-          trigger: "axis",
-        },
-        legend: {
-          data: seriesNames.map((name) => String(name)),
-          top: 10,
-        },
-        grid: {
-          left: "3%",
-          right: "4%",
-          bottom: "3%",
-          containLabel: true,
-        },
-        xAxis: {
-          type: "category",
-          boundaryGap: false,
-          data: categories,
-        },
-        yAxis: {
-          type: "value",
-        },
-        series: series,
-      }
-    },
-  },
   created() {
+    //initialize dates
     let baseDate = moment()
     this.dates.today = baseDate.format("YYYY-MM-DD")
     this.dates.dateTwo = baseDate.add(-1, "days").format("YYYY-MM-DD")

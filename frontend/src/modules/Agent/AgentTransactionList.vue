@@ -2,7 +2,7 @@
   <widget
     :class="'col-sm-6 col-md-5'"
     :title="$tc('phrases.lastTransactions')"
-    color="primary"
+    color="green"
     :paginator="agentTransactionService.paginator"
     :subscriber="subscriber"
   >

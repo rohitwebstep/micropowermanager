@@ -71,7 +71,7 @@
                 </md-field>
               </div>
 
-              <!--appliance list-->
+              <!--asset list-->
               <div class="md-layout-item md-size-50 md-small-size-100">
                 <md-field
                   :class="{
@@ -82,7 +82,7 @@
                     {{ $tc("words.appliance") }}
                   </label>
                   <md-select
-                    v-model="solarHomeSystemService.shs.applianceId"
+                    v-model="solarHomeSystemService.shs.assetId"
                     name="appliance"
                     id="appliance"
                     v-validate="'required'"
@@ -181,7 +181,7 @@ export default {
     },
     appliances() {
       return this.applianceService.list.filter(
-        (appliance) => appliance.applianceTypeId === APPLIANCE_TYPE_ID,
+        (appliance) => appliance.assetTypeId === APPLIANCE_TYPE_ID,
       )
     },
   },

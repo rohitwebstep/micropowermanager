@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Events\NewLogEvent;
-use App\Models\ApplianceRate;
+use App\Models\AssetRate;
 use App\Models\MainSettings;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Collection;
 // class ApplianceRateService implements IBaseService
 class ApplianceRateService {
     public function __construct(
-        private ApplianceRate $applianceRate,
+        private AssetRate $applianceRate,
         private MainSettings $mainSettings,
     ) {}
 
@@ -24,11 +24,11 @@ class ApplianceRateService {
         return $mainSettings->currency ?? '€';
     }
 
-    public function updateApplianceRateCost(ApplianceRate $applianceRate, int $creatorId, int $cost, int $newCost): ApplianceRate {
+    public function updateApplianceRateCost(AssetRate $applianceRate, int $creatorId, int $cost, int $newCost): AssetRate {
         $currency = $this->getCurrencyFromMainSettings();
         event(new NewLogEvent([
             'user_id' => $creatorId,
-            'affected' => $applianceRate->appliancePerson,
+            'affected' => $applianceRate->assetPerson,
             'action' => 'Appliance rate '.date(
                 'd-m-Y',
                 strtotime($applianceRate->due_date)
@@ -43,9 +43,9 @@ class ApplianceRateService {
         return $applianceRate->refresh();
     }
 
-    public function deleteUpdatedApplianceRateIfCostZero(ApplianceRate $applianceRate, int $creatorId, float $cost, float $newCost): void {
+    public function deleteUpdatedApplianceRateIfCostZero(AssetRate $applianceRate, int $creatorId, float $cost, float $newCost): void {
         $currency = $this->getCurrencyFromMainSettings();
-        $appliancePerson = $applianceRate->appliancePerson;
+        $appliancePerson = $applianceRate->assetPerson;
         $applianceRate->delete();
         event(new NewLogEvent([
             'user_id' => $creatorId,
@@ -61,59 +61,59 @@ class ApplianceRateService {
     /**
      * @param int[] $loanIds
      *
-     * @return Collection<int, ApplianceRate>
+     * @return Collection<int, AssetRate>
      */
     public function getByLoanIdsForDueDate(array $loanIds): Collection {
-        return $this->applianceRate->newQuery()->with('appliancePerson.appliance')
-            ->whereIn('appliance_person_id', $loanIds)
+        return $this->applianceRate->newQuery()->with('assetPerson.asset')
+            ->whereIn('asset_person_id', $loanIds)
             ->where('remaining', '>', 0)
             ->whereDate('due_date', '<', date('Y-m-d'))
             ->get();
     }
 
     /**
-     * @return Collection<int, ApplianceRate>
+     * @return Collection<int, AssetRate>
      */
     public function getAllByLoanId(int $loanId): Collection {
-        return $this->applianceRate->newQuery()->with('appliancePerson.appliance')
-            ->where('appliance_person_id', $loanId)
+        return $this->applianceRate->newQuery()->with('assetPerson.asset')
+            ->where('asset_person_id', $loanId)
             ->get();
     }
 
-    public function getById(int $id): ApplianceRate {
+    public function getById(int $id): AssetRate {
         throw new \Exception('Method getById() not yet implemented.');
     }
 
-    public function create(object $appliancePerson, string $installmentType = 'monthly'): void {
-        $baseTime = $appliancePerson->first_payment_date ?? date('Y-m-d');
+    public function create(object $assetPerson, string $installmentType = 'monthly'): void {
+        $baseTime = $assetPerson->first_payment_date ?? date('Y-m-d');
         $installment = $installmentType === 'monthly' ? 'month' : 'week';
-        if ($appliancePerson->down_payment > 0) {
+        if ($assetPerson->down_payment > 0) {
             $this->applianceRate->newQuery()->create(
                 [
-                    'appliance_person_id' => $appliancePerson->id,
-                    'rate_cost' => round($appliancePerson->down_payment),
+                    'asset_person_id' => $assetPerson->id,
+                    'rate_cost' => round($assetPerson->down_payment),
                     'remaining' => 0,
                     'due_date' => Carbon::parse(date('Y-m-d'))->toDateTimeString(),
                     'remind' => 0,
                 ]
             );
-            $appliancePerson->total_cost -= $appliancePerson->down_payment;
+            $assetPerson->total_cost -= $assetPerson->down_payment;
         }
-        foreach (range(1, $appliancePerson->rate_count) as $rate) {
-            if ($appliancePerson->rate_count === 0) {
+        foreach (range(1, $assetPerson->rate_count) as $rate) {
+            if ($assetPerson->rate_count === 0) {
                 $rateCost = 0;
-            } elseif ((int) $rate === (int) $appliancePerson->rate_count) {
+            } elseif ((int) $rate === (int) $assetPerson->rate_count) {
                 // last rate
-                $rateCost = $appliancePerson->total_cost
-                    - (($rate - 1) * floor($appliancePerson->total_cost / $appliancePerson->rate_count));
+                $rateCost = $assetPerson->total_cost
+                    - (($rate - 1) * floor($assetPerson->total_cost / $assetPerson->rate_count));
             } else {
-                $rateCost = floor($appliancePerson->total_cost / $appliancePerson->rate_count);
+                $rateCost = floor($assetPerson->total_cost / $assetPerson->rate_count);
             }
             $rateDate = date('Y-m-d', strtotime('+'.$rate." $installment", strtotime($baseTime)));
 
             $this->applianceRate->newQuery()->create(
                 [
-                    'appliance_person_id' => $appliancePerson->id,
+                    'asset_person_id' => $assetPerson->id,
                     'rate_cost' => $rateCost,
                     'remaining' => $rateCost,
                     'due_date' => $rateDate,
@@ -126,7 +126,7 @@ class ApplianceRateService {
     /**
      * @param array<string, mixed> $data
      */
-    public function update(object $model, array $data): ApplianceRate {
+    public function update(object $model, array $data): AssetRate {
         throw new \Exception('Method update() not yet implemented.');
     }
 
@@ -135,26 +135,26 @@ class ApplianceRateService {
     }
 
     /**
-     * @return Collection<int, ApplianceRate>
+     * @return Collection<int, AssetRate>
      */
     public function getAll(?int $limit = null): Collection {
         throw new \Exception('Method getAll() not yet implemented.');
     }
 
-    public function getDownPaymentAsApplianceRate(object $appliancePerson): ?ApplianceRate {
+    public function getDownPaymentAsAssetRate(object $assetPerson): ?AssetRate {
         return $this->applianceRate->newQuery()
-            ->where('appliance_person_id', $appliancePerson->id)
-            ->where('rate_cost', round($appliancePerson->down_payment))
+            ->where('asset_person_id', $assetPerson->id)
+            ->where('rate_cost', round($assetPerson->down_payment))
             ->where('remaining', 0)
             ->first();
     }
 
     /**
-     * @return Builder<ApplianceRate>
+     * @return Builder<AssetRate>
      */
     public function queryOutstandingDebtsByApplianceRates(CarbonImmutable $toDate): Builder {
         return $this->applianceRate->newQuery()
-            ->with(['appliancePerson.appliance', 'appliancePerson.person'])
+            ->with(['assetPerson.asset', 'assetPerson.person'])
             ->where('due_date', '<', $toDate->format('Y-m-d'))
             ->where('remaining', '>', 0)
             ->orderBy('id');

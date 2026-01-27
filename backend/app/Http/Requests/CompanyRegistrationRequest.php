@@ -16,6 +16,7 @@ class CompanyRegistrationRequest extends FormRequest {
             'address' => ['required'],
             'phone' => ['required'],
             'email' => ['required', 'unique:database_proxies'],
+            'protected_page_password' => ['required'],
         ];
     }
 }

@@ -1,6 +1,7 @@
 import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
-const resource = `/api/users/password`
+const resource = `${baseUrl}/api/users/password`
 
 export default {
   put(userData) {

@@ -6,6 +6,7 @@ use App\Models\Token;
 use App\Models\Transaction\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
+use MPM\Device\MiniGridDeviceService;
 
 class MiniGridRevenueService {
     public function __construct(

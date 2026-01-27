@@ -1,7 +1,8 @@
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 import Client from "@/repositories/Client/AxiosClient"
 import { Paginator } from "@/Helpers/Paginator"
 
-const resource = `/api/paystack`
+const resource = `${baseUrl}/api/paystack`
 
 export class TransactionService {
   constructor() {

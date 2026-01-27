@@ -6,24 +6,22 @@
         <addresses :person-id="person.id" v-if="person !== null" />
         <sms-history :person-id="personId" person-name="System" />
       </div>
-      <div
-        class="md-layout-item md-size-45 md-small-size-100"
-        v-if="isLoaded && $can('payments')"
-      >
-        <payment-flow />
-        <payment-detail />
+      <div class="md-layout-item md-size-45 md-small-size-100">
+        <payment-flow v-if="isLoaded" />
+        <payment-detail v-if="isLoaded" />
       </div>
-      <div class="md-layout-item md-size-100" v-if="$can('transactions')">
+      <div class="md-layout-item md-size-100">
         <transactions :personId="personId" />
       </div>
       <div class="md-layout-item md-size-50 md-small-size-100">
-        <div
-          class="client-detail-card"
-          v-if="person !== null && $can('appliances')"
-        >
-          <deferred-payments :person-id="person.id" :person="person" />
+        <div class="client-detail-card">
+          <deferred-payments
+            :person-id="person.id"
+            v-if="person !== null"
+            :person="person"
+          />
         </div>
-        <div class="client-detail-card" v-if="$can('tickets')">
+        <div class="client-detail-card">
           <ticket :personId="personId" />
         </div>
       </div>

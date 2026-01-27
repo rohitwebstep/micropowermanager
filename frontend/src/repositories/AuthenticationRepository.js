@@ -1,4 +1,6 @@
-const resource = `/api/auth`
+import { baseUrl } from "@/repositories/Client/AxiosClient"
+
+const resource = `${baseUrl}/api/auth`
 
 import Client from "@/repositories/Client/AxiosClient"
 

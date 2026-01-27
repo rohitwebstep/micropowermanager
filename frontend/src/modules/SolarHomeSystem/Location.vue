@@ -1,7 +1,7 @@
 <template>
   <widget
     :title="$tc('words.location')"
-    color="primary"
+    color="green"
     :subscriber="'shs-location'"
   >
     <client-map

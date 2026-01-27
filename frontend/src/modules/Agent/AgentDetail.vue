@@ -1,6 +1,6 @@
 <template>
   <widget
-    :title="$tc('words.detail', 2)"
+    :title="$tc('words.detail', 1)"
     :button="true"
     :button-text="$tc('words.delete')"
     button-icon="delete"
@@ -8,24 +8,21 @@
   >
     <md-card>
       <md-card-content>
-        <div class="md-layout md-gutter md-alignment-center" v-if="!editAgent">
-          <div class="md-layout-item">
-            <div class="md-layout md-alignment-center-left">
-              <div class="md-layout-item md-size-20">
-                <md-avatar class="md-avatar-icon md-large">
-                  {{ initials }}
-                </md-avatar>
-              </div>
-              <div class="md-layout-item">
-                <h2>
-                  {{ agent.name }}
-                  {{ agent.surname }}
-                </h2>
-              </div>
-            </div>
+        <div class="md-layout md-gutter" v-if="!editAgent">
+          <div class="md-layout-item md-size-25">
+            <md-icon class="md-size-3x">account_circle</md-icon>
           </div>
-
-          <div class="md-layout-item md-size-20">
+          <div class="md-layout-item md-size-25">
+            <h3>{{ agent.name }} {{ agent.surname }}</h3>
+          </div>
+          <div class="md-layout-item md-size-25">
+            <h3>
+              <md-icon>account_balance_wallet</md-icon>
+              {{ $tc("words.balance") }}:
+              {{ agent.balance }}
+            </h3>
+          </div>
+          <div class="md-layout-item md-size-25">
             <md-button
               @click="editAgent = true"
               class="md-icon-button"
@@ -35,56 +32,43 @@
             </md-button>
           </div>
 
-          <div class="md-layout-item md-size-100">
-            <md-list class="md-double-line">
-              <md-list-item>
-                <md-icon>wc</md-icon>
-                <div class="md-list-item-text">
-                  <span>{{ $tc("words.gender") }}</span>
-                  <span>{{ agent.gender || "N/A" }}</span>
-                </div>
-              </md-list-item>
-              <md-divider></md-divider>
-              <md-list-item>
-                <md-icon>phone</md-icon>
-                <div class="md-list-item-text">
-                  <span>{{ $tc("words.phone") }}</span>
-                  <span>
-                    {{ agent.phone || "N/A" }}
-                  </span>
-                </div>
-              </md-list-item>
-              <md-divider></md-divider>
-              <md-list-item>
-                <md-icon>cake</md-icon>
-                <div class="md-list-item-text">
-                  <span>{{ $tc("words.birthday") }}</span>
-                  <span>
-                    {{ agent.birthday || "N/A" }}
-                  </span>
-                </div>
-              </md-list-item>
-              <md-divider></md-divider>
-              <md-list-item>
-                <md-icon>tag</md-icon>
-                <div class="md-list-item-text">
-                  <span>{{ $tc("words.type") }}</span>
-                  <span>
-                    {{ agent.commissionType || "N/A" }}
-                  </span>
-                </div>
-              </md-list-item>
-              <md-divider></md-divider>
-              <md-list-item>
-                <md-icon>account_balance_wallet</md-icon>
-                <div class="md-list-item-text">
-                  <span>{{ $tc("words.balance") }}</span>
-                  <span>
-                    {{ formatCurrency(agent.balance || 0) }}
-                  </span>
-                </div>
-              </md-list-item>
-            </md-list>
+          <div class="md-layout-item md-size-100">&nbsp;</div>
+
+          <div
+            class="md-layout-item md-size-25 md-small-size-50 detail-card-second-row"
+          >
+            <label>
+              <md-icon>wc</md-icon>
+              {{ $tc("words.gender") }}:
+            </label>
+            <span>{{ agent.gender }}</span>
+          </div>
+          <div
+            class="md-layout-item md-size-25 md-small-size-50 detail-card-second-row"
+          >
+            <label>
+              <md-icon>phone</md-icon>
+              {{ $tc("words.phone") }}:
+            </label>
+            <span>{{ agent.phone }}</span>
+          </div>
+          <div
+            class="md-layout-item md-size-25 md-small-size-50 detail-card-second-row"
+          >
+            <label>
+              <md-icon>cake</md-icon>
+              {{ $tc("words.birthday") }}:
+            </label>
+            <span>{{ agent.birthday }}</span>
+          </div>
+          <div
+            class="md-layout-item md-size-25 md-small-size-50 detail-card-second-row"
+          >
+            <label>
+              <md-icon>tag</md-icon>
+              {{ $tc("words.type") }}
+            </label>
+            <span>{{ agent.commissionType }}</span>
           </div>
         </div>
 
@@ -141,7 +125,7 @@
                     </md-select>
                   </md-field>
 
-                  <md-field v-if="$can('settings')">
+                  <md-field>
                     <label for="commission">
                       {{ $tc("phrases.commissionType") }}:
                     </label>
@@ -202,11 +186,10 @@ import { AgentService } from "@/services/AgentService"
 import { AgentCommissionService } from "@/services/AgentCommissionService"
 import { EventBus } from "@/shared/eventbus"
 import { notify } from "@/mixins/notify"
-import { currency } from "@/mixins/currency"
 
 export default {
   name: "AgentDetail",
-  mixins: [notify, currency],
+  mixins: [notify],
   components: { Widget },
   data() {
     return {
@@ -233,30 +216,13 @@ export default {
       this.getAgentDetail()
     })
   },
-  computed: {
-    initials() {
-      const person = this.agent
-      if (!person) return ""
 
-      const first = person.name?.charAt(0) ?? ""
-      const last = person.surname?.charAt(0) ?? ""
-
-      return (first + last).toUpperCase()
-    },
-  },
   methods: {
     async getAgentCommissions() {
-      if (!this.$can("settings")) {
-        return
-      }
       try {
         this.agentCommissions =
           await this.agentCommissionService.getAgentCommissions()
       } catch (e) {
-        if (e.response && e.response.status === 403) {
-          console.warn("Agent commissions: Insufficient permissions")
-          return
-        }
         this.alertNotify("error", e.message)
       }
     },
@@ -315,12 +281,16 @@ export default {
         this.alertNotify("error", e.message)
       }
     },
-    formatCurrency(amount) {
-      const currency =
-        this.$store.getters["settings/getMainSettings"]?.currency || "TZS"
-      return this.readable(amount) + currency
-    },
   },
 }
 </script>
+<style scoped>
+.detail-card-second-row {
+  display: grid;
+}
+
+.detail-card-second-row label {
+  font-weight: bolder !important;
+}
+</style>
 <style scoped></style>

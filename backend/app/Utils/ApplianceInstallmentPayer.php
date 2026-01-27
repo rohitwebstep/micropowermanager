@@ -2,26 +2,26 @@
 
 namespace App\Utils;
 
-use App\DTO\TransactionDataContainer;
 use App\Events\PaymentSuccessEvent;
 use App\Exceptions\Device\DeviceIsNotAssignedToCustomer;
-use App\Models\AppliancePerson;
+use App\Misc\TransactionDataContainer;
+use App\Models\AssetPerson;
 use App\Models\Device;
 use App\Models\Person\Person;
 use App\Models\Transaction\Transaction;
 use App\Services\AppliancePaymentService;
 use App\Services\AppliancePersonService;
 use App\Services\ApplianceRateService;
-use App\Services\DeviceService;
 use Illuminate\Support\Collection;
+use MPM\Device\DeviceService;
 
 class ApplianceInstallmentPayer {
     private Person $customer;
     private Transaction $transaction;
 
-    /** @var array<int, array{appliance_rate_id: int, paid: float}> */
+    /** @var array<int, array{asset_rate_id: int, paid: float}> */
     public array $paidRates = [];
-    public ?AppliancePerson $shsLoan = null;
+    public ?AssetPerson $shsLoan = null;
     public float $consumableAmount;
 
     public function __construct(
@@ -113,7 +113,7 @@ class ApplianceInstallmentPayer {
                 $installment->save();
 
                 $this->paidRates[] = [
-                    'appliance_rate_id' => $installment->id,
+                    'asset_rate_id' => $installment->id,
                     'paid' => $this->transaction->amount,
                 ];
                 $this->transaction->amount = 0;
@@ -130,7 +130,7 @@ class ApplianceInstallmentPayer {
                     transaction: $this->transaction,
                 ));
                 $this->paidRates[] = [
-                    'appliance_rate_id' => $installment->id,
+                    'asset_rate_id' => $installment->id,
                     'paid' => $installment->remaining,
                 ];
                 $this->transaction->amount -= $installment->remaining;

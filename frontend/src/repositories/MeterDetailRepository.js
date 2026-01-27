@@ -1,6 +1,7 @@
 import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
-const resource = `/api/meters`
+const resource = `${baseUrl}/api/meters`
 
 export default {
   detail(meterSerial) {

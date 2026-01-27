@@ -1,5 +1,5 @@
 <template>
-  <widget :title="$tc('Meter Detail')" color="primary">
+  <widget :title="$tc('Meter Detail')" color="green">
     <div class="meter-overview-card">
       <div
         class="meter-overview-detail"
@@ -32,7 +32,7 @@
                 <span
                   style="cursor: pointer"
                   @click="editTariff = true"
-                  v-if="meter.tariff.factor !== 2 && $can('transactions')"
+                  v-if="meter.tariff.factor !== 2"
                 >
                   <md-icon>edit</md-icon>
                 </span>
@@ -74,7 +74,6 @@
                 <span
                   style="cursor: pointer"
                   @click="editConnectionGroup = true"
-                  v-if="$can('transactions')"
                 >
                   <md-icon>edit</md-icon>
                 </span>
@@ -124,7 +123,6 @@
                 <span
                   style="cursor: pointer"
                   @click="editConnectionType = true"
-                  v-if="$can('transactions')"
                 >
                   <md-icon>edit</md-icon>
                 </span>
@@ -189,13 +187,9 @@ export default {
     },
   },
   mounted() {
-    if (this.$can("transactions")) {
-      this.getTariffs()
-    }
-    if (this.$can("settings")) {
-      this.getConnectionGroups()
-      this.getConnectionTypes()
-    }
+    this.getTariffs()
+    this.getConnectionGroups()
+    this.getConnectionTypes()
     this.$emit("widget-loaded", "meter-detail")
   },
   data() {

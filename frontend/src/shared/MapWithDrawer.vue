@@ -106,31 +106,22 @@ export default {
     }
   },
   methods: {
-    emitLocationSelected(geometry) {
-      this.$emit("locationSelected", { geojson: geometry })
+    emitLocationSelected(location) {
+      let data = {}
+      if (!("geojson" in location)) {
+        data["geojson"] = location
+      } else {
+        data = location
+      }
+
+      this.$emit("locationSelected", data)
     },
 
-    focusLocation(feature) {
+    focusLocation(geo) {
+      let tmp = []
       this.geoLayer.clearLayers()
-      // Create a FeatureCollection from the single feature
-      const featureCollection = {
-        type: "FeatureCollection",
-        features: [feature],
-      }
-      const geoJsonLayer = L.geoJSON(featureCollection, {
-        onEachFeature: (feature, layer) => {
-          const displayName =
-            feature.properties?.display_name || feature.properties?.name || ""
-          if (displayName) {
-            layer.bindPopup(displayName)
-          }
-        },
-      })
-      geoJsonLayer.addTo(this.geoLayer)
-      const bounds = geoJsonLayer.getBounds()
-      if (bounds.isValid()) {
-        this.map.fitBounds(bounds)
-      }
+      tmp.push(geo)
+      this.setGeoLocation(tmp)
     },
     setMapView(location) {
       this.map.setView(location, 9)
@@ -153,8 +144,9 @@ export default {
     locationSelected(index, location) {
       this.manualLayer.clearLayers()
       this.selectedLocationIndex = index
-      this.emitLocationSelected(location.feature.geometry)
-      this.focusLocation(location.feature)
+      this.setMapView([location.lat, location.lon])
+      this.emitLocationSelected(location.geojson)
+      this.focusLocation(location)
     },
     removeCoordinate(index) {
       this.polygonCoordinates.splice(index, 1)
@@ -228,75 +220,54 @@ export default {
         .get(
           "https://nominatim.openstreetmap.org/search.php?q=" +
             this.cluster_name +
-            "&polygon_geojson=1&format=geojson",
+            "&polygon_geojson=1&format=json",
         )
         .then((response) => {
+          this.geoData = this.filterResultsOut(response.data)
           if (!this.mapInitialized) {
             this.initMap()
           }
 
-          const filteredFeatures = this.filterGeoJSONFeatures(
-            response.data.features || [],
-          )
-
-          this.geoData = filteredFeatures.map((feature) => ({
-            feature: feature,
-            display_name:
-              feature.properties?.display_name ||
-              feature.properties?.name ||
-              "",
-          }))
-
-          this.setGeoLocation(filteredFeatures)
+          this.setGeoLocation(response.data)
         })
     },
 
-    filterGeoJSONFeatures(features) {
-      if (Object.keys(this.filtered_types).length === 0) {
-        return features
+    filterResultsOut(data) {
+      let result = []
+      for (let i in data) {
+        let geoType = data[i].geojson.type
+        if (
+          Object.keys(this.filtered_types).length > 0 &&
+          !(geoType.toLowerCase() in this.filtered_types)
+        ) {
+          continue
+        }
+        result.push(data[i])
       }
-
-      return features.filter((feature) => {
-        const geoType = feature.geometry?.type?.toLowerCase()
-        return geoType && geoType in this.filtered_types
-      })
+      return result
     },
 
-    setGeoLocation(filteredFeatures) {
+    setGeoLocation(data) {
+      let locations = []
       this.geoLayer.clearLayers()
+      for (let i in data) {
+        let geoType = data[i].geojson.type
 
-      if (!filteredFeatures || filteredFeatures.length === 0) {
-        return
-      }
+        locations.push({
+          type: "Feature",
+          properties: { popupContent: data[i].display_name },
 
-      const featureCollection = {
-        type: "FeatureCollection",
-        features: filteredFeatures,
-      }
+          geometry: {
+            type: geoType,
+            coordinates: data[i].geojson.coordinates,
+          },
+        })
 
-      const geoJsonLayer = L.geoJSON(featureCollection, {
-        onEachFeature: (feature, layer) => {
-          // Add popup with display name
-          const displayName =
-            feature.properties?.display_name || feature.properties?.name || ""
-          if (displayName) {
-            layer.bindPopup(displayName)
-          }
-        },
-      })
+        let geoJsonLayer = L.geoJSON(locations)
 
-      geoJsonLayer.addTo(this.geoLayer)
+        geoJsonLayer.addTo(this.geoLayer)
 
-      const bounds = geoJsonLayer.getBounds()
-      if (bounds.isValid()) {
-        this.map.fitBounds(bounds)
-      } else if (filteredFeatures.length > 0) {
-        const firstFeature = filteredFeatures[0]
-        if (firstFeature.bbox && firstFeature.bbox.length >= 4) {
-          const centerLat = (firstFeature.bbox[1] + firstFeature.bbox[3]) / 2
-          const centerLon = (firstFeature.bbox[0] + firstFeature.bbox[2]) / 2
-          this.map.setView([centerLat, centerLon], 12)
-        }
+        this.map.setView([data[i].lat, data[i].lon], 12)
       }
     },
 

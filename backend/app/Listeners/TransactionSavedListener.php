@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\TransactionSavedEvent;
-use App\Providers\Interfaces\ITransactionProvider;
+use MPM\Transaction\Provider\ITransactionProvider;
 
 class TransactionSavedListener {
     public function onTransactionSaved(ITransactionProvider $transactionProvider): void {

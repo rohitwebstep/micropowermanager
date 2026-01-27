@@ -1,6 +1,7 @@
 import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
-const resource = `/api/revenue`
+const resource = `${baseUrl}/api/revenue`
 
 export default {
   trends(miniGridId, period) {

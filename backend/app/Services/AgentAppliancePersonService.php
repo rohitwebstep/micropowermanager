@@ -3,14 +3,14 @@
 namespace App\Services;
 
 use App\Models\Agent;
-use App\Models\AppliancePerson;
+use App\Models\AssetPerson;
 use App\Services\Interfaces\IAssignationService;
 
 /**
- * @implements IAssignationService<AppliancePerson, Agent>
+ * @implements IAssignationService<AssetPerson, Agent>
  */
 class AgentAppliancePersonService implements IAssignationService {
-    private AppliancePerson $appliancePerson;
+    private AssetPerson $appliancePerson;
     private Agent $agent;
 
     public function setAssigned($appliancePerson): void {
@@ -21,7 +21,7 @@ class AgentAppliancePersonService implements IAssignationService {
         $this->agent = $agent;
     }
 
-    public function assign(): AppliancePerson {
+    public function assign(): AssetPerson {
         $this->appliancePerson->creator()->associate($this->agent);
 
         return $this->appliancePerson;

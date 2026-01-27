@@ -15,8 +15,6 @@
 </template>
 
 <script>
-import Client from "@/repositories/Client/AxiosClient"
-
 export default {
   name: "VillageSelector",
   mounted() {
@@ -31,7 +29,7 @@ export default {
   },
   methods: {
     getCityList() {
-      Client.get(resources.city.list).then((response) => {
+      axios.get(resources.city.list).then((response) => {
         this.cities = response.data.data
       })
     },

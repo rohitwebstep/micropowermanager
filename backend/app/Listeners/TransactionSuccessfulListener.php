@@ -4,8 +4,8 @@ namespace App\Listeners;
 
 use App\Events\TransactionSuccessfulEvent;
 use App\Models\Transaction\Transaction;
-use App\Providers\Helpers\TransactionAdapter;
-use App\Providers\Interfaces\ITransactionProvider;
+use MPM\Transaction\Provider\ITransactionProvider;
+use MPM\Transaction\Provider\TransactionAdapter;
 
 class TransactionSuccessfulListener {
     public function onTransactionSuccess(Transaction $transaction): void {

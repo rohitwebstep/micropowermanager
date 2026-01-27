@@ -1,6 +1,7 @@
 import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
-const resource = `/api/clusters`
+const resource = `${baseUrl}/api/clusters`
 
 export default {
   create(cluster) {

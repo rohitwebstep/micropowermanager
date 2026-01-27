@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
-use App\Exceptions\CompanyAlreadyExistsException;
 use App\Models\Company;
 use App\Services\Interfaces\IBaseService;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * @implements IBaseService<Company>
@@ -25,18 +24,19 @@ class CompanyService implements IBaseService {
     }
 
     public function getById(int $id): Company {
-        return $this->company->newQuery()->findOrFail($id);
+        $result = $this->company->newQuery()->findOrFail($id);
+        if (isset($result->protected_page_password) && str_starts_with($result->protected_page_password, 'eyJ')) {
+            $result->protected_page_password = Crypt::decrypt($result->protected_page_password);
+        }
+
+        return $result;
     }
 
     /**
      * @param array<string, mixed> $data
      */
     public function create(array $data): Company {
-        try {
-            return $this->company->newQuery()->create($data);
-        } catch (UniqueConstraintViolationException) {
-            throw new CompanyAlreadyExistsException('Company already exists');
-        }
+        return $this->company->newQuery()->create($data);
     }
 
     /**

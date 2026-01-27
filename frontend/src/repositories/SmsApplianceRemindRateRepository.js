@@ -1,6 +1,7 @@
 import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
-const resource = `/api/sms-appliance-remind-rate`
+const resource = `${baseUrl}/api/sms-appliance-remind-rate`
 
 export default {
   list() {

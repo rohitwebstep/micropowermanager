@@ -168,7 +168,7 @@ export default {
       this.$sidebar.displaySidebar(false)
     },
     navigateRoute(route) {
-      this.$router.push(route).catch(() => {})
+      this.$router.push(route)
     },
   },
   computed: {

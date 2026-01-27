@@ -13,7 +13,6 @@ use Inensus\ChintMeter\Providers\ChintMeterServiceProvider;
 use Inensus\DalyBms\Providers\DalyBmsServiceProvider;
 use Inensus\DemoMeterManufacturer\Providers\DemoMeterManufacturerServiceProvider;
 use Inensus\DemoShsManufacturer\Providers\DemoShsManufacturerServiceProvider;
-use Inensus\EcreeeETender\Providers\EcreeeETenderServiceProvider;
 use Inensus\GomeLongMeter\Providers\GomeLongMeterServiceProvider;
 use Inensus\KelinMeter\Providers\KelinMeterServiceProvider;
 use Inensus\MesombPaymentProvider\Providers\MesombServiceProvider;
@@ -26,15 +25,15 @@ use Inensus\SteamaMeter\Providers\SteamaMeterServiceProvider;
 use Inensus\StronMeter\Providers\StronMeterServiceProvider;
 use Inensus\SunKingSHS\Providers\SunKingSHSServiceProvider;
 use Inensus\SwiftaPaymentProvider\Providers\SwiftaServiceProvider;
-use Inensus\TextbeeSmsGateway\Providers\TextbeeSmsGatewayServiceProvider;
+use Inensus\Ticket\Providers\TicketServiceProvider;
 use Inensus\ViberMessaging\Providers\ViberMessagingServiceProvider;
 use Inensus\VodacomMobileMoney\Providers\VodacomMobileMoneyServiceProvider;
 use Inensus\WavecomPaymentProvider\Providers\WavecomPaymentProviderServiceProvider;
 use Inensus\WaveMoneyPaymentProvider\Providers\WaveMoneyPaymentProviderServiceProvider;
 
 return [
-    ApiKeyServiceProvider::class,
     AppServiceProvider::class,
+    ApiKeyServiceProvider::class,
     HorizonServiceProvider::class,
     ServicesProvider::class,
     AfricasTalkingServiceProvider::class,
@@ -44,24 +43,23 @@ return [
     CalinSmartMeterServiceProvider::class,
     ChintMeterServiceProvider::class,
     DalyBmsServiceProvider::class,
-    DemoMeterManufacturerServiceProvider::class,
-    DemoShsManufacturerServiceProvider::class,
     GomeLongMeterServiceProvider::class,
     KelinMeterServiceProvider::class,
     MesombServiceProvider::class,
     MicroStarMeterServiceProvider::class,
-    OdysseyDataExportServiceProvider::class,
-    PaystackPaymentProviderServiceProvider::class,
-    ProspectServiceProvider::class,
     SparkMeterServiceProvider::class,
     SteamaMeterServiceProvider::class,
     StronMeterServiceProvider::class,
     SunKingSHSServiceProvider::class,
     SwiftaServiceProvider::class,
-    TextbeeSmsGatewayServiceProvider::class,
+    TicketServiceProvider::class,
     ViberMessagingServiceProvider::class,
     VodacomMobileMoneyServiceProvider::class,
     WaveMoneyPaymentProviderServiceProvider::class,
     WavecomPaymentProviderServiceProvider::class,
-    EcreeeETenderServiceProvider::class,
+    ProspectServiceProvider::class,
+    OdysseyDataExportServiceProvider::class,
+    DemoMeterManufacturerServiceProvider::class,
+    DemoShsManufacturerServiceProvider::class,
+    PaystackPaymentProviderServiceProvider::class,
 ];

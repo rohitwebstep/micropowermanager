@@ -7,7 +7,7 @@
       :search="true"
       :subscriber="subscriber"
       :route_name="'/meters'"
-      color="primary"
+      color="green"
     >
       <md-table md-card style="margin-left: 0">
         <md-table-row>
@@ -56,7 +56,6 @@ import { Meters } from "@/services/MeterService"
 import { Manufacturers } from "@/services/ManufacturerService"
 import { EventBus } from "@/shared/eventbus"
 import { timing } from "@/mixins/timing"
-import Client from "@/repositories/Client/AxiosClient"
 
 export default {
   name: "Meters",
@@ -138,7 +137,7 @@ export default {
       })
     },
     deleteMeter(meterId) {
-      Client.delete(resources.meters.delete + meterId).then(() => {
+      axios.delete(resources.meters.delete + meterId).then(() => {
         const Toast = this.$swal.mixin({
           toast: true,
           //position: 'center',

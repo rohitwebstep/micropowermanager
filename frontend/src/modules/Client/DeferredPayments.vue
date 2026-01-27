@@ -6,7 +6,7 @@
       :button="true"
       :title="$tc('phrases.soldAppliances')"
       :button-color="'red'"
-      color="primary"
+      color="green"
       :subscriber="subscriber"
       @widgetAction="
         () => {
@@ -26,12 +26,12 @@
             </md-table-head>
           </md-table-row>
           <md-table-row
-            v-for="(item, index) in appliancePersonService.list"
+            v-for="(item, index) in assetPersonService.list"
             :key="index"
             @click="showDetails(index)"
           >
             <md-table-cell md-label="Name" md-sort-by="name">
-              {{ item.appliance.name }}
+              {{ item.asset.name }}
             </md-table-cell>
             <md-table-cell md-label="Cost" md-sort-by="total_cost">
               {{ moneyFormat(item.total_cost) }}
@@ -56,7 +56,8 @@
 </template>
 
 <script>
-import { AppliancePersonService } from "@/services/AppliancePersonService"
+import { AssetRateService } from "@/services/AssetRateService"
+import { AssetPersonService } from "@/services/AssetPersonService"
 import { currency, notify } from "@/mixins"
 import { EventBus } from "@/shared/eventbus"
 import Widget from "@/shared/Widget.vue"
@@ -74,15 +75,16 @@ export default {
     },
   },
   mounted() {
-    this.getApplianceList()
+    this.getAssetList()
   },
   data() {
     return {
-      subscriber: "person-appliance",
-      appliancePersonService: new AppliancePersonService(),
+      subscriber: "person-asset",
+      assetRateService: new AssetRateService(),
+      assetPersonService: new AssetPersonService(),
       adminId:
         this.$store.getters["auth/authenticationService"].authenticateUser.id,
-      selectedAppliance: null,
+      selectedAsset: null,
       headers: [
         this.$tc("words.name"),
         this.$tc("words.cost"),
@@ -95,25 +97,18 @@ export default {
 
   methods: {
     showDetails(index) {
-      this.selectedAppliance = this.appliancePersonService.list[index]
-      this.$router.push("/sold-appliance-detail/" + this.selectedAppliance.id)
+      this.selectedAsset = this.assetPersonService.list[index]
+      this.$router.push("/sold-appliance-detail/" + this.selectedAsset.id)
     },
-    async getApplianceList() {
-      if (!this.$can("appliances")) {
-        return
-      }
+    async getAssetList() {
       try {
-        await this.appliancePersonService.getPersonAppliances(this.personId)
+        await this.assetPersonService.getPersonAssets(this.personId)
         EventBus.$emit(
           "widgetContentLoaded",
           this.subscriber,
-          this.appliancePersonService.list.length,
+          this.assetPersonService.list.length,
         )
       } catch (e) {
-        if (e.response && e.response.status === 403) {
-          console.warn("Assets/Deferred payments: Insufficient permissions")
-          return
-        }
         this.alertNotify("error", e.message)
       }
     },

@@ -35,7 +35,7 @@ export class SolarHomeSystemService {
     this.list = []
     this.shs = {
       serialNumber: null,
-      applianceId: null,
+      assetId: null,
       manufacturerId: null,
       personId: null,
     }

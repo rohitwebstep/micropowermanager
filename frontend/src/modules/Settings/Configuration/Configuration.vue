@@ -1,6 +1,6 @@
 <template>
   <div class="settings-area">
-    <widget color="primary" title="Settings">
+    <widget color="green" title="Settings">
       <md-tabs>
         <md-tab id="tab-home" md-icon="home" md-label="Main">
           <main-settings :mainSettings="mainSettings" />

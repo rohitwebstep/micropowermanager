@@ -9,7 +9,7 @@
       :button-text="$tc('phrases.assignAppliance', 0)"
       :button="true"
       :title="$tc('phrases.assignAppliance', 1)"
-      color="primary"
+      color="green"
       :subscriber="subscriber"
       @widgetAction="addNewAppliance"
     >

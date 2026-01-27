@@ -3,15 +3,15 @@
 namespace Database\Seeders;
 
 use App\Models\Address\Address;
-use App\Models\Appliance;
-use App\Models\ApplianceType;
+use App\Models\Asset;
+use App\Models\AssetType;
 use App\Models\Device;
 use App\Models\GeographicalInformation;
 use App\Models\Manufacturer;
 use App\Models\Person\Person;
 use App\Models\SolarHomeSystem;
-use App\Services\DatabaseProxyManagerService;
 use Illuminate\Database\Seeder;
+use MPM\DatabaseProxy\DatabaseProxyManagerService;
 
 class SolarHomeSystemSeeder extends Seeder {
     public function __construct(
@@ -38,13 +38,13 @@ class SolarHomeSystemSeeder extends Seeder {
 
         $manufacturers = collect([$demoShsManufacturer]);
 
-        // Get the SHS appliance type
-        $applianceType = ApplianceType::where('name', 'Solar Home System')->first();
+        // Get the SHS asset type
+        $assetType = AssetType::where('name', 'Solar Home System')->first();
 
         // Create our appliances, i.e. sales deals (?)
-        $appliances = Appliance::factory()
+        $appliances = Asset::factory()
             ->count(5)
-            ->for($applianceType)
+            ->for($assetType)
             ->sequence(
                 // Thank you ChatGPT for generating these names... 🤖
                 [
@@ -75,7 +75,7 @@ class SolarHomeSystemSeeder extends Seeder {
         foreach ($selectedPersons as $person) {
             // Create a Solar Home System
             $solarHomeSystem = SolarHomeSystem::factory()
-                ->for(Appliance::all()->random(), 'appliance')
+                ->for(Asset::all()->random(), 'appliance')
                 ->for($demoShsManufacturer)
                 ->create();
 
@@ -108,7 +108,7 @@ class SolarHomeSystemSeeder extends Seeder {
         // Create additional not-yet-sold SHS
         for ($i = 1; $i <= 10; ++$i) {
             $solarHomeSystem = SolarHomeSystem::factory()
-                ->for(Appliance::all()->random(), 'appliance')
+                ->for(Asset::all()->random(), 'appliance')
                 ->for($demoShsManufacturer)
                 ->create();
 

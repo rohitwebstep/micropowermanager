@@ -1,6 +1,7 @@
 import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
-const resource = `/api/connection-groups`
+const resource = `${baseUrl}/api/connection-groups`
 
 export default {
   list() {

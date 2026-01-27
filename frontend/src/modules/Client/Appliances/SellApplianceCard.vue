@@ -279,7 +279,7 @@
 <script>
 import Widget from "@/shared/Widget.vue"
 import { ApplianceService } from "@/services/ApplianceService"
-import { AppliancePersonService } from "@/services/AppliancePersonService"
+import { AssetPersonService } from "@/services/AssetPersonService"
 import { currency, notify } from "@/mixins"
 import { PersonService } from "@/services/PersonService"
 import { TariffService } from "@/services/TariffService"
@@ -312,7 +312,7 @@ export default {
       showRates: false,
       personService: new PersonService(),
       applianceService: new ApplianceService(),
-      appliancePersonService: new AppliancePersonService(),
+      assetPersonService: new AssetPersonService(),
       tariffService: new TariffService(),
       currency: this.$store.getters["settings/getMainSettings"].currency,
       minimumPayableAmount: 0,
@@ -364,8 +364,8 @@ export default {
       if (validator) {
         this.$swal({
           type: "question",
-          title: this.$tc("phrases.sellAppliance", 0),
-          text: this.$tc("phrases.sellAppliance", 2, {
+          title: this.$tc("phrases.sellAsset", 0),
+          text: this.$tc("phrases.sellAsset", 2, {
             cost:
               this.newAppliance.cost +
               this.$store.getters["settings/getMainSettings"].currency,
@@ -398,17 +398,13 @@ export default {
                   )
                 }
 
-                let soldAppliance =
-                  await this.appliancePersonService.saveAppliance(
-                    this.newAppliance.id,
-                    this.personId,
-                    this.newAppliance,
-                    this.adminId,
-                  )
-                this.alertNotify(
-                  "success",
-                  this.$tc("phrases.sellAppliance", 1),
+                let soldAppliance = await this.assetPersonService.saveAsset(
+                  this.newAppliance.id,
+                  this.personId,
+                  this.newAppliance,
+                  this.adminId,
                 )
+                this.alertNotify("success", this.$tc("phrases.sellAsset", 1))
                 await this.$router.push(
                   "/sold-appliance-detail/" + soldAppliance.id,
                 )
@@ -452,7 +448,7 @@ export default {
     checkIsForSHS(appliance) {
       if (
         appliance.applianceType === APPLIANCE_TYPE_SHS_ID ||
-        appliance.applianceTypeName === APPLIANCE_TYPE_SHS_NAME
+        appliance.assetTypeName === APPLIANCE_TYPE_SHS_NAME
       ) {
         this.showSelectDevice = true
         this.newAppliance.isShs = true

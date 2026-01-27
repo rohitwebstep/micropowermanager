@@ -121,7 +121,7 @@ export default {
       this.toggleCard = !this.toggleCard
     },
     navigateRoute(route) {
-      this.$router.push(route).catch(() => {})
+      this.$router.push(route)
     },
   },
   computed: {

@@ -12,34 +12,14 @@
           <div v-if="!hasValidData" class="no-data-message">
             <p>{{ $tc("phrases.noData") }}</p>
           </div>
-          <div v-else style="height: 600px; width: 100%; position: relative">
-            <v-chart
-              v-if="
-                echartsOption &&
-                echartsOption.series &&
-                echartsOption.series[0] &&
-                echartsOption.series[0].data &&
-                echartsOption.series[0].data.length > 0
-              "
-              :option="echartsOption"
-              :autoresize="true"
-              style="height: 600px; width: 100%; min-height: 600px"
-            />
-            <div
-              v-else
-              style="
-                padding: 2rem;
-                text-align: center;
-                color: #999;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              "
-            >
-              {{ $tc("phrases.noData") || "No Data Available" }}
-            </div>
-          </div>
+          <GChart
+            v-else
+            type="ColumnChart"
+            :data="displayData"
+            :options="safeChartOptions"
+            :resizeDebounce="500"
+            :loading="loading"
+          />
         </div>
       </div>
     </widget>
@@ -50,10 +30,11 @@
 import Widget from "@/shared/Widget.vue"
 import Loader from "@/shared/Loader.vue"
 import { EventBus } from "@/shared/eventbus"
+import { GChart } from "vue-google-charts"
 
 export default {
   name: "TicketsOverview",
-  components: { Loader, Widget },
+  components: { Loader, Widget, GChart },
   props: {
     chartOptions: {
       required: true,
@@ -108,65 +89,45 @@ export default {
         ]
       )
     },
-    echartsOption() {
-      if (
-        !this.hasValidData ||
-        !this.displayData ||
-        this.displayData.length < 2
-      ) {
-        return null
-      }
-
-      const data = this.displayData
-      const headers = data[0] || []
-      const periodIndex = 0
-      const seriesNames = headers.slice(1)
-
-      const periods = data.slice(1).map((row) => row[periodIndex] || "")
-
-      const series = seriesNames.map((name, index) => {
-        const seriesIndex = index + 1
-        return {
-          name: String(name || `Series ${index + 1}`),
-          type: "bar",
-          stack: "total",
-          data: data.slice(1).map((row) => parseFloat(row[seriesIndex]) || 0),
+    safeChartOptions() {
+      return (
+        this.chartOptions || {
+          isStacked: true,
+          chart: {
+            legend: {
+              position: "top",
+            },
+          },
+          hAxis: {
+            textPosition: "out",
+            slantedText: true,
+            maxAlternation: 1,
+            showTextEvery: 4,
+          },
+          vAxis: {
+            minValue: 0,
+            format: "0",
+            gridlines: {
+              count: 5,
+            },
+            viewWindow: {
+              min: 0,
+            },
+          },
+          height: "600",
+          animation: {
+            duration: 0,
+            startup: false,
+          },
+          // Performance optimizations
+          focusTarget: "category",
+          aggregationTarget: "category",
+          enableInteractivity: true,
+          tooltip: {
+            trigger: "selection",
+          },
         }
-      })
-
-      return {
-        tooltip: {
-          trigger: "axis",
-          axisPointer: {
-            type: "shadow",
-          },
-        },
-        legend: {
-          data: seriesNames.map((name) => String(name)),
-          top: 10,
-        },
-        grid: {
-          left: "3%",
-          right: "4%",
-          bottom: "15%",
-          containLabel: true,
-        },
-        xAxis: {
-          type: "category",
-          data: periods,
-          axisLabel: {
-            rotate: 45,
-            interval: 0,
-            showMaxLabel: true,
-            showMinLabel: true,
-          },
-        },
-        yAxis: {
-          type: "value",
-          min: 0,
-        },
-        series: series,
-      }
+      )
     },
   },
   methods: {

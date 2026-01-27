@@ -1,5 +1,5 @@
 import { resources } from "@/resources"
-import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
 export class Consumptions {
   constructor(meterId) {
@@ -9,15 +9,18 @@ export class Consumptions {
 
   getData(start, end) {
     this.data = []
-    let resource =
+    let url =
       resources.meters.consumptions +
       this.meterId +
       "/consumptions/" +
       start +
       "/" +
       end
+    // Make sure we are calling the backend
+    url = url.startsWith("http") ? url : `${baseUrl}${url}`
 
-    return Client.get(resource)
+    return axios
+      .get(url)
       .then((response) => {
         for (let c in response.data.data) {
           let item = response.data.data[c]

@@ -1,6 +1,7 @@
 import Client from "@/repositories/Client/AxiosClient"
+import { baseUrl } from "@/repositories/Client/AxiosClient"
 
-const resource = `/api/reports`
+const resource = `${baseUrl}/api/reports`
 
 export default {
   list(type) {

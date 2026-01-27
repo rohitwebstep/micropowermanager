@@ -1,21 +1,20 @@
 <template>
   <div class="row">
-    <div v-if="showNewUser" style="margin-top: 1rem">
-      <AddExternalTicketingUser
-        @created="onUserCreated"
-        @cancel="showNewUser = false"
-      />
-    </div>
-
-    <Widget
+    <div v-if="showNewUser" style="margin-top: 1rem"></div>
+    <widget
       :title="$tc('phrases.userList')"
-      :button="true"
+      :button="false"
       button-text="Add new User"
       @widgetAction="showAddUser"
-      color="primary"
+      color="green"
       :subscriber="subscriber"
     >
-      <md-table v-model="userList" md-sort="name" md-sort-order="asc" md-card>
+      <md-table
+        v-model="ticketUserService.list"
+        md-sort="name"
+        md-sort-order="asc"
+        md-card
+      >
         <md-table-row slot="md-table-row" slot-scope="{ item }">
           <md-table-cell :md-label="$tc('words.id')" md-sort-by="id" md-numeric>
             {{ item.id }}
@@ -38,26 +37,24 @@
           </md-table-cell>
         </md-table-row>
       </md-table>
-    </Widget>
+    </widget>
   </div>
 </template>
 
 <script>
 import { notify } from "@/mixins/notify"
 import Widget from "@/shared/Widget.vue"
-import AddExternalTicketingUser from "@/modules/Ticket/AddExternalTicketingUser.vue"
 import { TicketUserService } from "@/services/TicketUserService"
 import { EventBus } from "@/shared/eventbus"
 
 export default {
   name: "UserManagement",
-  mixins: [notify],
-  components: { Widget, AddExternalTicketingUser },
+  mixing: [notify],
+  components: { Widget },
   data() {
     return {
       subscriber: "ticket-user-list",
       ticketUserService: new TicketUserService(),
-      userList: [],
       showNewUser: false,
       loading: false,
       updateModal: false,
@@ -65,20 +62,19 @@ export default {
   },
   mounted() {
     this.getUsers()
-    EventBus.$on("ticket.add.user", (data) => {
+    EventBus.$on("ticket.add.user", function (data) {
       this.showNewUser = data
     })
   },
   methods: {
     async getUsers() {
       try {
-        this.userList = []
+        this.ticketUserService.list = []
         await this.ticketUserService.getUsers()
-        this.$set(this, "userList", this.ticketUserService.list || [])
         EventBus.$emit(
           "widgetContentLoaded",
           this.subscriber,
-          this.userList.length,
+          this.ticketUserService.list.length,
         )
       } catch (e) {
         this.alertNotify("error", e.message)
@@ -86,10 +82,6 @@ export default {
     },
     showAddUser() {
       this.showNewUser = true
-    },
-    async onUserCreated() {
-      await this.getUsers()
-      this.showNewUser = false
     },
     updateTicketingUser(isActivated, userId) {
       console.log(isActivated, userId)

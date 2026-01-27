@@ -55,20 +55,20 @@ export let resources = {
     create: "/api/tariffs",
   },
   ticket: {
-    list: "/api/tickets/ticket",
-    detail: "/api/tickets/ticket/",
-    close: "/api/tickets/ticket",
-    create: "/api/tickets/ticket",
-    createMaintenance: "/api/tickets/ticket",
-    getUser: "/api/tickets/user/",
-    users: "/api/tickets/users/",
-    createUserTicket: "/api/tickets/users",
-    labels: "/api/tickets/labels",
-    comments: "/api/tickets/comments",
+    list: "/tickets/api/ticket",
+    detail: "/tickets/api/ticket/",
+    close: "/tickets/api/ticket",
+    create: "/tickets/api/ticket",
+    createMaintenance: "/tickets/api/ticket",
+    getUser: "/tickets/api/tickets/user/",
+    users: "/tickets/api/users/",
+    createUserTicket: "/tickets/api/tickets/users",
+    labels: "/tickets/api/labels",
+    comments: "/tickets/api/tickets/comments",
   },
   ticketOursourcePayoutReports: {
-    list: "/api/reports",
-    download: "/api/reports/download/", //{id}
+    list: "/tickets/api/reports",
+    download: "/tickets/api/reports/download/", //{id}
   },
   transactions: {
     list: {
@@ -83,22 +83,18 @@ export let resources = {
   },
   paymenthistories: "/api/paymenthistories/",
   debt: "/api/paymenthistories/debt/",
-  appliances: {
-    list: "/api/appliances",
+  assets: {
+    list: "/api/assets",
     type: {
-      list: "/api/appliances/types",
-      store: "/api/appliances/types",
-      update: "/api/appliances/types",
-      delete: "/api/appliances/types",
-      sell: "/api/appliances/types/",
-      person: "/api/appliances/types/people/",
+      list: "/api/assets/types",
+      store: "/api/assets/types",
+      update: "/api/assets/types",
+      delete: "/api/assets/types",
+      sell: "/api/assets/types/",
+      person: "/api/assets/types/people/",
     },
     rate: {
-      update: "/api/appliances/rates/",
-    },
-    person: {
-      rates: "/api/appliances/person/",
-      logs: "/api/appliances/person/",
+      update: "/api/assets/rates/",
     },
   },
   meters: {
@@ -163,7 +159,7 @@ export let resources = {
     balance_histories: "/api/agents/balance/history/",
     sold_appliances: "/api/agents/sold/",
     transactions: "/api/agents/transactions/",
-    tickets: "/api/tickets/agents",
+    tickets: "/tickets/api/agents",
     receipts: "/api/agents/receipt",
   },
   solarHomeSystems: {

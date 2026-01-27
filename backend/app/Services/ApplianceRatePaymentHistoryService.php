@@ -2,27 +2,27 @@
 
 namespace App\Services;
 
-use App\Models\ApplianceRate;
+use App\Models\AssetRate;
 use App\Models\PaymentHistory;
 use App\Services\Interfaces\IAssignationService;
 
 /**
- * @implements IAssignationService<PaymentHistory, ApplianceRate>
+ * @implements IAssignationService<PaymentHistory, AssetRate>
  */
 class ApplianceRatePaymentHistoryService implements IAssignationService {
     private PaymentHistory $paymentHistory;
-    private ApplianceRate $applianceRate;
+    private AssetRate $assetRate;
 
     public function setAssigned($paymentHistory): void {
         $this->paymentHistory = $paymentHistory;
     }
 
-    public function setAssignee($applianceRate): void {
-        $this->applianceRate = $applianceRate;
+    public function setAssignee($assetRate): void {
+        $this->assetRate = $assetRate;
     }
 
     public function assign(): PaymentHistory {
-        $this->paymentHistory->paidFor()->associate($this->applianceRate);
+        $this->paymentHistory->paidFor()->associate($this->assetRate);
 
         return $this->paymentHistory;
     }

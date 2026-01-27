@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use App\Models\Base\BaseModel;
-use App\Models\Interfaces\ITargetAssignable;
 use Database\Factories\ClusterFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use MPM\Target\TargetAssignable;
 
 /**
  * Class Cluster.
@@ -17,14 +17,19 @@ use Illuminate\Support\Carbon;
  * @property      int                       $id
  * @property      string                    $name
  * @property      int                       $manager_id
- * @property      array<array-key, mixed>   $geo_json
+ * @property      array<array-key, mixed>   $geo_data
  * @property      Carbon|null               $created_at
  * @property      Carbon|null               $updated_at
  * @property-read Collection<int, City>     $cities
  * @property-read User|null                 $manager
  * @property-read Collection<int, MiniGrid> $miniGrids
+ *
+ * Special attributes only used for caching services:
+ * @property int   $population This field is used only for caching.
+ * @property int   $meterCount This field is used only for caching.
+ * @property float $revenue    This field is used only for caching.
  */
-class Cluster extends BaseModel implements ITargetAssignable {
+class Cluster extends BaseModel implements TargetAssignable {
     /** @use HasFactory<ClusterFactory> */
     use HasFactory;
 
@@ -47,7 +52,7 @@ class Cluster extends BaseModel implements ITargetAssignable {
 
     protected function casts(): array {
         return [
-            'geo_json' => 'object',
+            'geo_data' => 'array',
         ];
     }
 }

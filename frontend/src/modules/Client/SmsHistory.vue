@@ -1,7 +1,7 @@
 <template>
   <widget
     :title="$tc('phrases.smsHistory') + ' (' + smses.length + ')'"
-    color="primary"
+    color="green"
     :subscriber="subscriber"
     :button="true"
     :empty-state-create-button="true"

@@ -1,7 +1,7 @@
 <template>
   <widget
     :title="$tc('SolarHomeSystem')"
-    color="primary"
+    color="green"
     :subscriber="'shs-details'"
   >
     <md-list class="md-double-line">

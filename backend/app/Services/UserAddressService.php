@@ -34,7 +34,7 @@ class UserAddressService {
         $user->update();
         $address = $user->address()->first();
         if (!$address) {
-            $address = $this->address->newQuery()->newModelInstance([
+            $address = $this->address->newQuery()->create([
                 'email' => $user->email,
                 'phone' => $data['phone'],
                 'street' => $data['street'],

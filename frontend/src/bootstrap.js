@@ -4,6 +4,20 @@ import "babel-polyfill"
 
 window.axios = require("axios")
 window.axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest"
+// Add a request interceptor
+window.axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token")
+    if (token) {
+      config.headers["Authorization"] = "Bearer " + token
+    }
+    // config.headers['Content-Type'] = 'application/json';
+    return config
+  },
+  (error) => {
+    Promise.reject(error)
+  },
+)
 
 import { config } from "./config"
 
@@ -45,36 +59,11 @@ Vue.use(VeeValidate, {
 })
 
 /**
- * ECharts (vue-echarts 7.x with ECharts 5.x)
+ * VueGoogleCharts
  */
-import { use } from "echarts/core"
-import { CanvasRenderer } from "echarts/renderers"
+import VueGoogleCharts from "vue-google-charts"
 
-import { BarChart, LineChart, PieChart } from "echarts/charts"
-
-import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent,
-  ToolboxComponent,
-} from "echarts/components"
-
-import VChart from "vue-echarts"
-
-use([
-  CanvasRenderer,
-  BarChart,
-  LineChart,
-  PieChart,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent,
-  ToolboxComponent,
-])
-
-Vue.component("v-chart", VChart)
+Vue.use(VueGoogleCharts)
 
 /**
  * moment

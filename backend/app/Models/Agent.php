@@ -3,10 +3,7 @@
 namespace App\Models;
 
 use App\Models\Address\Address;
-use App\Models\Auth\Permission;
-use App\Models\Auth\Role;
 use App\Models\Person\Person;
-use App\Models\Ticket\Ticket;
 use App\Models\Transaction\Transaction;
 use Database\Factories\AgentFactory;
 use Illuminate\Database\Eloquent\Collection;
@@ -18,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Traits\HasRoles;
+use Inensus\Ticket\Models\Ticket;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 /**
@@ -47,18 +44,15 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
  * @property-read Collection<int, AgentBalanceHistory>     $balanceHistory
  * @property-read AgentCommission|null                     $commission
  * @property-read MiniGrid|null                            $miniGrid
- * @property-read Collection<int, Permission>              $permissions
  * @property-read Person|null                              $person
  * @property-read Collection<int, AgentReceipt>            $receipt
- * @property-read Collection<int, Role>                    $roles
- * @property-read Collection<int, AppliancePerson>         $soldAppliances
+ * @property-read Collection<int, AssetPerson>             $soldAppliances
  * @property-read Collection<int, Ticket>                  $tickets
  * @property-read Collection<int, Transaction>             $transaction
  */
 class Agent extends Authenticatable implements JWTSubject {
     /** @use HasFactory<AgentFactory> */
     use HasFactory;
-    use HasRoles;
 
     public const RELATION_NAME = 'agent';
 
@@ -167,10 +161,10 @@ class Agent extends Authenticatable implements JWTSubject {
     }
 
     /**
-     * @return MorphMany<AppliancePerson, $this>
+     * @return MorphMany<AssetPerson, $this>
      */
     public function soldAppliances(): MorphMany {
-        return $this->morphMany(AppliancePerson::class, 'creator');
+        return $this->morphMany(AssetPerson::class, 'creator');
     }
 
     /**

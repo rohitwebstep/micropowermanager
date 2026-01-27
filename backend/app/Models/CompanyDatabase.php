@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * @property      int                            $id
@@ -27,18 +26,6 @@ class CompanyDatabase extends BaseModelCentral {
     public const TABLE_NAME = 'company_databases';
     public const COL_DATABASE_NAME = 'database_name';
     public const COL_COMPANY_ID = 'company_id';
-    private const CACHE_KEY_PREFIX = 'company_database';
-    private const CACHE_TTL = 3600; // 1 hour in seconds
-
-    protected static function booted(): void {
-        static::saved(function (self $companyDatabase) {
-            $companyDatabase->clearCache();
-        });
-
-        static::deleted(function (self $companyDatabase) {
-            $companyDatabase->clearCache();
-        });
-    }
 
     /** @return BelongsTo<Company, $this> */
     public function company(): BelongsTo {
@@ -51,11 +38,10 @@ class CompanyDatabase extends BaseModelCentral {
     }
 
     public function findByCompanyId(int $companyId): CompanyDatabase {
-        $cacheKey = self::CACHE_KEY_PREFIX.':'.$companyId;
-
-        return Cache::remember($cacheKey, self::CACHE_TTL, fn () => $this->newQuery()
+        return $this->newQuery()
+            ->select(self::COL_DATABASE_NAME)
             ->where(self::COL_COMPANY_ID, '=', $companyId)
-            ->firstOrFail());
+            ->firstOrFail();
     }
 
     public function getDatabaseName(): string {
@@ -68,10 +54,5 @@ class CompanyDatabase extends BaseModelCentral {
 
     public function getCompanyId(): int {
         return $this->company_id;
-    }
-
-    private function clearCache(): void {
-        $cacheKey = self::CACHE_KEY_PREFIX.':'.$this->company_id;
-        Cache::forget($cacheKey);
     }
 }

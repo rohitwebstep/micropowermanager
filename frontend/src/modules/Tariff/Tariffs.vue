@@ -8,7 +8,7 @@
       :subscriber="subscriber"
       :buttonText="$tc('phrases.newTariff')"
       @widgetAction="showNewTariff"
-      color="primary"
+      color="green"
       :paginator="tariffService.paginator"
     >
       <md-table

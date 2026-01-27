@@ -22,24 +22,6 @@ export default {
       props.selected = false
       drawingLayer.addLayer(layer)
 
-      // Convert Leaflet latlngs to GeoJSON coordinates format
-      // GeoJSON uses [longitude, latitude] and needs nested array for Polygon
-      const coordinates = layer._latlngs[0].map((latlng) => [
-        latlng.lng,
-        latlng.lat,
-      ])
-
-      // GeoJSON Polygon specification requires the first and last coordinates to be identical (closed polygon)
-      if (
-        coordinates.length > 0 &&
-        (coordinates[0][0] !== coordinates[coordinates.length - 1][0] ||
-          coordinates[0][1] !== coordinates[coordinates.length - 1][1])
-      ) {
-        coordinates.push([...coordinates[0]])
-      }
-
-      const geoJsonCoordinates = [coordinates]
-
       const { sumLat, sumLon } = layer._latlngs[0].reduce(
         (acc, coordinates) => {
           acc.sumLat += coordinates.lat
@@ -56,7 +38,7 @@ export default {
         type: "manual",
         geojson: {
           type: "Polygon",
-          coordinates: geoJsonCoordinates,
+          coordinates: layer._latlngs,
         },
         display_name: "",
         selected: false,
@@ -79,24 +61,6 @@ export default {
       const editedItems = []
       const editedLayers = item.layers
       editedLayers.eachLayer((layer) => {
-        // Convert Leaflet latlngs to GeoJSON coordinates format
-        // GeoJSON uses [longitude, latitude] and needs nested array for Polygon
-        const coordinates = layer._latlngs[0].map((latlng) => [
-          latlng.lng,
-          latlng.lat,
-        ])
-
-        // GeoJSON Polygon specification requires the first and last coordinates to be identical (closed polygon)
-        if (
-          coordinates.length > 0 &&
-          (coordinates[0][0] !== coordinates[coordinates.length - 1][0] ||
-            coordinates[0][1] !== coordinates[coordinates.length - 1][1])
-        ) {
-          coordinates.push([...coordinates[0]])
-        }
-
-        const geoJsonCoordinates = [coordinates]
-
         const { sumLat, sumLon } = layer._latlngs[0].reduce(
           (acc, coordinates) => {
             acc.sumLat += coordinates.lat
@@ -113,7 +77,7 @@ export default {
           type: "manual",
           geojson: {
             type: "Polygon",
-            coordinates: geoJsonCoordinates,
+            coordinates: layer._latlngs,
           },
           display_name: "",
           selected: false,
@@ -129,103 +93,90 @@ export default {
     drawCluster() {
       this.editableLayer.clearLayers()
       const geoData = this.mappingService.geoData
-
-      // Handle both single feature and array of features
-      const features = Array.isArray(geoData) ? geoData : [geoData]
-
-      // Create FeatureCollection with cluster properties
-      const featureCollection = {
+      const geoType = geoData.geojson.type
+      const coordinatesClone = geoData.geojson.coordinates[0].reduce(
+        (acc, coord) => {
+          acc[0].push([coord[1], coord[0]])
+          return acc
+        },
+        [[]],
+      )
+      const drawing = {
         type: "FeatureCollection",
-        features: features.map((feature) => {
-          // Convert manual drawn items to proper GeoJSON Features
-          if (feature.type === "manual" && feature.geojson) {
-            return {
-              type: "Feature",
-              geometry: feature.geojson,
-              properties: {
-                clusterId: -1,
-                clusterDisplayName: feature.display_name || "",
-                name: feature.display_name || "",
-                draw_type: feature.draw_type || "draw",
-              },
-            }
-          }
-
-          // Validate it's a proper Feature
-          if (feature.type !== "Feature") {
-            throw new Error("Expected GeoJSON Feature, got: " + feature.type)
-          }
-
-          // Return Feature with enhanced properties
-          return {
-            ...feature,
+        crs: {
+          type: "name",
+          properties: {
+            name: "urn:ogc:def:crs:OGC:1.3:CRS84",
+          },
+        },
+        features: [
+          {
+            type: "Feature",
             properties: {
-              ...feature.properties,
-              clusterId: feature.properties?.clusterId || -1,
+              popupContent: geoData.display_name,
+              draw_type:
+                geoData.draw_type === undefined ? "set" : geoData.draw_type,
+              selected:
+                geoData.selected === undefined ? false : geoData.selected,
+              clusterId:
+                geoData.clusterId === undefined ? -1 : geoData.clusterId,
               clusterDisplayName:
-                feature.properties?.clusterDisplayName ||
-                feature.properties?.display_name ||
-                feature.properties?.name ||
-                "",
+                geoData.display_name === undefined ? -1 : geoData.display_name,
             },
-          }
-        }),
+            geometry: {
+              type: geoType,
+              coordinates: geoData.searched
+                ? geoData.geojson.coordinates
+                : coordinatesClone,
+            },
+          },
+        ],
       }
-
+      const polygonColor = this.mappingService.strToHex(geoData.display_name)
+      // "this"  cannot be used inside the L.geoJson function
       const editableLayer = this.editableLayer
       const geoDataItems = this.geoDataItems
-      const parent = this
-
-      const drawnCluster = L.geoJSON(featureCollection, {
-        style: (feature) => {
-          const displayName =
-            feature.properties?.clusterDisplayName ||
-            feature.properties?.display_name ||
-            feature.properties?.name ||
-            ""
-          const polygonColor = this.mappingService.strToHex(displayName)
-          return { fillColor: polygonColor, color: polygonColor }
-        },
+      const drawnCluster = L.geoJson(drawing, {
+        style: { fillColor: polygonColor, color: polygonColor },
         onEachFeature: function (feature, layer) {
-          const clusterId = feature.properties?.clusterId || -1
-          const displayName =
-            feature.properties?.clusterDisplayName ||
-            feature.properties?.display_name ||
-            feature.properties?.name ||
-            ""
-
-          if (
-            feature.geometry.type.toLowerCase() === "polygon" &&
-            clusterId !== -1
-          ) {
+          const type = layer.feature.geometry.type
+          const clusterId = layer.feature.properties.clusterId
+          if (type === "polygon" && clusterId !== -1) {
             layer.on("click", () => {
-              parent.$router.push({
+              this.$router.push({
                 path: "/clusters/" + clusterId,
               })
             })
           }
-
           editableLayer.addLayer(layer)
-          layer.bindTooltip("<strong>Cluster:</strong> " + displayName, {
-            sticky: true,
-            offset: [10, 10],
-          })
+          layer.bindTooltip(
+            "<strong>Cluster:</strong> " +
+              layer.feature.properties.clusterDisplayName,
+            { sticky: true, offset: [10, 10] },
+          )
 
           const geoDataItem = {
             leaflet_id: layer._leaflet_id,
             type: "manual",
-            geojson: feature.geometry,
-            display_name: displayName,
-            clusterId: clusterId,
+            geojson: {
+              type: geoData.geojson.type,
+              coordinates:
+                geoData.searched === true
+                  ? coordinatesClone
+                  : geoData.geojson.coordinates,
+            },
+            searched: false,
+            display_name: geoData.display_name,
+            selected: feature.properties.selected,
+            draw_type: feature.properties.draw_type,
+            lat: geoData.lat,
+            lon: geoData.lon,
           }
           geoDataItems.push(geoDataItem)
         },
       })
-
       const bounds = drawnCluster.getBounds()
-      if (bounds.isValid()) {
-        this.map.fitBounds(bounds)
-      }
+      this.map.fitBounds(bounds)
     },
     setMiniGridMarkers() {
       const control = L.control.layers(null, null, { collapsed: false })

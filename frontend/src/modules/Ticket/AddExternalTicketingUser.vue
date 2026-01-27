@@ -20,6 +20,7 @@
                 {{ errors.first($tc("words.name")) }}
               </span>
             </md-field>
+            <!-- phone -->
             <template>
               <vue-tel-input
                 id="phone"
@@ -34,12 +35,12 @@
                 autocomplete="off"
                 :name="$tc('words.phone')"
                 enabledCountryCode="true"
-                :value="ticketUserService.newUser.phone || ''"
+                v-model="ticketUserService.newUser.phone"
                 @validate="validatePhone"
                 @input="onPhoneInput"
-              />
+              ></vue-tel-input>
               <span
-                v-if="phoneObj && phoneObj.valid === false && firstStepClicked"
+                v-if="!phone.valid && firstStepClicked"
                 style="color: red"
                 class="md-error"
               >
@@ -48,21 +49,21 @@
             </template>
           </div>
         </div>
-        <md-progress-bar md-mode="indeterminate" v-if="saving" />
+        <md-progress-bar md-mode="indeterminate" v-if="loading" />
       </md-card-content>
 
       <md-card-actions>
         <md-button
           type="button"
           @click="saveUser"
-          :disabled="saving"
+          :disabled="loading"
           class="md-primary md-raised md-dense"
         >
           {{ $tc("words.save") }}
         </md-button>
         <md-button
           type="button"
-          @click="$emit('cancel')"
+          @click="showNewUser = false"
           class="md-accent md-raised md-dense"
         >
           {{ $tc("words.close") }}
@@ -73,76 +74,65 @@
 </template>
 
 <script>
-import { notify } from "@/mixins/notify"
 import { TicketUserService } from "@/services/TicketUserService"
 import { EventBus } from "@/shared/eventbus"
 
 export default {
   name: "AddExternalTicketingUser",
-  mixins: [notify],
   data() {
     return {
+      subscriber: "ticket-user-add-external",
       ticketUserService: new TicketUserService(),
-      phoneObj: { valid: null },
+      loading: false,
+      phone: {
+        valid: true,
+      },
       firstStepClicked: false,
-      saving: false,
     }
   },
-  mounted() {},
+  mounted() {
+    this.getUsers()
+  },
+
   methods: {
     validatePhone(phone) {
-      this.phoneObj = phone || { valid: false }
+      this.phone = phone
     },
-    onPhoneInput(value) {
-      this.ticketUserService.newUser.phone = value == null ? "" : String(value)
+    onPhoneInput(_, phone) {
+      this.phone = phone
     },
     async saveUser() {
+      let validator = await this.$validator.validateAll()
       this.firstStepClicked = true
-      if (this.phoneObj && this.phoneObj.valid === false) {
-        this.alertNotify(
-          "error",
-          this.$tc("validation.invalidPhone") || "Invalid phone",
-        )
-        return
-      }
+      if (!this.phone.valid) return
 
-      try {
-        this.saving = true
-        const name = this.ticketUserService.newUser.name
-        const phone = this.ticketUserService.newUser.phone
-        const created = await this.ticketUserService.createExternalUser(
-          name,
-          phone,
-        )
-
-        if (created && created.statusCode) {
-          this.alertNotify("error", created.message || "Failed to create user")
-          return
-        }
-
-        if (created && (created.id || created.success)) {
-          this.$emit("created", created)
-          this.alertNotify(
-            "success",
-            "External ticketing user created successfully",
+      if (validator) {
+        this.loading = true
+        try {
+          const userData = await this.ticketUserService.createExternalUser(
+            this.ticketUserService.newUser.name,
+            this.ticketUserService.newUser.phone,
           )
-          EventBus.$emit("ticket.add.user", false)
-          this.ticketUserService.resetNewUser()
-          this.$validator.reset()
-          this.firstStepClicked = false
-          this.phoneObj = { valid: null }
-          this.$emit("cancel")
-        } else {
-          this.alertNotify("error", "User created but response invalid")
+
+          if (userData.error !== undefined) {
+            this.alertNotify(
+              "warn",
+              this.$tc("phrases.ticketUserNotify", 2, {
+                tag: this.ticketUserService.newUser.tag,
+              }),
+            )
+            this.loading = false
+            return
+          }
+          await this.getUsers()
+          this.alertNotify("success", this.$tc("phrases.ticketUserNotify", 1))
+          this.loading = false
+        } catch (e) {
+          this.loading = false
+          this.alertNotify("error", e.message)
         }
-      } catch (err) {
-        const msg =
-          (err.response && err.response.data && err.response.data.message) ||
-          err.message ||
-          "Failed to create user"
-        this.alertNotify("error", msg)
-      } finally {
-        this.saving = false
+        this.ticketUserService.resetNewUser()
+        EventBus.$emit("ticket.add.user.show", false)
       }
     },
   },

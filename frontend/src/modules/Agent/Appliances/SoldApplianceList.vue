@@ -6,7 +6,7 @@
     :button-color="'red'"
     :paginator="agentSoldApplianceService.paginator"
     :subscriber="subscriber"
-    color="primary"
+    color="green"
   >
     <md-table>
       <md-table-row>

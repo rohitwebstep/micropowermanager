@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Services\ApiCompanyResolverService;
-use App\Services\ApiResolvers\Data\ApiResolverMap;
-use App\Services\DatabaseProxyManagerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use MPM\DatabaseProxy\DatabaseProxyManagerService;
+use MPM\TenantResolver\ApiCompanyResolverService;
+use MPM\TenantResolver\ApiResolvers\Data\ApiResolverMap;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tymon\JWTAuth\JWTGuard;
@@ -100,10 +100,8 @@ class UserDefaultDatabaseConnectionMiddleware {
 
         if (Str::startsWith($path, [
             'horizon',
-            'telescope',
             'laravel-erd',
             'api/users/password',
-            'api/mpm-plugins',
         ])) {
             return true;
         }
@@ -111,6 +109,7 @@ class UserDefaultDatabaseConnectionMiddleware {
         if ($method === 'GET') {
             return in_array($path, [
                 'api/micro-star-meters/test',
+                'api/mpm-plugins',
                 'api/protected-pages',
                 'api/usage-types',
                 'up',

@@ -347,6 +347,7 @@ export default {
 }
 
 .md-toolbar[data-color="default"] {
+  background: rgb(61, 59, 63);
   background: linear-gradient(
     162deg,
     rgba(61, 59, 63, 1) 0%,
@@ -372,13 +373,18 @@ export default {
   }
 }
 
-.md-toolbar[data-color="primary"] {
-  background: linear-gradient(45deg, $brand-primary, $brand-primary-light);
-
+.md-toolbar[data-color="green"] {
+  background: rgb(68, 113, 68);
+  background: linear-gradient(
+    162deg,
+    rgba(68, 113, 68, 1) 0%,
+    rgba(90, 149, 90, 1) 50%,
+    rgba(102, 171, 102, 1) 100%
+  );
   box-shadow:
-    0 12px 20px -10px rgba($brand-primary, 0.28),
-    0 4px 20px 0 rgba($brand-primary, 0.12),
-    0 7px 8px -5px rgba($brand-primary, 0.2);
+    0 12px 20px -10px rgba(76, 175, 80, 0.28),
+    0 4px 20px 0 rgba(0, 0, 0, 0.12),
+    0 7px 8px -5px rgba(76, 175, 80, 0.2);
 
   h4 {
     color: #fefefe;
@@ -394,18 +400,18 @@ export default {
   }
 }
 
-.md-toolbar[data-color="secondary"] {
+.md-toolbar[data-color="orange"] {
+  background: rgb(164, 106, 0);
   background: linear-gradient(
     162deg,
-    $brand-secondary-dark 0%,
-    $brand-secondary 50%,
-    $brand-secondary-light 100%
+    rgba(164, 106, 0, 1) 0%,
+    rgba(218, 142, 1, 1) 50%,
+    rgba(255, 165, 0, 1) 100%
   );
-
   box-shadow:
-    0 12px 20px -10px rgba($brand-secondary, 0.28),
-    0 4px 20px 0 rgba($brand-secondary, 0.12),
-    0 7px 8px -5px rgba($brand-secondary, 0.2);
+    0 12px 20px -10px rgba(255, 165, 0, 0.28),
+    0 4px 20px 0 rgba(255, 165, 0, 0.12),
+    0 7px 8px -5px rgba(255, 165, 0, 0.2);
 
   h4 {
     color: #fefefe;
@@ -416,18 +422,23 @@ export default {
   }
 
   .chic-button {
-    background-color: #a81e10 !important;
+    background-color: orangered !important;
     color: #fefefe !important;
   }
 }
 
-.md-toolbar[data-color="accent"] {
-  background: linear-gradient(45deg, $brand-accent-dark, $brand-accent);
-
+.md-toolbar[data-color="red"] {
+  background: rgb(96, 28, 28);
+  background: linear-gradient(
+    162deg,
+    rgba(96, 28, 28, 1) 0%,
+    rgba(198, 73, 92, 1) 50%,
+    rgba(236, 17, 50, 1) 100%
+  );
   box-shadow:
-    0 12px 20px -10px rgba($brand-accent, 0.28),
-    0 4px 20px 0 rgba($brand-accent, 0.12),
-    0 7px 8px -5px rgba($brand-accent, 0.2);
+    0 12px 20px -10px rgba(255, 0, 39, 0.28),
+    0 4px 20px 0 rgba(255, 0, 39, 0.12),
+    0 7px 8px -5px rgba(255, 0, 39, 0.2);
 
   h4 {
     color: #fefefe;

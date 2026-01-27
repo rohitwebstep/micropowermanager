@@ -5,22 +5,21 @@ includes:
 parameters:
 
     paths:
-        - app
-        - bootstrap
-        - config
+        - app/
+        - bootstrap/
+        - config/
         - database
+        - packages
         - public
         - resources
         - routes
+        - storage
         - stubs
         # - tests
 
     # Level 9 is the highest level
     level: 6
 
-    # Ensure PHPStan scans vendor for class discovery
-    scanDirectories:
-        - vendor/spatie/laravel-query-builder
 #    ignoreErrors:
 #        - '#PHPDoc tag @var#'
 #

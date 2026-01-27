@@ -2,7 +2,7 @@
 
 namespace App\Utils;
 
-use App\DTO\TransactionDataContainer;
+use App\Misc\TransactionDataContainer;
 
 class MinimumPurchaseAmountValidator {
     private float $restAmount;

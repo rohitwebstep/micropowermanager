@@ -2,10 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Address\Address;
-use App\Models\Device;
-use App\Models\Meter\Meter;
-use App\Models\Person\Person;
 use App\Models\Sms;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -20,30 +16,14 @@ class SmsFactory extends Factory {
      * @return array<string, mixed>
      */
     public function definition(): array {
-        // Get an actual address with phone and person relationship
-        $address = Address::whereNotNull('phone')
-            ->whereHasMorph('owner', [Person::class])
-            ->inRandomOrder()
-            ->first();
+        // Generate realistic Tanzanian names
+        $firstNames = ['Ambidwile', 'Samiha', 'Tatu', 'Sharifa', 'Manica', 'Seghen', 'Bamba',
+            'Bora', 'Hadiya', 'Fahima', 'Asiya', 'Asha', 'Adla', 'Hiba', 'Malika'];
+        $lastNames = ['Ngabile', 'Furaha', 'Amaziah', 'Sanaa', 'Asili', 'Adhra', 'Fadhili',
+            'Buyu', 'Sakina', 'Tumo', 'Ndweleifwa', 'Buyu', 'Amaziah', 'Saidi'];
 
-        $phone = $address->phone;
-        /** @var Person $person */
-        $person = $address->owner;
-        $fullName = "{$person->name} {$person->surname}";
-
-        // Get an actual meter associated with this person
-        $device = Device::where('person_id', $person->id)
-            ->where('device_type', 'meter')
-            ->inRandomOrder()
-            ->first();
-
-        if ($device) {
-            $meter = Meter::find($device->device_id);
-            $meterNumber = $meter->serial_number;
-        } else {
-            $meter = Meter::inRandomOrder()->first();
-            $meterNumber = $meter->serial_number;
-        }
+        // Generate realistic meter numbers
+        $meterNumber = '47000'.$this->faker->numberBetween(290000, 520000);
 
         // Generate realistic transaction amounts (between 1000 and 20000)
         $amount = $this->faker->numberBetween(1000, 20000);
@@ -57,7 +37,11 @@ class SmsFactory extends Factory {
         // Generate random token (32 characters)
         $token = Str::random(32);
 
+        // Format Tanzanian phone number
+        $phone = '+255'.$this->faker->numberBetween(710000000, 789999999);
+
         // Construct message body
+        $fullName = $this->faker->firstName().' '.$this->faker->lastName();
         $body = sprintf(
             'Dear %s, we received your transaction %d.Meter: %s, %s Unit %s .Transaction amount is %d, \n VAT for energy : %s \n VAT for the other staffs : 0 . Your Company etc.',
             $fullName,
