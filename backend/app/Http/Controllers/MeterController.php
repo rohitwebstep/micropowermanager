@@ -174,7 +174,7 @@ class MeterController extends Controller
                     'serial_number'       => $row['Meter No.'] ?? 'DUMMY-METER',
                     'meter_type'          => $meterTypeId ?? 0,
                     'surname'             => 'DUMMY',
-                    'phone'               => '+12345678901', // no + because of numeric rule
+                    'phone'               => '+' . rand(10000000000, 99999999999),
                     'tariff_id'           => 1,
                     'geo_points'          => '0,0',
                     'manufacturer'        => 1,
