@@ -12,29 +12,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use App\Http\Controllers\PersonController;
 use App\Http\Requests\MeterTypeCreateRequest;
-use App\Http\Requests\PersonRequest;
-use App\Models\Person\Person;
-use App\Services\AddressesService;
-use App\Services\AddressGeographicalInformationService;
-use App\Services\GeographicalInformationService;
-use App\Services\PersonService;
-use MPM\Device\DeviceAddressService;
-use MPM\Device\DeviceService;
-use MPM\Meter\MeterDeviceService;
+use MPM\Apps\CustomerRegistration\CustomerRegistrationAppService;
 
 class MeterController extends Controller
 {
     public function __construct(
-        private PersonService $personService,
         private MeterService $meterService,
-        private DeviceService $deviceService,
-        private MeterDeviceService $meterDeviceService,
-        private AddressesService $addressService,
-        private DeviceAddressService $deviceAddressService,
-        private GeographicalInformationService $geographicalInformationService,
-        private AddressGeographicalInformationService $addressGeographicalInformationService,
+        private CustomerRegistrationAppService $customerRegistrationService
     ) {}
 
     /**
@@ -138,47 +123,6 @@ class MeterController extends Controller
             $meterId = null;
             $peopleId = null;
 
-            // ===== Create Customer =====
-            try {
-                $peopleData = [
-                    'title'        => $row['Title'] ?? null,
-                    'name'         => $row['Customer Name'] ?? null,
-                    'surname'      => $row['Surname'] ?? 'N/A',
-                    'birth_date'   => $row['Birth Date'] ?? null,
-                    'sex'          => $row['Sex'] ?? null,
-                    'education'    => $row['Education'] ?? null,
-                    'city_id'      => $row['City ID'] ?? 1,
-                    'street'       => $row['Street'] ?? null,
-                    'email'        => $row['Email'] ?? null,
-                    'phone'        => $row['Phone'] ?? null,
-                    'country_code' => $row['Country Code'] ?? null,
-                    'customer_type' => 1,
-                ];
-                $peopleRequest = PersonRequest::create('/fake-url', 'POST', $peopleData);
-                $peopleController = app(\App\Http\Controllers\PersonController::class);
-                $peopleResponse = $peopleController->store($peopleRequest);
-
-                // Resolve the response data
-                $responseData = $peopleResponse->getData(true)['data'] ?? null;
-
-                if (!$responseData || !isset($responseData['id'])) {
-                    throw new \Exception('Failed to create Person via controller');
-                }
-
-                // Load the actual Person model from DB
-                $peopleId = $responseData['id'];
-                $people = \App\Models\Person\Person::find($peopleId);
-
-                if (!$people) {
-                    throw new \Exception("Person with ID $peopleId not found after creation");
-                }
-            } catch (\Exception $e) {
-                $people = [
-                    'error' => $e->getMessage(),
-                    'data_attempted' => $peopleData ?? null,
-                ];
-            }
-
             // ===== Create / Get MeterType =====
             try {
                 $maxCurrent = $calcMaxCurrent($row['Total Unit'] ?? null, $phase);
@@ -223,46 +167,41 @@ class MeterController extends Controller
                 ];
             }
 
-            // ===== Create / Get Meter =====
+            // ===== Create Customer =====
             try {
-                $serialNumber = $row['Meter No.'] ?? null;
-                $existingMeter = $this->meterService->getBySerialNumber($serialNumber);
+                $customerRequestData = [
+                    'name'                => $row['Customer Name'] ?? 'N/A',
+                    'serial_number'       => $row['Meter No.'] ?? 'DUMMY-METER',
+                    'meter_type'          => $meterTypeId ?? 0,
+                    'surname'             => 'DUMMY',
+                    'phone'               => '+12345678901', // no + because of numeric rule
+                    'tariff_id'           => 1,
+                    'geo_points'          => '0,0',
+                    'manufacturer'        => 1,
+                    'connection_type_id'  => 1,
+                    'connection_group_id' => 1,
+                    'city_id'             => 1,
+                ];
 
-                if ($existingMeter) {
-                    $meter = $existingMeter->toArray();
-                    $meterId = $existingMeter->id;
-                } else {
-                    $meterData = [
-                        'serial_number'       => $serialNumber,
-                        'connection_group_id' => 1,
-                        'manufacturer_id'     => 1,
-                        'meter_type_id'       => $meterTypeId,
-                        'connection_type_id'  => 1,
-                        'tariff_id'           => 1,
-                        'in_use'              => 1,
-                    ];
+                // build request object properly
+                $androidRequest = new \App\Http\Requests\AndroidAppRequest();
+                $androidRequest->merge($customerRequestData);
 
-                    $meter = $this->meterService->create($meterData);
+                // validate using built-in validation pipeline
+                $validator = validator($customerRequestData, $androidRequest->rules());
+                $androidRequest->setValidator($validator);
+                $androidRequest->validated(); // throws if invalid
 
-                    if (!$meter) {
-                        throw new \Exception("Meter with ID $meterId not found after creation");
-                    }
-                }
-
-                $device = $this->deviceService->make([
-                    'person_id' => $peopleId,
-                    'device_serial' => $serialNumber,
-                ]);
-                $this->meterDeviceService->setAssigned($device);
-                $this->meterDeviceService->setAssignee($meter);
-                $this->meterDeviceService->assign();
-                $this->deviceService->save($device);
-            } catch (\Exception $e) {
-                $meter = [
+                // now call service — type matches
+                $people = app(\MPM\Apps\CustomerRegistration\CustomerRegistrationAppService::class)
+                    ->createCustomer($androidRequest);
+            } catch (\Throwable $e) {
+                $people = [
                     'error' => $e->getMessage(),
-                    'data_attempted' => $meterData ?? null,
+                    'data_attempted' => $customerRequestData ?? null,
                 ];
             }
+
 
             // ===== Vending / Transaction =====
             $vend = [
@@ -275,7 +214,7 @@ class MeterController extends Controller
                 'operator'   => $row['Operator'] ?? null,
             ];
 
-            $parsed[] = compact('meterType', 'meter', 'people', 'vend');
+            $parsed[] = compact('meterType', 'people', 'vend');
         }
 
         return ApiResource::make([
