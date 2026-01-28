@@ -234,26 +234,15 @@ class MeterController extends Controller
                 } else {
                     $meterData = [
                         'serial_number'       => $serialNumber,
+                        'connection_group_id' => 1,
                         'manufacturer_id'     => 1,
                         'meter_type_id'       => $meterTypeId,
-                        'in_use'              => 1,
                         'connection_type_id'  => 1,
-                        'connection_group_id' => 1,
                         'tariff_id'           => 1,
+                        'in_use'              => 1,
                     ];
-                    $meterRequest = MeterRequest::create('/fake-url', 'POST', $meterData);
-                    $meterController = app(\App\Http\Controllers\MeterController::class);
-                    $meterResponse = $meterController->store($meterRequest);
-                    // Resolve the response
-                    $responseData = $meterResponse->resolve() ?? null;
 
-                    if (!$responseData || !isset($responseData['id'])) {
-                        throw new \Exception('Failed to create Meter via controller');
-                    }
-
-                    // Load the Meter object from the DB using the returned ID
-                    $meterId = $responseData['id'];
-                    $meter = Meter::find($meterId);
+                    $meter = $this->meterService->create($meterData);
 
                     if (!$meter) {
                         throw new \Exception("Meter with ID $meterId not found after creation");
