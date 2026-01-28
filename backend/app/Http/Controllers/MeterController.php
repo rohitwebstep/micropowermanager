@@ -195,13 +195,14 @@ class MeterController extends Controller
                 // now call service — type matches
                 $people = app(\MPM\Apps\CustomerRegistration\CustomerRegistrationAppService::class)
                     ->createCustomer($androidRequest);
+
+                $peopleId = $people['id'];
             } catch (\Throwable $e) {
                 $people = [
                     'error' => $e->getMessage(),
                     'data_attempted' => $customerRequestData ?? null,
                 ];
             }
-
 
             // ===== Vending / Transaction =====
             $vend = [
