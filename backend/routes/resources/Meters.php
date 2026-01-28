@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 Route::group(['prefix' => 'meters'], function () {
     Route::get('/', [MeterController::class, 'index']);
     Route::post('/', [MeterController::class, 'store']);
+    Route::post('/import/csv', [MeterController::class, 'importFromCsv']);
     Route::get('/connection-types', [MeterController::class, 'showConnectionTypes']);
     Route::put('/{meter}', [MeterController::class, 'update']);
     Route::get('/search', [MeterController::class, 'search']);
