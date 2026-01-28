@@ -24,7 +24,8 @@ class AndroidAppRequest extends FormRequest {
             'phone' => ['required', 'min:11', 'regex:(^\+)', 'numeric'],
             'tariff_id' => ['required'],
             'geo_points' => ['required'],
-            'serial_number' => ['required', 'string'],
+            // 'serial_number' => ['required', 'string'],
+            'serial_number' => ['nullable', 'string'],
             'manufacturer' => ['required'],
             'meter_type' => ['required'],
         ];
