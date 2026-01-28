@@ -89,16 +89,16 @@ class CustomerRegistrationAppService
             $this->deviceAddressService->setAssignee($device);
             $this->deviceAddressService->assign();
             $this->addressService->save($address);
+
+            $geographicalInformation = $this->geographicalInformationService->make([
+                'points' => $geoPoints,
+            ]);
+
+            $this->addressGeographicalInformationService->setAssigned($geographicalInformation);
+            $this->addressGeographicalInformationService->setAssignee($address);
+            $this->addressGeographicalInformationService->assign();
+            $this->geographicalInformationService->save($geographicalInformation);
         }
-
-        $geographicalInformation = $this->geographicalInformationService->make([
-            'points' => $geoPoints,
-        ]);
-
-        $this->addressGeographicalInformationService->setAssigned($geographicalInformation);
-        $this->addressGeographicalInformationService->setAssignee($address);
-        $this->addressGeographicalInformationService->assign();
-        $this->geographicalInformationService->save($geographicalInformation);
 
         return $person;
     }
