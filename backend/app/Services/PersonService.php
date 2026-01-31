@@ -46,6 +46,7 @@ class PersonService implements IBaseService {
                 'citizenship',
                 'roleOwner.definitions',
                 'devices' => fn ($q) => $q->whereHas('address')->with('address.geo'),
+                'devices.device.orders',
             ]
         )->find($personID);
     }

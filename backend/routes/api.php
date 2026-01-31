@@ -68,6 +68,8 @@ require __DIR__.'/resources/Cities.php';
 require __DIR__.'/resources/Countries.php';
 // Routes for meter resource
 require __DIR__.'/resources/Meters.php';
+// Routes for order resource
+require __DIR__.'/resources/Orders.php';
 // Routes for Addresses resource
 require __DIR__.'/resources/Addresses.php';
 // Transaction routes

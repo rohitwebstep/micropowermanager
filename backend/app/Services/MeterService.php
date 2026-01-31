@@ -20,6 +20,7 @@ class MeterService implements IBaseService {
         return $this->meter->newQuery()->with([
             'tariff',
             'device.person',
+            'orders',
             'meterType',
             'connectionType',
             'connectionGroup',

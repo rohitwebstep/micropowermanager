@@ -9,6 +9,7 @@ use App\Models\ConnectionGroup;
 use App\Models\ConnectionType;
 use App\Models\Device;
 use App\Models\Manufacturer;
+use App\Models\Order\Order;
 use App\Models\Token;
 use App\Models\Transaction\Transaction;
 use Database\Factories\Meter\MeterFactory;
@@ -43,7 +44,8 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Token>            $tokens
  * @property-read Collection<int, Transaction>      $transactions
  */
-class Meter extends BaseModel {
+class Meter extends BaseModel
+{
     /** @use HasFactory<MeterFactory> */
     use HasFactory;
 
@@ -58,46 +60,55 @@ class Meter extends BaseModel {
     ];
 
     /** @return BelongsTo<MeterType, $this> */
-    public function meterType(): BelongsTo {
+    public function meterType(): BelongsTo
+    {
         return $this->belongsTo(MeterType::class);
     }
 
     /** @return MorphOne<Device, $this> */
-    public function device(): MorphOne {
+    public function device(): MorphOne
+    {
         return $this->morphOne(Device::class, 'device');
     }
 
     /** @return BelongsTo<Manufacturer, $this> */
-    public function manufacturer(): BelongsTo {
+    public function manufacturer(): BelongsTo
+    {
         return $this->belongsTo(Manufacturer::class);
     }
 
     /** @return BelongsTo<MeterTariff, $this> */
-    public function tariff(): BelongsTo {
+    public function tariff(): BelongsTo
+    {
         return $this->belongsTo(MeterTariff::class);
     }
 
     /** @return BelongsTo<ConnectionType, $this> */
-    public function connectionType(): BelongsTo {
+    public function connectionType(): BelongsTo
+    {
         return $this->belongsTo(ConnectionType::class, 'connection_type_id', 'id');
     }
 
     /** @return BelongsTo<ConnectionGroup, $this> */
-    public function connectionGroup(): BelongsTo {
+    public function connectionGroup(): BelongsTo
+    {
         return $this->belongsTo(ConnectionGroup::class);
     }
 
     /** @return HasOne<AccessRatePayment, $this> */
-    public function accessRatePayment(): HasOne {
+    public function accessRatePayment(): HasOne
+    {
         return $this->hasOne(AccessRatePayment::class);
     }
 
-    public function accessRate(): AccessRate {
+    public function accessRate(): AccessRate
+    {
         return $this->tariff->accessRate;
     }
 
     /** @return HasManyThrough<Token, Device, $this> */
-    public function tokens(): HasManyThrough {
+    public function tokens(): HasManyThrough
+    {
         return $this->hasManyThrough(
             Token::class,
             Device::class,
@@ -109,20 +120,32 @@ class Meter extends BaseModel {
     }
 
     /** @return HasMany<MeterConsumption, $this> */
-    public function consumptions(): HasMany {
+    public function consumptions(): HasMany
+    {
         return $this->hasMany(MeterConsumption::class);
     }
 
     /** @return HasMany<Transaction, $this> */
-    public function transactions(): HasMany {
+    public function transactions(): HasMany
+    {
         return $this->hasMany(Transaction::class, 'message', 'serial_number');
     }
 
-    public function findBySerialNumber(string $meterSerialNumber): ?self {
+    /**
+     * @return HasMany<Order, $this>
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'meter_id', 'id');
+    }
+
+    public function findBySerialNumber(string $meterSerialNumber): ?self
+    {
         return $this->newQuery()->where('serial_number', '=', $meterSerialNumber)->first();
     }
 
-    public function getId(): int {
+    public function getId(): int
+    {
         return $this->id;
     }
 }

@@ -62,6 +62,22 @@ class Device extends BaseModel {
     }
 
     /**
+     * Get orders through the meter if this device is a meter.
+     *
+     * @return HasMany|null
+     */
+    public function meterOrders(): ?HasMany
+    {
+        if ($this->device_type === 'meter') {
+            /** @var Meter|null $meter */
+            $meter = $this->device; // polymorphic relation
+            return $meter?->orders(); // returns HasMany<Order> or null
+        }
+
+        return null; // if device is not a meter
+    }
+
+    /**
      * @return MorphOne<Address, $this>
      */
     public function address(): MorphOne {

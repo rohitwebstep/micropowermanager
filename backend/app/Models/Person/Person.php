@@ -13,6 +13,7 @@ use App\Models\Country;
 use App\Models\CustomerGroup;
 use App\Models\Device;
 use App\Models\MiniGrid;
+use App\Models\Order\Order;
 use App\Models\PaymentHistory;
 use App\Models\Role\RoleInterface;
 use App\Models\Role\Roles;
@@ -62,7 +63,8 @@ use Inensus\Ticket\Models\Ticket;
  * @property-read Collection<int, Roles>          $roleOwner
  * @property-read Collection<int, Ticket>         $tickets
  */
-class Person extends BaseModel implements HasAddressesInterface, RoleInterface {
+class Person extends BaseModel implements HasAddressesInterface, RoleInterface
+{
     /** @use HasFactory<PersonFactory> */
     use HasFactory;
     use SoftDeletes;
@@ -81,103 +83,127 @@ class Person extends BaseModel implements HasAddressesInterface, RoleInterface {
     /**
      * @return MorphMany<Ticket, $this>
      */
-    public function tickets(): MorphMany {
+    public function tickets(): MorphMany
+    {
         return $this->morphMany(Ticket::class, 'owner');
     }
 
     /**
      * @return BelongsTo<MiniGrid, $this>
      */
-    public function miniGrid(): BelongsTo {
+    public function miniGrid(): BelongsTo
+    {
         return $this->belongsTo(MiniGrid::class, 'mini_grid_id', 'id');
     }
 
     /**
      * Check if this person is a maintenance user.
      */
-    public function isMaintenanceUser(): bool {
+    public function isMaintenanceUser(): bool
+    {
         return $this->type === 'maintenance' && $this->mini_grid_id !== null;
     }
 
     /**
      * Check if this person is an agent.
      */
-    public function isAgent(): bool {
+    public function isAgent(): bool
+    {
         return $this->type === 'agent';
     }
 
-    public function saveAddress(Address $address): void {
+    public function saveAddress(Address $address): void
+    {
         $this->addresses()->save($address);
     }
 
     /**
      * @return MorphMany<Address, $this>
      */
-    public function addresses(): MorphMany {
+    public function addresses(): MorphMany
+    {
         return $this->morphMany(Address::class, 'owner');
     }
 
     /**
      * @return BelongsTo<Country, $this>
      */
-    public function citizenship(): BelongsTo {
+    public function citizenship(): BelongsTo
+    {
         return $this->belongsTo(Country::class, 'nationality', 'id');
     }
 
     /**
      * @return HasMany<Device, $this>
      */
-    public function devices(): HasMany {
+    public function devices(): HasMany
+    {
         return $this->hasMany(Device::class);
+    }
+
+    /**
+     * @return HasMany<Order, $this>
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'customer_id', 'id');
     }
 
     /**
      * @return MorphMany<Roles, $this>
      */
-    public function roleOwner(): MorphMany {
+    public function roleOwner(): MorphMany
+    {
         return $this->morphMany(Roles::class, 'role_owner');
     }
 
     /**
      * @return MorphMany<PaymentHistory, $this>
      */
-    public function payments(): MorphMany {
+    public function payments(): MorphMany
+    {
         return $this->morphMany(PaymentHistory::class, 'payer');
     }
 
     /**
      * @return BelongsTo<CustomerGroup, $this>
      */
-    public function customerGroup(): BelongsTo {
+    public function customerGroup(): BelongsTo
+    {
         return $this->belongsTo(CustomerGroup::class);
     }
 
     /**
      * @return HasOne<Agent, $this>
      */
-    public function agent(): HasOne {
+    public function agent(): HasOne
+    {
         return $this->hasOne(Agent::class);
     }
 
     /**
      * @return HasOne<AgentSoldAppliance, $this>
      */
-    public function agentSoldAppliance(): HasOne {
+    public function agentSoldAppliance(): HasOne
+    {
         return $this->hasOne(AgentSoldAppliance::class);
     }
 
     /**
      * @return HasMany<AssetPerson, $this>
      */
-    public function assetPerson(): HasMany {
+    public function assetPerson(): HasMany
+    {
         return $this->HasMany(AssetPerson::class, 'person_id', 'id');
     }
 
-    public function __toString(): string {
+    public function __toString(): string
+    {
         return sprintf('%s %s', $this->name, $this->surname);
     }
 
-    public function livingInClusterQuery(int $clusterId): Builder {
+    public function livingInClusterQuery(int $clusterId): Builder
+    {
         return DB::connection('tenant')->table($this->getTable())
             ->select('people.id')
             ->leftJoin('addresses', function (JoinClause $q) {
@@ -195,11 +221,13 @@ class Person extends BaseModel implements HasAddressesInterface, RoleInterface {
             ->orderBy('cities.id');
     }
 
-    public function getId(): int {
+    public function getId(): int
+    {
         return $this->id;
     }
 
-    protected function getIsActiveAttribute(): bool {
+    protected function getIsActiveAttribute(): bool
+    {
         $lastPayment = $this->latestPayment;
 
         if (!$lastPayment) {
@@ -212,11 +240,13 @@ class Person extends BaseModel implements HasAddressesInterface, RoleInterface {
     /**
      * @return HasOne<PaymentHistory, $this>
      */
-    public function latestPayment(): HasOne {
+    public function latestPayment(): HasOne
+    {
         return $this->hasOne(PaymentHistory::class, 'payer_id')->latestOfMany('created_at');
     }
 
-    protected function casts(): array {
+    protected function casts(): array
+    {
         return [
             'additional_json' => 'array',
         ];
