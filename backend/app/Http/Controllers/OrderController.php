@@ -13,55 +13,45 @@ use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
-    public function __construct(
-        private OrderService $orderService
-    ) {}
+    public function __construct(private OrderService $orderService) {}
 
-    /**
-     * List Orders
-     */
+    // List orders
     public function index(Request $request): ApiResource
     {
         $limit = $request->input('limit', config('settings.paginate'));
+        $type  = $request->input('type'); // optional
 
-        return ApiResource::make(
-            $this->orderService->getAll($limit)
-        );
+        return ApiResource::make($this->orderService->getAll($limit, $type));
     }
 
-    /**
-     * Create Order
-     */
+    // Create order
     public function store(OrderCreateRequest $request): ApiResource
     {
-        return ApiResource::make(
-            $this->orderService->create($request->validated())
-        );
+        $data = $request->validated();
+
+        // return ApiResource::make($data);
+
+        $order = $this->orderService->create($data);
+
+        return ApiResource::make($order);
     }
 
-    /**
-     * Order Detail
-     */
+    // Show order
     public function show(int $orderId): ApiResource
     {
-        return ApiResource::make(
-            $this->orderService->getById($orderId)
-        );
+        $order = $this->orderService->getById($orderId);
+        return ApiResource::make($order);
     }
 
-    /**
-     * Update Order
-     */
-    public function update(
-        OrderUpdateRequest $request,
-        Order $order
-    ): ApiResource {
+    // Update order
+    public function update(OrderUpdateRequest $request, Order $order): ApiResource
+    {
         $before = json_encode($order->toArray());
-
-        $updated = $this->orderService->update(
-            $order,
-            $request->validated()
-        );
+        $data = $request->validated();
+        if (($data['type'] ?? null) !== 'product_order') {
+            $data['product_meta'] = null;
+        }
+        $updated = $this->orderService->update($order, $data);
 
         event(new NewLogEvent([
             'user_id'  => auth('api')->id(),
@@ -72,13 +62,10 @@ class OrderController extends Controller
         return ApiResource::make($updated);
     }
 
-    /**
-     * Delete Order
-     */
+    // Delete order
     public function destroy(Order $order): JsonResponse
     {
         $this->orderService->delete($order);
-
         return response()->json(null, 204);
     }
 }

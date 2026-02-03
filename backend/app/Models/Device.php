@@ -34,7 +34,8 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Token>       $tokens
  * @property-read Collection<int, Transaction> $transactions
  */
-class Device extends BaseModel {
+class Device extends BaseModel
+{
     /** @use HasFactory<DeviceFactory> */
     use HasFactory;
 
@@ -48,7 +49,8 @@ class Device extends BaseModel {
     /**
      * @return MorphTo<Meter|SolarHomeSystem|EBike, $this>
      */
-    public function device(): MorphTo {
+    public function device(): MorphTo
+    {
         // https://github.com/larastan/larastan/issues/1223
         // @phpstan-ignore return.type
         return $this->morphTo();
@@ -57,51 +59,56 @@ class Device extends BaseModel {
     /**
      * @return BelongsTo<Person, $this>
      */
-    public function person(): BelongsTo {
+    public function person(): BelongsTo
+    {
         return $this->belongsTo(Person::class);
     }
 
     /**
-     * Get orders through the meter if this device is a meter.
+     * If this device is a meter, get all orders linked to it.
      *
-     * @return HasMany|null
+     * @return HasMany<Order>|null
      */
     public function meterOrders(): ?HasMany
     {
         if ($this->device_type === 'meter') {
             /** @var Meter|null $meter */
-            $meter = $this->device; // polymorphic relation
+            $meter = $this->device;
             return $meter?->orders(); // returns HasMany<Order> or null
         }
 
-        return null; // if device is not a meter
+        return null;
     }
 
     /**
      * @return MorphOne<Address, $this>
      */
-    public function address(): MorphOne {
+    public function address(): MorphOne
+    {
         return $this->morphOne(Address::class, 'owner');
     }
 
     /**
      * @return HasMany<Token, $this>
      */
-    public function tokens(): HasMany {
+    public function tokens(): HasMany
+    {
         return $this->hasMany(Token::class, 'device_id', 'id');
     }
 
     /**
      * @return HasOne<AssetPerson, $this>
      */
-    public function assetPerson(): HasOne {
+    public function assetPerson(): HasOne
+    {
         return $this->hasOne(AssetPerson::class, 'device_serial', 'device_serial');
     }
 
     /**
      * @return HasOneThrough<Asset, AssetPerson, $this>
      */
-    public function appliance(): HasOneThrough {
+    public function appliance(): HasOneThrough
+    {
         return $this->hasOneThrough(
             Asset::class,
             AssetPerson::class,
@@ -115,7 +122,20 @@ class Device extends BaseModel {
     /**
      * @return HasMany<Transaction, $this>
      */
-    public function transactions(): HasMany {
+    public function transactions(): HasMany
+    {
         return $this->hasMany(Transaction::class, 'message', 'device_serial');
+    }
+
+    /**
+     * Get only meter orders of a specific type (optional helper)
+     *
+     * @param string|null $type 'meter_order'|'meter_electricity_order'
+     * @return HasMany<Order>|null
+     */
+    public function meterOrdersByType(?string $type): ?HasMany
+    {
+        $orders = $this->meterOrders();
+        return $orders?->when($type, fn($query) => $query->where('type', $type));
     }
 }

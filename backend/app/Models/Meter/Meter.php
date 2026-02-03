@@ -131,12 +131,21 @@ class Meter extends BaseModel
         return $this->hasMany(Transaction::class, 'message', 'serial_number');
     }
 
-    /**
-     * @return HasMany<Order, $this>
-     */
+    /** Orders placed for this meter (all types) */
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'meter_id', 'id');
+    }
+
+    /** Orders filtered by type */
+    public function meterOrders(): HasMany
+    {
+        return $this->orders()->where('type', 'meter_order');
+    }
+
+    public function meterElectricityOrders(): HasMany
+    {
+        return $this->orders()->where('type', 'meter_electricity_order');
     }
 
     public function findBySerialNumber(string $meterSerialNumber): ?self

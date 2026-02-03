@@ -5,6 +5,7 @@ namespace MPM\Apps\CustomerRegistration;
 use App\Events\AccessRatePaymentInitialize;
 use App\Http\Requests\AndroidAppRequest;
 use App\Models\Meter\Meter;
+use App\Models\Order\Order;
 use App\Models\Person\Person;
 use App\Services\AddressesService;
 use App\Services\AddressGeographicalInformationService;
@@ -71,6 +72,17 @@ class CustomerRegistrationAppService
             $this->meterDeviceService->setAssignee($meter);
             $this->meterDeviceService->assign();
             $this->deviceService->save($device);
+
+            $customerPendingFirstOrder = Order::where('customer_id', $person->id)
+                ->where('type', 'meter_order')
+                ->whereNull('meter_id')
+                ->orderBy('created_at')
+                ->first();
+
+            if ($customerPendingFirstOrder) {
+                $customerPendingFirstOrder->meter_id = $meter->id;
+                $customerPendingFirstOrder->save();
+            }
 
             // initializes a new Access Rate Payment for the next Period
             event(new AccessRatePaymentInitialize($meter));

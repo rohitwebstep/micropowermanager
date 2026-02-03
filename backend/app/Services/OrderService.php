@@ -15,35 +15,88 @@ class OrderService implements IBaseService
         private Order $order
     ) {}
 
+    /**
+     * Get order by ID with relationships
+     */
     public function getById(int $orderId): ?Order
     {
         return $this->order->newQuery()
-            ->with(['customer', 'meter'])
+            ->with(['customer', 'meter', 'billingAddress', 'shippingAddress'])
             ->find($orderId);
     }
 
-    public function getAll(?int $limit = null): LengthAwarePaginator
+    /**
+     * Get all orders (paginated) with relationships
+     */
+    public function getAll(?int $limit = null, ?string $type = null): LengthAwarePaginator
     {
-        return $this->order->newQuery()
-            ->with(['customer', 'meter'])
-            ->paginate($limit);
-    }
+        $query = $this->order->newQuery()
+            ->with(['customer', 'meter', 'billingAddress', 'shippingAddress']);
 
-    public function create(array $data): Order
-    {
-        return $this->order->newQuery()->create($data);
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        return $query->paginate($limit);
     }
 
     /**
+     * Create a new order
+     */
+    public function create(array $data): Order
+    {
+        // Create order
+        $order = $this->order->newQuery()->create($data);
+
+        // Billing address
+        if (!empty($data['billing_address'])) {
+            $order->billingAddress()->updateOrCreate(
+                ['type' => 'billing'],       // Match on type (unique key)
+                $data['billing_address']     // Fill with new data
+            );
+        }
+
+        // Shipping address
+        if (!empty($data['shipping_address'])) {
+            $order->shippingAddress()->updateOrCreate(
+                ['type' => 'shipping'],      // Match on type (unique key)
+                $data['shipping_address']    // Fill with new data
+            );
+        }
+
+        return $order->fresh(['customer', 'meter', 'billingAddress', 'shippingAddress']);
+    }
+
+    /**
+     * Update an existing order
+     *
      * @param Order $order
      */
     public function update($order, array $data): Order
     {
         $order->update($data);
-        return $order->fresh();
+
+        // Update addresses if provided
+        if (!empty($data['billing_address'])) {
+            $order->billingAddress()->updateOrCreate(
+                ['order_id' => $order->id, 'type' => 'billing'],
+                $data['billing_address']
+            );
+        }
+
+        if (!empty($data['shipping_address'])) {
+            $order->shippingAddress()->updateOrCreate(
+                ['order_id' => $order->id, 'type' => 'shipping'],
+                $data['shipping_address']
+            );
+        }
+
+        return $order->fresh(['customer', 'meter', 'billingAddress', 'shippingAddress']);
     }
 
     /**
+     * Delete an order
+     *
      * @param Order $order
      */
     public function delete($order): ?bool

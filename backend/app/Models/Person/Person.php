@@ -141,12 +141,26 @@ class Person extends BaseModel implements HasAddressesInterface, RoleInterface
         return $this->hasMany(Device::class);
     }
 
-    /**
-     * @return HasMany<Order, $this>
-     */
+    /** Orders relationship */
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'customer_id', 'id');
+    }
+
+    /** Helper: orders by type */
+    public function meterOrders(): HasMany
+    {
+        return $this->orders()->where('type', 'meter_order');
+    }
+
+    public function meterElectricityOrders(): HasMany
+    {
+        return $this->orders()->where('type', 'meter_electricity_order');
+    }
+
+    public function productOrders(): HasMany
+    {
+        return $this->orders()->where('type', 'product_order');
     }
 
     /**
