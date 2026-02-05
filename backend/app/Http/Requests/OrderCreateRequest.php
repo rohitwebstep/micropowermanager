@@ -69,6 +69,13 @@ class OrderCreateRequest extends FormRequest
         // Require meter_id for electricity orders
         $validator->sometimes('meter_id', 'required', fn($input) => in_array($input->type, ['meter_electricity_order']));
 
+        // Require order_id when type is NOT product_order
+        $validator->sometimes(
+            'order_id',
+            'required',
+            fn($input) => $input->type !== 'product_order'
+        );
+
         // Require product_meta for product orders
         // $validator->sometimes('product_meta', 'required|array', fn($input) => $input->type === 'product_order');
     }
