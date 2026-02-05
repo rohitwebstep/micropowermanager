@@ -20,7 +20,7 @@ class OrderUpdateRequest extends FormRequest
                 'string',
                 Rule::unique('tenant.orders', 'order_id')->ignore($this->route('order')->id),
             ],
-            'customer_id' => ['required', 'numeric', 'exists:tenant.people,id'],
+            'customer_id' => ['nullable', 'numeric', 'exists:tenant.people,id'],
             'type' => ['required', Rule::in(['meter_order', 'meter_electricity_order', 'product_order'])],
             'meter_id' => ['nullable', 'numeric', 'exists:tenant.meters,id'],
             'amount' => ['required', 'numeric', 'min:0'],
@@ -32,10 +32,10 @@ class OrderUpdateRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'phone_number' => ['nullable', 'string', 'max:20'],
 
-            // Product meta (optional)
+            // Product meta (array of products)
             'product_meta' => ['required', 'array'],
-            'product_meta.product_name' => ['required', 'string', 'max:255'],
-            'product_meta.quantity' => ['required', 'numeric', 'min:1'],
+            'product_meta.*.product_name' => ['required', 'string', 'max:255'],
+            'product_meta.*.quantity' => ['required', 'numeric', 'min:1'],
 
             // Billing address (optional)
             'billing_address' => ['nullable', 'array'],
@@ -59,6 +59,15 @@ class OrderUpdateRequest extends FormRequest
         ];
     }
 
+    private function generateOrderId(): string
+    {
+        $date = now()->format('d-m-Y');
+        $random = random_int(100000, 999999);
+
+        return "MPM-ODR-{$date}-{$random}";
+    }
+
+
     public function withValidator($validator)
     {
         // Require meter_id for electricity orders
@@ -70,6 +79,12 @@ class OrderUpdateRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+        if (!$this->filled('order_id')) {
+            $this->merge([
+                'order_id' => $this->generateOrderId(),
+            ]);
+        }
+
         /*
         // Default product_meta and meter_id to null if not relevant
         if ($this->input('type') !== 'product_order') {

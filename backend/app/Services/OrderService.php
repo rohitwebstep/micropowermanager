@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
 use App\Models\Order\Order;
+use App\Models\Person\Person;
 use App\Services\Interfaces\IBaseService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -12,7 +14,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class OrderService implements IBaseService
 {
     public function __construct(
-        private Order $order
+        private Order $order,
+        private PersonService $personService
     ) {}
 
     /**
@@ -45,27 +48,51 @@ class OrderService implements IBaseService
      */
     public function create(array $data): Order
     {
+        // Handle customer creation if customer_id is null
+        if (empty($data['customer_id'])) {
+            $phone = $data['phone_number'] ?? null;
+
+            if ($phone) {
+                $person = $this->personService->getByPhoneNumber($phone);
+
+                if (!$person instanceof Person) {
+                    $person = $this->personService->createFromRequest(
+                        new Request([
+                            'name'        => $data['first_name'] ?? null,
+                            'surname'     => $data['last_name'] ?? null,
+                            'email'       => $data['email'] ?? null,
+                            'phone'       => $phone,
+                            'is_customer' => 1,
+                        ])
+                    );
+                }
+
+                $data['customer_id'] = $person->id;
+            }
+        }
+
         // Create order
         $order = $this->order->newQuery()->create($data);
 
         // Billing address
         if (!empty($data['billing_address'])) {
             $order->billingAddress()->updateOrCreate(
-                ['type' => 'billing'],       // Match on type (unique key)
-                $data['billing_address']     // Fill with new data
+                ['type' => 'billing'],
+                $data['billing_address']
             );
         }
 
         // Shipping address
         if (!empty($data['shipping_address'])) {
             $order->shippingAddress()->updateOrCreate(
-                ['type' => 'shipping'],      // Match on type (unique key)
-                $data['shipping_address']    // Fill with new data
+                ['type' => 'shipping'],
+                $data['shipping_address']
             );
         }
 
         return $order->fresh(['customer', 'meter', 'billingAddress', 'shippingAddress']);
     }
+
 
     /**
      * Update an existing order

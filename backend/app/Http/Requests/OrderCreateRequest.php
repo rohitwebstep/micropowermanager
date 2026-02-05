@@ -15,8 +15,8 @@ class OrderCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_id' => ['required', 'string', 'unique:tenant.orders,order_id'],
-            'customer_id' => ['required', 'numeric', 'exists:tenant.people,id'],
+            'order_id' => ['nullable', 'string', 'unique:tenant.orders,order_id'],
+            'customer_id' => ['nullable', 'numeric', 'exists:tenant.people,id'],
             'type' => ['required', Rule::in(['meter_order', 'meter_electricity_order', 'product_order'])],
             'meter_id' => ['nullable', 'numeric', 'exists:tenant.meters,id'],
             'amount' => ['required', 'numeric', 'min:0'],
@@ -55,6 +55,15 @@ class OrderCreateRequest extends FormRequest
         ];
     }
 
+    private function generateOrderId(): string
+    {
+        $date = now()->format('d-m-Y');
+        $random = random_int(100000, 999999);
+
+        return "MPM-ODR-{$date}-{$random}";
+    }
+
+
     public function withValidator($validator)
     {
         // Require meter_id for electricity orders
@@ -66,6 +75,12 @@ class OrderCreateRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+        if (!$this->filled('order_id')) {
+            $this->merge([
+                'order_id' => $this->generateOrderId(),
+            ]);
+        }
+
         /*
         // Default product_meta and meter_id to null if not relevant
         if ($this->input('type') !== 'product_order') {
