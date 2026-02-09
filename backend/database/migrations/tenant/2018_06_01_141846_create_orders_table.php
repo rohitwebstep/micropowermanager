@@ -30,6 +30,11 @@ return new class extends Migration {
                 ->default('pending');
 
             $table->decimal('amount', 10, 2);
+
+            // ✅ Electricity-specific fields
+            $table->string('power_code')->nullable();
+            $table->string('token')->nullable();
+
             $table->timestamp('purchased_at')->useCurrent(); // timestamp instead of date
 
             $table->text('notes')->nullable();

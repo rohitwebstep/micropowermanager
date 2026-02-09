@@ -20,6 +20,8 @@ class OrderCreateRequest extends FormRequest
             'type' => ['required', Rule::in(['meter_order', 'meter_electricity_order', 'product_order'])],
             'meter_id' => ['nullable', 'numeric', 'exists:tenant.meters,id'],
             'amount' => ['required', 'numeric', 'min:0'],
+            'power_code' => ['nullable', 'string', 'max:255'],
+            'token'      => ['nullable', 'string', 'max:255'],
             'purchased_at' => ['required', 'date'],
 
             // Optional customer info
@@ -76,6 +78,13 @@ class OrderCreateRequest extends FormRequest
             fn($input) => $input->type !== 'product_order'
         );
 
+        // Require power_code & token for electricity orders
+        $validator->sometimes(
+            ['power_code', 'token'],
+            'required',
+            fn($input) => $input->type === 'meter_electricity_order'
+        );
+
         // Require product_meta for product orders
         // $validator->sometimes('product_meta', 'required|array', fn($input) => $input->type === 'product_order');
     }
@@ -96,6 +105,14 @@ class OrderCreateRequest extends FormRequest
         */
         if (in_array($this->input('type'), ['meter_order'])) {
             $this->merge(['meter_id' => null]);
+        }
+
+        // Nullify power_code & token if not electricity order
+        if ($this->input('type') !== 'meter_electricity_order') {
+            $this->merge([
+                'power_code' => null,
+                'token' => null,
+            ]);
         }
     }
 }

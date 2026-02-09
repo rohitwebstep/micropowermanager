@@ -46,13 +46,23 @@ class OrderService implements IBaseService
         // 🔍 Search only on orders table columns
         if (!empty($searchTerm)) {
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('order_id', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('first_name', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('last_name', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('email', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('phone_number', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('status', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('notes', 'LIKE', '%' . $searchTerm . '%');
+                $columns = [
+                    'order_id',
+                    'first_name',
+                    'last_name',
+                    'email',
+                    'phone_number',
+                    'status',
+                    'notes',
+                    'type',
+                    'amount',
+                    'power_code',
+                    'token',
+                ];
+
+                foreach ($columns as $column) {
+                    $q->orWhere($column, 'LIKE', "%{$searchTerm}%");
+                }
             });
         }
 
