@@ -18,10 +18,13 @@ class OrderController extends Controller
     // List orders
     public function index(Request $request): ApiResource
     {
-        $limit = $request->input('limit', config('settings.paginate'));
-        $type  = $request->input('type'); // optional
+        $limit      = $request->input('limit', config('settings.paginate'));
+        $type       = $request->input('type');    // optional
+        $searchTerm = $request->input('search');  // optional
 
-        return ApiResource::make($this->orderService->getAll($limit, $type));
+        return ApiResource::make(
+            $this->orderService->getAll($limit, $type, $searchTerm)
+        );
     }
 
     // Create order

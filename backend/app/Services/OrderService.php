@@ -31,13 +31,29 @@ class OrderService implements IBaseService
     /**
      * Get all orders (paginated) with relationships
      */
-    public function getAll(?int $limit = null, ?string $type = null): LengthAwarePaginator
-    {
+    public function getAll(
+        ?int $limit = null,
+        ?string $type = null,
+        ?string $searchTerm = null
+    ): LengthAwarePaginator {
         $query = $this->order->newQuery()
             ->with(['customer', 'meter', 'billingAddress', 'shippingAddress']);
 
         if ($type) {
             $query->where('type', $type);
+        }
+
+        // 🔍 Search only on orders table columns
+        if (!empty($searchTerm)) {
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('order_id', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('first_name', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('last_name', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('email', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('phone_number', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('status', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('notes', 'LIKE', '%' . $searchTerm . '%');
+            });
         }
 
         return $query->paginate($limit);

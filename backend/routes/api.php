@@ -190,6 +190,7 @@ Route::group(['prefix' => 'mini-grids', 'middleware' => 'jwt.verify'], static fu
     Route::get('/', [MiniGridController::class, 'index']);
     Route::post('/', [MiniGridController::class, 'store']);
     Route::get('/{miniGridId}', [MiniGridController::class, 'show']);
+    Route::put('/{miniGridId}', [MiniGridController::class, 'update']);
 
     Route::post('/{miniGridId}/transactions', [MiniGridRevenueController::class, 'show']);
     Route::post('/{miniGridId}/energy', [MiniGridRevenueController::class, 'show']);
