@@ -13,12 +13,10 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Http\Requests\MeterTypeCreateRequest;
-use App\Services\CustomerRegistrationAppService;
 
 class MeterController extends Controller {
     public function __construct(
         private MeterService $meterService,
-        private CustomerRegistrationAppService $customerRegistrationService
     ) {}
 
     /**
@@ -190,7 +188,7 @@ class MeterController extends Controller {
                 $androidRequest->validated(); // throws if invalid
 
                 // now call service — type matches
-                $people = app(\MPM\Apps\CustomerRegistration\CustomerRegistrationAppService::class)
+                $people = app(\App\Services\CustomerRegistrationAppService::class)
                     ->createCustomer($androidRequest);
 
                 $peopleId = $people['id'];
@@ -212,7 +210,8 @@ class MeterController extends Controller {
                 'operator'   => $row['Operator'] ?? null,
             ];
 
-            $parsed[] = compact('meterType', 'people', 'vend');
+            // $parsed[] = compact('meterType', 'people', 'vend');
+            $parsed[] = compact('customerRequestData');
         }
 
         return ApiResource::make([
