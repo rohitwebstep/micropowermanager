@@ -22,7 +22,7 @@ class OrderCreateRequest extends FormRequest
             'amount' => ['required', 'numeric', 'min:0'],
             'power_code' => ['nullable', 'string', 'max:255'],
             'token'      => ['nullable', 'string', 'max:255'],
-            'purchased_at' => ['required', 'date'],
+            'purchased_at' => ['nullable', 'date'],
 
             // Optional customer info
             'first_name' => ['nullable', 'string', 'max:255'],
@@ -84,6 +84,13 @@ class OrderCreateRequest extends FormRequest
             'required',
             fn($input) => $input->type === 'meter_electricity_order'
         );
+
+        $validator->sometimes(
+            'purchased_at',
+            'required',
+            fn($input) => $input->type === 'meter_electricity_order'
+        );
+
 
         // Require product_meta for product orders
         // $validator->sometimes('product_meta', 'required|array', fn($input) => $input->type === 'product_order');

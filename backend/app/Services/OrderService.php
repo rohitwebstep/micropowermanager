@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order\Order;
 use App\Models\Person\Person;
@@ -69,25 +70,37 @@ class OrderService implements IBaseService
         return $query->paginate($limit);
     }
 
-    public function analytics(): array
+    public function analytics(?string $from = null, ?string $to = null): array
     {
-        $orders = $this->order->newQuery()->get();
+        $query = $this->order->newQuery();
 
-        $grouped = $orders
+        // Apply purchase date filter
+        if ($from && $to) {
+            $query->whereBetween('purchased_at', [
+                Carbon::parse($from)->startOfDay(),
+                Carbon::parse($to)->endOfDay()
+            ]);
+        } elseif ($from) {
+            $query->whereDate('purchased_at', '>=', Carbon::parse($from));
+        } elseif ($to) {
+            $query->whereDate('purchased_at', '<=', Carbon::parse($to));
+        }
+
+        $results = (clone $query)
             ->groupBy('type')
-            ->map(function ($items, $type) {
-                return [
-                    'type' => $type,
-                    'total_orders' => $items->count(),
-                    'total_amount' => $items->sum('amount'),
-                ];
-            })
-            ->values();
+            ->select('type')
+            ->selectRaw('COUNT(id) as total_orders')
+            ->selectRaw('SUM(amount) as total_amount')
+            ->get();
 
         return [
-            'summary' => $grouped,
-            'grand_total_orders' => $orders->count(),
-            'grand_total_amount' => $orders->sum('amount'),
+            'filters' => [
+                'from' => $from,
+                'to'   => $to,
+            ],
+            'summary' => $results,
+            'grand_total_orders' => $query->count(),
+            'grand_total_amount' => $query->sum('amount'),
         ];
     }
 
