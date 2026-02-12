@@ -150,9 +150,10 @@ class OrderController extends Controller
         return ApiResource::make($order);
     }
 
-    public function assignMeter(Request $request, $order_id)
+    public function assignExternalDetails(Request $request, $order_id)
     {
         $request->validate([
+            'external_customer_id' => ['required', 'string'],
             'serial_number' => ['required', 'string'],
             'max_current'   => ['required', 'numeric'],
             'phase'         => ['required', 'numeric', 'in:1,3'],
@@ -258,6 +259,7 @@ class OrderController extends Controller
             // =============================
             $order->update([
                 'meter_id'     => $meter->id,
+                'external_customer_id' => $request->external_customer_id,
             ]);
 
             return response()->json([

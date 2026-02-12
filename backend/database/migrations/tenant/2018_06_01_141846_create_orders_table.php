@@ -15,6 +15,7 @@ return new class extends Migration {
 
             $table->string('order_id')->unique();
             $table->unsignedInteger('customer_id');
+            $table->string('external_customer_id')->nullable();
             $table->unsignedInteger('meter_id')->nullable(); // Nullable for non-meter orders
 
             $table->enum('type', ['meter_order', 'meter_electricity_order', 'product_order'])

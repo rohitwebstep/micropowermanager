@@ -16,6 +16,7 @@ class Order extends BaseModel
     protected $fillable = [
         'order_id',
         'customer_id',
+        'external_customer_id',
         'meter_id',
         'type',
         'first_name',
