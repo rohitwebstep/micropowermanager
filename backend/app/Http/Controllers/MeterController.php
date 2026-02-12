@@ -210,8 +210,7 @@ class MeterController extends Controller {
                 'operator'   => $row['Operator'] ?? null,
             ];
 
-            // $parsed[] = compact('meterType', 'people', 'vend');
-            $parsed[] = compact('customerRequestData');
+            $parsed[] = compact('meterType', 'people', 'vend');
         }
 
         return ApiResource::make([
