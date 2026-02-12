@@ -13,16 +13,16 @@ class CustomerRegistrationAppController extends Controller {
     public function __construct(private CustomerRegistrationAppService $customerRegistrationAppService) {}
 
     public function store(AndroidAppRequest $request): JsonResponse {
-        // try {
+        try {
             DB::connection('tenant')->beginTransaction();
             $person = $this->customerRegistrationAppService->createCustomer($request);
             DB::connection('tenant')->commit();
 
             return ApiResource::make($person)->response()->setStatusCode(201);
-        // } catch (\Exception $e) {
-        //     DB::connection('tenant')->rollBack();
-        //     Log::critical('Error while adding new Customer', ['message' => $e->getMessage()]);
-        //     throw new \Exception($e->getMessage(), $e->getCode(), $e);
-        // }
+        } catch (\Exception $e) {
+            DB::connection('tenant')->rollBack();
+            Log::critical('Error while adding new Customer', ['message' => $e->getMessage()]);
+            throw new \Exception($e->getMessage(), $e->getCode(), $e);
+        }
     }
 }
