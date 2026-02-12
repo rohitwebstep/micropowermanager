@@ -9,6 +9,7 @@ use App\Models\ConnectionGroup;
 use App\Models\ConnectionType;
 use App\Models\Device;
 use App\Models\Manufacturer;
+use App\Models\Order\Order;
 use App\Models\Tariff;
 use App\Models\Token;
 use App\Models\Transaction\Transaction;
