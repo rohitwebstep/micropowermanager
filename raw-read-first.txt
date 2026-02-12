@@ -2,8 +2,6 @@ cd /var/www
 rm -rf micropowermanager
 git clone https://github.com/rohitwebstep/micropowermanager.git
 cd micropowermanager
-
-
 cd backend
 sudo cp .env.example .env
 composer install --ignore-platform-reqs
@@ -24,3 +22,12 @@ pm2 stop micropower-frontend
 pm2 delete micropower-frontend
 pm2 start "npm run serve -- --port 8001" --name micropower-frontend
 pm2 logs micropower-frontend
+
+------------- Storage Path Error
+
+cd /var/www/micropowermanager/backend
+sudo mkdir -p storage/logs
+sudo chown -R www-data:www-data storage
+sudo chown -R www-data:www-data bootstrap/cache
+sudo chmod -R 775 storage
+sudo chmod -R 775 bootstrap/cache

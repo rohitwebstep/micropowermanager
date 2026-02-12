@@ -11,10 +11,14 @@ use App\Services\MeterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Http\Requests\MeterTypeCreateRequest;
+use App\Services\CustomerRegistrationAppService;
 
 class MeterController extends Controller {
     public function __construct(
         private MeterService $meterService,
+        private CustomerRegistrationAppService $customerRegistrationService
     ) {}
 
     /**
