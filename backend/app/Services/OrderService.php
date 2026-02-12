@@ -69,6 +69,28 @@ class OrderService implements IBaseService
         return $query->paginate($limit);
     }
 
+    public function analytics(): array
+    {
+        $orders = $this->order->newQuery()->get();
+
+        $grouped = $orders
+            ->groupBy('type')
+            ->map(function ($items, $type) {
+                return [
+                    'type' => $type,
+                    'total_orders' => $items->count(),
+                    'total_amount' => $items->sum('amount'),
+                ];
+            })
+            ->values();
+
+        return [
+            'summary' => $grouped,
+            'grand_total_orders' => $orders->count(),
+            'grand_total_amount' => $orders->sum('amount'),
+        ];
+    }
+
     /**
      * Create a new order
      */

@@ -27,6 +27,14 @@ class OrderController extends Controller
         );
     }
 
+    // Analytics
+    public function analytics(): ApiResource
+    {
+        $data = $this->orderService->analytics();
+        return ApiResource::make($data);
+    }
+
+
     // Create order
     public function store(OrderCreateRequest $request): ApiResource
     {
