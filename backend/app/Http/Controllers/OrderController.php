@@ -10,6 +10,9 @@ use App\Models\Order\Order;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
@@ -36,6 +39,102 @@ class OrderController extends Controller
         $data = $this->orderService->analytics($from, $to);
 
         return ApiResource::make($data);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $debug = $request->boolean('debug', false);
+        // You can also hardcode: $debug = true;
+
+        $from = $request->input('from');
+        $to   = $request->input('to');
+
+        $query = \App\Models\Order\Order::with(['meter.meter_type'])
+            ->where('type', 'meter_order')
+            ->whereNull('meter_id');
+
+
+        if ($from && $to) {
+            $query->whereBetween('purchased_at', [
+                \Carbon\Carbon::parse($from)->startOfDay(),
+                \Carbon\Carbon::parse($to)->endOfDay()
+            ]);
+        }
+
+        $orders = $query->get();
+
+        /*
+    |--------------------------------------------------------------------------
+    | DEBUG MODE → Return Array Instead of Excel
+    |--------------------------------------------------------------------------
+    */
+        if ($debug) {
+
+            $data = $orders->map(function ($order) {
+                return [
+                    'customer_no'   => '',
+                    'customer_name' => $order->first_name . ' ' . $order->last_name,
+                    'meter_no'      => '',
+                    'price'         => $order->amount,
+                    'tax'           => '',
+                    'total_unit'    => '',
+                    'total_paid'    => '',
+                    'operator'      => 'pos1',
+                    'token'         => '',
+                    'created_date'  => $order->purchased_at,
+                ];
+            });
+
+            return response()->json($data);
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | NORMAL MODE → Generate Excel
+    |--------------------------------------------------------------------------
+    */
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $headers = [
+            'Customer No.',
+            'Customer Name',
+            'Meter No.',
+            'Price',
+            'Tax',
+            'Total Unit',
+            'Total Paid',
+            'Operator',
+            'Token',
+            'Created Date'
+        ];
+
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
+
+        $row = 2;
+
+        foreach ($orders as $order) {
+            $sheet->setCellValue("A{$row}", "");
+            $sheet->setCellValue("B{$row}", $order->first_name . ' ' . $order->last_name);
+            $sheet->setCellValue("C{$row}", $order->meter->serial_number ?? '');
+            $sheet->setCellValue("D{$row}", $order->amount);
+            $sheet->setCellValue("E{$row}", "");
+            $sheet->setCellValue("F{$row}", $order->meter->meter_type->max_current ?? '');
+            $sheet->setCellValue("G{$row}", "");
+            $sheet->setCellValue("H{$row}", "pos1");
+            $sheet->setCellValue("I{$row}", $order->token);
+            $sheet->setCellValue("J{$row}", $order->purchased_at);
+            $row++;
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $fileName = 'VendingRecords.xlsx';
+        $temp_file = tempnam(sys_get_temp_dir(), $fileName);
+        $writer->save($temp_file);
+
+        return response()->download($temp_file, $fileName)->deleteFileAfterSend(true);
     }
 
     // Create order

@@ -24,6 +24,8 @@ class Order extends BaseModel
         'phone_number',
         'status',
         'amount',
+        'power_code',
+        'token',
         'purchased_at',
         'notes',
         'product_meta',
