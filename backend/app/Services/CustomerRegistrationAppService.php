@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Events\AccessRatePaymentInitialize;
 use App\Http\Requests\AndroidAppRequest;
 use App\Models\Meter\Meter;
+use App\Models\Order\Order;
 use App\Models\Person\Person;
 
 class CustomerRegistrationAppService
@@ -23,6 +24,7 @@ class CustomerRegistrationAppService
     public function createCustomer(AndroidAppRequest $request): Person
     {
         $serialNumber = $request->input('serial_number');
+        $phone = $request->input('phone');
 
         $person = $this->personService->getByPhoneNumber($phone);
         if (!$person instanceof Person) {
@@ -32,7 +34,6 @@ class CustomerRegistrationAppService
 
         if (!empty($serialNumber)) {
             $meter = $this->meterService->getBySerialNumber($serialNumber);
-            $phone = $request->input('phone');
             if ($meter instanceof Meter) {
                 throw new \Exception('Meter already exists');
             }
