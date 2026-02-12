@@ -11,11 +11,11 @@ use App\Models\GeographicalInformation;
 use App\Models\Manufacturer;
 use App\Models\Meter\Meter;
 use App\Models\Meter\MeterConsumption;
-use App\Models\Meter\MeterTariff;
 use App\Models\Meter\MeterType;
 use App\Models\Person\Person;
+use App\Models\Tariff;
+use App\Services\DatabaseProxyManagerService;
 use Illuminate\Database\Seeder;
-use MPM\DatabaseProxy\DatabaseProxyManagerService;
 
 class MeterSeeder extends Seeder {
     public function __construct(
@@ -43,7 +43,7 @@ class MeterSeeder extends Seeder {
         $manufacturers = collect([$demoMeterManufacturer]);
 
         // Tariffs
-        MeterTariff::factory()
+        Tariff::factory()
             ->create([
                 'name' => 'Simple Tariff',
                 'price' => '250',
@@ -51,7 +51,7 @@ class MeterSeeder extends Seeder {
                 'currency' => 'TZS',
             ]);
 
-        MeterTariff::factory()
+        Tariff::factory()
             ->has(
                 AccessRate::factory()
                     ->state([
@@ -104,7 +104,7 @@ class MeterSeeder extends Seeder {
                 ->for(ConnectionGroup::all()->random())
                 ->for(MeterType::all()->random())
                 ->for($manufacturers->random())
-                ->for(MeterTariff::all()->random(), 'tariff')
+                ->for(Tariff::all()->random(), 'tariff')
                 ->createOne();
 
             // Assign the Meter to the customer by creating a device
@@ -149,7 +149,5 @@ class MeterSeeder extends Seeder {
             'consumption' => $consumption,
             'credit_on_meter' => $creditOnMeter,
         ]);
-
-        echo "Created meter consumption data for meter ID: {$meterId}\n";
     }
 }

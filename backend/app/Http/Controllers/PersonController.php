@@ -39,11 +39,11 @@ class PersonController extends Controller {
      */
     public function index(Request $request): ApiResource {
         $customerType = $request->input('is_customer', 1);
-        $limit = $request->input('limit', config('settings.paginate'));
+        $perPage = $request->input('per_page', config('settings.paginate'));
         $agentId = $request->input('agent_id');
         $activeCustomer = $request->has('active_customer') ? (bool) $request->input('active_customer') : null;
 
-        return ApiResource::make($this->personService->getAll($limit, $customerType, $agentId, $activeCustomer));
+        return ApiResource::make($this->personService->getAll($perPage, $customerType, $agentId, $activeCustomer));
     }
 
     /**
@@ -108,7 +108,7 @@ class PersonController extends Controller {
      * @bodyParam name string. The title of the person. Example: Dr.
      * @bodyParam surname string. The title of the person. Example: Dr.
      * @bodyParam birth_date string. The title of the person. Example: Dr.
-     * @bodyParam sex string. The title of the person. Example: Dr.
+     * @bodyParam gender string. The title of the person. Example: Dr.
      * @bodyParam education string. The title of the person. Example: Dr.
      *
      * @apiResourceModel App\Models\Person\Person
@@ -159,10 +159,11 @@ class PersonController extends Controller {
     public function search(
         Request $request,
     ): ApiResource {
-        $term = $request->input('term');
+        $term = $request->input('term', '');
         $paginate = $request->input('paginate', 1);
+        $per_page = $request->input('per_page', 15);
 
-        return ApiResource::make($this->personService->searchPerson($term, $paginate));
+        return ApiResource::make($this->personService->searchPerson($term, $paginate, $per_page));
     }
 
     /**
@@ -178,9 +179,20 @@ class PersonController extends Controller {
      */
     public function destroy(
         int $personId,
-    ): ApiResource {
+    ): JsonResponse {
         $person = $this->personService->getById($personId);
 
-        return ApiResource::make($this->personService->delete($person));
+        $deleted = $this->personService->delete($person);
+
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Failed to delete person',
+            ], 500);
+        }
+
+        return ApiResource::make([
+            'message' => 'Person deleted successfully',
+            'data' => $person,
+        ])->response()->setStatusCode(200);
     }
 }

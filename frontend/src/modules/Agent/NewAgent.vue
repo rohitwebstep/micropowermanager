@@ -1,6 +1,10 @@
 <template>
   <div>
-    <widget v-show="addAgent" :title="$tc('phrases.newAgent')" color="red">
+    <widget
+      v-show="addAgent"
+      :title="$tc('phrases.newAgent')"
+      color="secondary"
+    >
       <md-card>
         <md-card-content>
           <div class="md-layout md-gutter">
@@ -218,7 +222,7 @@
                       id="password"
                       :name="$tc('words.password')"
                       v-model="agentService.agent.password"
-                      v-validate="'required|min:3|max:15'"
+                      v-validate="'required|min:3|max:128'"
                       ref="passwordRef"
                       type="password"
                     />

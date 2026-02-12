@@ -11,10 +11,10 @@ use App\Models\MiniGrid;
 use App\Models\Person\Person;
 use App\Services\CompanyDatabaseService;
 use App\Services\CompanyService;
+use App\Services\DatabaseProxyManagerService;
 use App\Services\DatabaseProxyService;
 use App\Utils\DemoCompany;
 use Illuminate\Database\Seeder;
-use MPM\DatabaseProxy\DatabaseProxyManagerService;
 
 class AgentSeeder extends Seeder {
     public function __construct(
@@ -86,6 +86,7 @@ class AgentSeeder extends Seeder {
                     'email' => $firstAgent ? DemoCompany::DEMO_COMPANY_AGENT_EMAIL : fake()->safeEmail(),
                     'password' => $firstAgent ? DemoCompany::DEMO_COMPANY_PASSWORD : fake()->password(),
                 ]);
+
             $firstAgent = false; // Ensure only one agent gets the test email
 
             // Give our Agent some balance

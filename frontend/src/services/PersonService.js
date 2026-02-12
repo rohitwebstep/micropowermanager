@@ -2,6 +2,7 @@ import { ErrorHandler } from "@/Helpers/ErrorHandler"
 import moment from "moment"
 import { convertObjectKeysToSnakeCase } from "@/Helpers/Utils"
 import { resources } from "@/resources"
+import Client from "@/repositories/Client/AxiosClient"
 
 import { Paginator } from "@/Helpers/Paginator"
 import { EventBus } from "@/shared/eventbus"
@@ -34,7 +35,7 @@ export class Person {
       personData.citizenship != null
         ? personData.citizenship.country_name
         : "No data available"
-    this.gender = personData.sex
+    this.gender = personData.gender
     this.addresses = personData.addresses
     this.devices = personData.devices
     this.is_active = personData.is_active
@@ -65,7 +66,7 @@ export class Person {
       data.citizenship != null
         ? data.citizenship.country_name
         : "No data available"
-    this.gender = data.sex
+    this.gender = data.gender
     this.addresses = data.addresses
     this.lastUpdate = data.updated_at
     this.devices = data.devices
@@ -81,7 +82,7 @@ export class Person {
       name: this.name,
       surname: this.surname,
       birth_date: this.birthDate,
-      sex: this.gender,
+      gender: this.gender,
       education: this.education,
     }
   }
@@ -95,7 +96,7 @@ export class Person {
     if (this.birthDate !== null) {
       this.birthDate = this.isoYear(this.birthDate)
     }
-    axios.put(resources.person.update + this.id, this.toJson())
+    Client.put(resources.person.update + this.id, this.toJson())
   }
 
   getFullName() {
@@ -189,7 +190,7 @@ export class PersonService {
           personData.citizenship != null
             ? personData.citizenship.country_name
             : "No data available",
-        gender: personData.sex,
+        gender: personData.gender,
         addresses: personData.addresses,
         devices: personData.devices,
         is_active: personData.is_active,

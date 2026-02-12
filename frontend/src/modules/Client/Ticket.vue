@@ -2,7 +2,7 @@
   <div class="col-sm-12">
     <widget
       :subscriber="subscriber"
-      color="green"
+      color="primary"
       :title="$tc('phrases.userTicket', 2)"
       :paginator="tickets.paginator"
       :button="true"
@@ -155,7 +155,7 @@ import moment from "moment"
 import { TicketUserService } from "@/services/TicketUserService"
 import { TicketLabelService } from "@/services/TicketLabelService"
 import TicketItem from "../../shared/TicketItem"
-import { baseUrl } from "@/repositories/Client/AxiosClient"
+import Client from "@/repositories/Client/AxiosClient"
 import { notify } from "@/mixins/notify"
 
 export default {
@@ -296,6 +296,14 @@ export default {
     },
 
     async saveTicket() {
+      if (!this.$can("tickets")) {
+        this.alertNotify(
+          "error",
+          "You do not have permission to create tickets",
+        )
+        return
+      }
+
       // Validate all fields
       const validator = await this.$validator.validateAll()
       if (!validator) {
@@ -320,7 +328,7 @@ export default {
       }
 
       try {
-        await axios.post(baseUrl + resources.ticket.create, newTicketParams)
+        await Client.post(resources.ticket.create, newTicketParams)
         this.alertNotify("success", "Ticket created successfully.")
         // Refresh ticket list
         EventBus.$emit(
@@ -334,7 +342,14 @@ export default {
         this.closeModal()
       } catch (error) {
         console.error("Error creating ticket:", error)
-        this.alertNotify("error", error.message)
+        if (error.response && error.response.status === 403) {
+          this.alertNotify(
+            "error",
+            "You do not have permission to create tickets",
+          )
+        } else {
+          this.alertNotify("error", error.message)
+        }
       }
     },
   },

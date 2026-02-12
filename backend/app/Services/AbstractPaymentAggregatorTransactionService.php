@@ -2,19 +2,19 @@
 
 namespace App\Services;
 
+use App\DTO\TransactionDataContainer;
 use App\Exceptions\TransactionAmountNotEnoughException;
 use App\Exceptions\TransactionIsInvalidForProcessingIncomingRequestException;
-use App\Misc\TransactionDataContainer;
 use App\Models\Address\Address;
 use App\Models\Meter\Meter;
 use App\Models\Person\Person;
 use App\Models\Transaction\Transaction;
+use App\Plugins\PaystackPaymentProvider\Models\PaystackTransaction;
+use App\Plugins\SteamaMeter\Exceptions\ModelNotFoundException;
+use App\Plugins\SwiftaPaymentProvider\Models\SwiftaTransaction;
+use App\Plugins\WavecomPaymentProvider\Models\WaveComTransaction;
+use App\Plugins\WaveMoneyPaymentProvider\Models\WaveMoneyTransaction;
 use App\Utils\MinimumPurchaseAmountValidator;
-use Inensus\PaystackPaymentProvider\Models\PaystackTransaction;
-use Inensus\SteamaMeter\Exceptions\ModelNotFoundException;
-use Inensus\SwiftaPaymentProvider\Models\SwiftaTransaction;
-use Inensus\WavecomPaymentProvider\Models\WaveComTransaction;
-use Inensus\WaveMoneyPaymentProvider\Models\WaveMoneyTransaction;
 
 abstract class AbstractPaymentAggregatorTransactionService {
     private const MINIMUM_TRANSACTION_AMOUNT = 0;

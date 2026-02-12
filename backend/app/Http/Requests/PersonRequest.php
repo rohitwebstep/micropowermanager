@@ -9,12 +9,12 @@ use Illuminate\Foundation\Http\FormRequest;
  * @bodyParam name string required. Example: John
  * @bodyParam surname string required. Example: Doe
  * @bodyParam birth_date string optional. Example: 1970-01-01
- * @bodyParam sex string optional Example: male
+ * @bodyParam gender string optional Example: male
  * @bodyParam education string optional. Example: University
- * @bodyParam city_id int required. Example: 1
+ * @bodyParam city_id int optional. Example: 1
  * @bodyParam street string optional. Example: Some Street 1/13
  * @bodyParam email string optional. Example: john.doe@mail.com
- * @bodyParam phone string required. Example: +1111
+ * @bodyParam phone string optional. Example: +1111
  * @bodyParam country_code string optional. Example: NG, US, etc.
  */
 class PersonRequest extends FormRequest {
@@ -36,12 +36,12 @@ class PersonRequest extends FormRequest {
             'name' => ['required', 'min:2'],
             'surname' => ['required', 'min:2'],
             'birth_date' => ['sometimes', 'nullable', 'date'],
-            'sex' => ['sometimes', 'nullable', 'string', 'in:male,female'],
+            'gender' => ['sometimes', 'nullable', 'string'],
             'education' => ['sometimes', 'nullable', 'string'],
-            'city_id' => ['required', 'integer', 'exists:tenant.cities,id'],
+            'city_id' => ['sometimes', 'integer', 'exists:tenant.cities,id'],
             'street' => ['sometimes', 'nullable', 'string', 'min:5'],
             'email' => ['sometimes', 'nullable', 'email'],
-            'phone' => ['required', 'min:11'],
+            'phone' => ['sometimes', 'min:11'],
             'country_code' => ['sometimes', 'nullable', 'string'],
         ];
     }

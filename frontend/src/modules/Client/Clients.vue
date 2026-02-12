@@ -6,15 +6,15 @@
       :search="true"
       :subscriber="subscriber"
       :button="true"
-      :paginator="people.paginator"
+      :paginator="paginator"
+      :show_per_page="true"
       :route_name="'/people'"
-      color="green"
+      color="primary"
       :button-text="$tc('phrases.addCustomer')"
       :key="widgetKey"
       @widgetAction="
         () => {
           showAddClient = true
-          this.key++
         }
       "
     >
@@ -38,13 +38,25 @@
               <md-button
                 class="md-raised md-default export-csv-button"
                 @click="exportDebts"
+                :disabled="downloadingDebts"
               >
-                <md-icon>download</md-icon>
+                <md-icon class="export-icon">
+                  <Transition mode="out-in" name="fade">
+                    <md-progress-spinner
+                      v-if="downloadingDebts"
+                      md-mode="indeterminate"
+                      :md-diameter="21"
+                      :md-stroke="3"
+                    />
+                    <span v-else>download</span>
+                  </Transition>
+                </md-icon>
                 {{ $tc("phrases.exportCustomersDebts") }}
               </md-button>
               <md-button
                 class="md-raised md-primary export-csv-button"
                 @click="showExportModal = true"
+                :disabled="downloadingCustomers"
               >
                 <md-icon>download</md-icon>
                 {{ $tc("phrases.exportAllCustomers") }}
@@ -113,75 +125,58 @@
         </div>
 
         <div class="md-layout-item md-size-100" v-if="people.list.length > 0">
-          <md-table md-card style="margin-left: 0">
-            <md-table-row>
-              <md-table-head>
-                {{ $tc("words.name") }}
-              </md-table-head>
-              <md-table-head>
-                {{ $tc("words.phone") }}
-              </md-table-head>
-              <md-table-head>
-                {{ $tc("words.city") }}
-              </md-table-head>
-              <md-table-head>
-                {{ $tc("words.isActive") }}
-              </md-table-head>
-              <md-table-head>
-                {{ $tc("words.device") }}
-              </md-table-head>
-              <md-table-head>
-                {{ $tc("words.agent") }}
-              </md-table-head>
-              <md-table-head>
-                {{ $tc("phrases.lastUpdate") }}
-              </md-table-head>
-            </md-table-row>
+          <md-table
+            v-model="people.list"
+            md-card
+            style="margin-left: 0"
+            md-sort="created_at"
+            md-sort-order="desc"
+            @md-sorted="onSort"
+          >
             <md-table-row
-              v-for="client in people.list"
-              :key="client.id"
-              @click="detail(client.id)"
+              slot="md-table-row"
+              slot-scope="{ item }"
+              @click="detail(item.id)"
               style="cursor: pointer"
             >
-              <md-table-cell>
-                {{ client.name }} {{ client.surname }}
+              <md-table-cell :md-label="$tc('words.name')" md-sort-by="name">
+                {{ item.name }} {{ item.surname }}
               </md-table-cell>
-              <md-table-cell>
-                {{
-                  client.addresses.length > 0 ? client.addresses[0].phone : "-"
-                }}
+
+              <md-table-cell :md-label="$tc('words.phone')">
+                {{ item.addresses.length > 0 ? item.addresses[0].phone : "-" }}
               </md-table-cell>
-              <md-table-cell class="hidden-xs">
+
+              <md-table-cell
+                :md-label="$tc('words.city')"
+                md-sort-by="city"
+                class="hidden-xs"
+              >
                 {{
-                  client.addresses.length > 0 && client.addresses[0].city
-                    ? client.addresses[0].city.name
+                  item.addresses.length > 0 && item.addresses[0].city
+                    ? item.addresses[0].city.name
                     : "-"
                 }}
               </md-table-cell>
-              <md-table-cell>
-                {{ client.is_active ? $tc("words.yes") : $tc("words.no") }}
+
+              <md-table-cell :md-label="$tc('words.isActive')">
+                {{ item.is_active ? $tc("words.yes") : $tc("words.no") }}
               </md-table-cell>
-              <md-table-cell>
-                {{
-                  client.devices.length > 0 ? deviceList(client.devices) : "-"
-                }}
+
+              <md-table-cell :md-label="$tc('words.device')">
+                {{ item.devices.length > 0 ? deviceList(item.devices) : "-" }}
               </md-table-cell>
-              <md-table-cell>
-                {{ getAgentName(client) }}
+
+              <md-table-cell :md-label="$tc('words.agent')" md-sort-by="agent">
+                {{ getAgentName(item) }}
               </md-table-cell>
-              <md-table-cell class="hidden-xs">
-                {{ timeForTimeZone(client.lastUpdate) }}
-              </md-table-cell>
-            </md-table-row>
-            <!-- No customers found message -->
-            <md-table-row v-if="people.list.length === 0">
+
               <md-table-cell
-                colspan="7"
-                style="text-align: center; padding: 2rem"
+                :md-label="$tc('phrases.lastUpdate')"
+                md-sort-by="created_at"
+                class="hidden-xs"
               >
-                <div style="color: #666; font-style: italic">
-                  No customers found
-                </div>
+                {{ timeForTimeZone(item.lastUpdate) }}
               </md-table-cell>
             </md-table-row>
           </md-table>
@@ -192,7 +187,6 @@
     <add-client-modal
       :showAddClient="showAddClient"
       @hideAddCustomer="() => (showAddClient = false)"
-      :key="key"
     />
 
     <!-- Updated Export Modal for Customer Export -->
@@ -210,7 +204,7 @@
                 <md-option
                   v-for="miniGrid in miniGridService.list"
                   :key="miniGrid.id"
-                  :value="miniGrid.id"
+                  :value="miniGrid.name"
                 >
                   {{ miniGrid.name }}
                 </md-option>
@@ -225,7 +219,7 @@
                 <md-option
                   v-for="city in cityService.list"
                   :key="city.id"
-                  :value="city.id"
+                  :value="city.name"
                 >
                   {{ city.name }}
                 </md-option>
@@ -253,9 +247,12 @@
               <label>{{ $tc("words.deviceType") }}</label>
               <md-select v-model="exportFilters.deviceType">
                 <md-option value="">{{ $tc("words.all") }}</md-option>
-                <md-option value="meter">{{ $tc("words.meter") }}</md-option>
-                <md-option value="appliance">
-                  {{ $tc("words.appliance") }}
+                <md-option
+                  v-for="device in deviceTypes"
+                  :key="device.type"
+                  :value="device.type"
+                >
+                  {{ device.display }}
                 </md-option>
               </md-select>
             </md-field>
@@ -272,11 +269,17 @@
         </div>
       </md-dialog-content>
 
+      <md-progress-bar md-mode="indeterminate" v-if="downloadingCustomers" />
+
       <md-dialog-actions>
-        <md-button @click="showExportModal = false">
+        <md-button class="md-raised" @click="showExportModal = false">
           {{ $tc("words.cancel") }}
         </md-button>
-        <md-button class="md-primary" @click="exportCustomers">
+        <md-button
+          class="md-primary md-raised"
+          :disabled="downloadingCustomers"
+          @click="exportCustomers"
+        >
           {{ $tc("words.export") }}
         </md-button>
       </md-dialog-actions>
@@ -300,6 +303,7 @@ import { MainSettingsService } from "@/services/MainSettingsService"
 import { AgentService } from "@/services/AgentService"
 import { MiniGridService } from "@/services/MiniGridService"
 import { CityService } from "@/services/CityService"
+import { mapGetters } from "vuex"
 
 const debounce = require("debounce")
 
@@ -314,7 +318,6 @@ export default {
       paginator: new Paginator(resources.person.list),
       searchTerm: "",
       showAddClient: false,
-      key: 0,
       outstandingDebtsExportService: new OutstandingDebtsExportService(),
       customerExportService: new CustomerExportService(),
       mainSettingsService: new MainSettingsService(),
@@ -323,6 +326,8 @@ export default {
       selectedAgentId: null,
       widgetKey: 0,
       showFilter: false,
+      currentSortBy: "created_at",
+      currentSortOrder: "desc",
       exportFilters: {
         format: "csv",
         isActive: "",
@@ -333,8 +338,15 @@ export default {
       miniGridService: new MiniGridService(),
       cityService: new CityService(),
       isSearching: false,
+      downloadingDebts: false,
+      downloadingCustomers: false,
       activeRequest: null,
     }
+  },
+  computed: {
+    ...mapGetters({
+      deviceTypes: "device/getDeviceTypes",
+    }),
   },
   watch: {
     searchTerm: debounce(function () {
@@ -366,11 +378,45 @@ export default {
 
   methods: {
     handleSearch() {
-      if (this.searchTerm.length > 0) {
+      if (this.searchTerm.length > 2) {
         this.performSearch()
-      } else {
-        this.showAllEntries()
       }
+    },
+
+    onSort(sortData) {
+      if (typeof sortData === "string") {
+        this.currentSortBy = sortData
+        if (
+          this.currentSortBy === sortData &&
+          this.currentSortOrder === "asc"
+        ) {
+          this.currentSortOrder = "desc"
+        } else {
+          this.currentSortOrder = "asc"
+        }
+      } else if (sortData && typeof sortData === "object") {
+        this.currentSortBy = sortData.name || null
+        this.currentSortOrder = sortData.type || "desc"
+      } else {
+        this.currentSortBy = null
+        this.currentSortOrder = "desc"
+      }
+
+      // Build term object with sort parameters for pagination
+      const term = {}
+      if (this.currentSortBy) {
+        const prefix = this.currentSortOrder === "desc" ? "-" : ""
+        term.sort_by = `${prefix}${this.currentSortBy}`
+      }
+      if (this.selectedAgentId) {
+        term.agent_id = this.selectedAgentId
+      }
+
+      // Emit EventBus event so Paginate.vue includes sort params in all subsequent pagination calls
+      EventBus.$emit("loadPage", this.paginator, term)
+
+      // Load the first page with sort applied
+      this.getClientList(1)
     },
 
     async performSearch() {
@@ -386,6 +432,10 @@ export default {
         const searchPaginator = new Paginator(resources.person.search)
 
         const params = { term: this.searchTerm }
+        if (this.currentSortBy) {
+          const prefix = this.currentSortOrder === "desc" ? "-" : ""
+          params.sort_by = `${prefix}${this.currentSortBy}`
+        }
         if (this.selectedAgentId) {
           params.agent_id = this.selectedAgentId
         }
@@ -411,24 +461,21 @@ export default {
     },
 
     onSearchEvent(searchTerm) {
-      // Update search term if it came from widget
-      if (searchTerm !== this.searchTerm) {
-        this.searchTerm = searchTerm
-      }
-      // The watch on searchTerm will handle the actual search
+      this.searchTerm = searchTerm
     },
 
     onEndSearchEvent() {
       this.searchTerm = ""
-      // The watch will trigger showAllEntries
+      this.showAllEntries()
     },
 
     reloadList(subscriber, data) {
       if (subscriber !== this.subscriber) {
         return
       }
+      // Always update with the returned data - the paginator already applied
+      // sort and search parameters in the API request, so the data is correct
       this.people.updateList(data)
-
       EventBus.$emit(
         "widgetContentLoaded",
         this.subscriber,
@@ -442,6 +489,10 @@ export default {
 
     async getClientList(pageNumber = 1) {
       const params = {}
+      if (this.currentSortBy) {
+        const prefix = this.currentSortOrder === "desc" ? "-" : ""
+        params.sort_by = `${prefix}${this.currentSortBy}`
+      }
 
       if (this.isSearching && this.searchTerm) {
         params.term = this.searchTerm
@@ -454,6 +505,16 @@ export default {
       try {
         const response = await this.paginator.loadPage(pageNumber, params)
         this.people.updateList(response.data)
+
+        // Keep widget content state in sync with the actual list length.
+        // This ensures that after clearing a search (especially one that returned no results),
+        // the customer list becomes visible again instead of staying empty while
+        // the paginator still shows existing entries.
+        EventBus.$emit(
+          "widgetContentLoaded",
+          this.subscriber,
+          this.people.list.length,
+        )
 
         if (this.selectedAgentId) {
           // Update pagination for filtered results
@@ -498,6 +559,8 @@ export default {
     },
 
     async exportDebts() {
+      this.downloadingDebts = true
+
       try {
         const response =
           await this.outstandingDebtsExportService.exportOutstandingDebts()
@@ -522,6 +585,8 @@ export default {
           "error",
           "Error occured while exporting Customers' debts",
         )
+      } finally {
+        this.downloadingDebts = false
       }
     },
 
@@ -572,6 +637,8 @@ export default {
     },
 
     async exportCustomers() {
+      this.downloadingCustomers = true
+
       try {
         const data = {
           format: this.exportFilters.format,
@@ -614,6 +681,8 @@ export default {
         this.showExportModal = false
       } catch (e) {
         this.alertNotify("error", "Error occurred while exporting customers")
+      } finally {
+        this.downloadingCustomers = false
       }
     },
 
@@ -697,5 +766,9 @@ export default {
 
 .export-dialog .md-dialog-content {
   padding: 20px;
+}
+
+.fade-enter-active .fade-leave-active {
+  transition: opacity ease;
 }
 </style>

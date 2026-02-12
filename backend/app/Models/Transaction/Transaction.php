@@ -2,12 +2,17 @@
 
 namespace App\Models\Transaction;
 
-use App\Models\AssetPerson;
+use App\Models\AppliancePerson;
 use App\Models\Base\BaseModel;
 use App\Models\Device;
 use App\Models\PaymentHistory;
 use App\Models\Sms;
 use App\Models\Token;
+use App\Plugins\MesombPaymentProvider\Models\MesombTransaction;
+use App\Plugins\PaystackPaymentProvider\Models\PaystackTransaction;
+use App\Plugins\SwiftaPaymentProvider\Models\SwiftaTransaction;
+use App\Plugins\WavecomPaymentProvider\Models\WaveComTransaction;
+use App\Plugins\WaveMoneyPaymentProvider\Models\WaveMoneyTransaction;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -15,11 +20,6 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Inensus\MesombPaymentProvider\Models\MesombTransaction;
-use Inensus\PaystackPaymentProvider\Models\PaystackTransaction;
-use Inensus\SwiftaPaymentProvider\Models\SwiftaTransaction;
-use Inensus\WavecomPaymentProvider\Models\WaveComTransaction;
-use Inensus\WaveMoneyPaymentProvider\Models\WaveMoneyTransaction;
 
 /**
  * General purpose system Transaction.
@@ -42,7 +42,7 @@ use Inensus\WaveMoneyPaymentProvider\Models\WaveMoneyTransaction;
  * @property      string                                                                                                                                                 $message
  * @property      Carbon|null                                                                                                                                            $created_at
  * @property      Carbon|null                                                                                                                                            $updated_at
- * @property-read AssetPerson|null                                                                                                                                       $appliance
+ * @property-read AppliancePerson|null                                                                                                                                   $appliance
  * @property-read Device|null                                                                                                                                            $device
  * @property-read AgentTransaction|CashTransaction|ThirdPartyTransaction|MesombTransaction|SwiftaTransaction|WaveComTransaction|WaveMoneyTransaction|PaystackTransaction $originalTransaction
  * @property-read Collection<int, PaymentHistory>                                                                                                                        $paymentHistories
@@ -94,10 +94,10 @@ class Transaction extends BaseModel {
     }
 
     /**
-     * @return HasOne<AssetPerson, $this>
+     * @return HasOne<AppliancePerson, $this>
      */
     public function appliance(): HasOne {
-        return $this->hasOne(AssetPerson::class, 'device_serial', 'message');
+        return $this->hasOne(AppliancePerson::class, 'device_serial', 'message');
     }
 
     /**

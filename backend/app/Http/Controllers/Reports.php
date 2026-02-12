@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\CustomerGroup\CustomerGroupNotFound;
+use App\Exceptions\ConnectionGroupNotFoundException;
 use App\Models\City;
 use App\Models\ConnectionGroup;
 use App\Models\ConnectionType;
@@ -231,7 +231,7 @@ class Reports {
     /**
      * @param Collection<int,Transaction> $transactions
      *
-     * @throws CustomerGroupNotFound
+     * @throws ConnectionGroupNotFoundException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
     public function generateXls(
@@ -260,7 +260,7 @@ class Reports {
     /**
      * @param Collection<int, Transaction> $transactions
      *
-     * @throws CustomerGroupNotFound
+     * @throws ConnectionGroupNotFoundException
      */
     private function addTransactions(Worksheet $sheet, Collection $transactions, bool $addPurchaseBreakDown = true): void {
         $sheetIndex = 0;
@@ -335,7 +335,7 @@ class Reports {
      *
      * @param Collection<int, PaymentHistory> $paymentHistories
      *
-     * @throws CustomerGroupNotFound
+     * @throws ConnectionGroupNotFoundException
      */
     private function purchaseBreakDown(
         Worksheet $sheet,
@@ -367,7 +367,7 @@ class Reports {
     }
 
     /**
-     * @throws CustomerGroupNotFound
+     * @throws ConnectionGroupNotFoundException
      */
     private function getConnectionGroupColumn(string $connectionGroupName): string {
         if (
@@ -378,7 +378,7 @@ class Reports {
         ) {
             return $this->connectionTypeCells[$connectionGroupName];
         }
-        throw new CustomerGroupNotFound($connectionGroupName.' not found');
+        throw new ConnectionGroupNotFoundException($connectionGroupName.' not found');
     }
 
     private function storeConnectionGroupColumn(string $connectionGroup, string $column): void {
@@ -450,7 +450,7 @@ class Reports {
     }
 
     /**
-     * @throws CustomerGroupNotFound
+     * @throws ConnectionGroupNotFoundException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
     private function addSoldSummary(Worksheet $sheet): void {
@@ -498,7 +498,7 @@ class Reports {
     }
 
     /**
-     * @throws CustomerGroupNotFound
+     * @throws ConnectionGroupNotFoundException
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
     private function generateReportForCity(
@@ -666,11 +666,11 @@ class Reports {
         meters.connection_group_id,
         meters.serial_number as meter,
         SUM(transactions.amount) as revenue,
-        meter_tariffs.price as tariff_price,
+        tariffs.price as tariff_price,
         IFNULL(SUM(payment_histories.amount), 0) as total
     ')
             ->join('meters', 'transactions.message', '=', 'meters.serial_number')
-            ->join('meter_tariffs', 'meters.tariff_id', '=', 'meter_tariffs.id')
+            ->join('tariffs', 'meters.tariff_id', '=', 'tariffs.id')
             ->join('payment_histories', 'transactions.id', '=', 'payment_histories.transaction_id', 'left')
             ->where('meters.connection_group_id', $connectionGroupId)
             ->whereBetween('transactions.created_at', $dateRange)

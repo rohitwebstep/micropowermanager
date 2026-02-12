@@ -1,7 +1,7 @@
 <template>
   <div>
     <widget
-      color="green"
+      color="primary"
       @widgetAction="
         () => {
           showSellApplianceModal = true
@@ -27,7 +27,7 @@
           @click="showDetails(soldAppliancesList[index].id)"
         >
           <md-table-cell md-label="Name" md-sort-by="name">
-            {{ item.asset.name }}
+            {{ item.appliance.name }}
           </md-table-cell>
           <md-table-cell md-label="Cost" md-sort-by="total_cost">
             {{ moneyFormat(item.total_cost) }}
