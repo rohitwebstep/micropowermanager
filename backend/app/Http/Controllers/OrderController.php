@@ -73,7 +73,7 @@ class OrderController extends Controller
 
             $data = $orders->map(function ($order) {
                 return [
-                    'customer_no'   => '',
+                    'customer_no'   => $order->external_customer_id,
                     'customer_name' => $order->first_name . ' ' . $order->last_name,
                     'meter_no'      => '',
                     'price'         => $order->amount,
