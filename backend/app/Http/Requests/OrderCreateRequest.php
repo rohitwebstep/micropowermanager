@@ -65,7 +65,6 @@ class OrderCreateRequest extends FormRequest
         return "MPM-ODR-{$date}-{$random}";
     }
 
-
     public function withValidator($validator)
     {
         // Require meter_id for electricity orders
