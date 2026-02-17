@@ -14,6 +14,7 @@ return new class extends Migration {
         Schema::connection('tenant')->create('people', function (Blueprint $table) {
             $table->increments('id');
             $table->string('external_customer_id')->nullable();
+            $table->string('national_id_number')->nullable();
             $table->string('title', 50)->nullable();
             $table->string('education', 90)->nullable();
             $table->string('name', 60);

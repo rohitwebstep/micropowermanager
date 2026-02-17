@@ -225,6 +225,7 @@ class PersonController extends Controller
                 // CREATE CUSTOMER
                 // ===============================
                 $customerData = [
+                    'national_id_number'      => $niNumber,
                     'external_customer_id'    => trim($row['Id']) ?? null,
                     'name'                    => $firstName,
                     'serial_number'           => null,

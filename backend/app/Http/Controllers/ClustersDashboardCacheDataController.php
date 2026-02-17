@@ -7,31 +7,37 @@ use App\Http\Resources\ApiResource;
 use App\Services\ClustersDashboardCacheDataService;
 use Illuminate\Http\Request;
 
-class ClustersDashboardCacheDataController extends Controller {
+class ClustersDashboardCacheDataController extends Controller
+{
     public function __construct(
         private ClustersDashboardCacheDataService $clustersDashboardCacheDataService,
     ) {}
 
-    public function index(): ApiResource {
-        /** @var array<ClusterDashboardData> $cachedData */
+    public function index(): ApiResource
+    {
+        /*
+        // @var array<ClusterDashboardData> $cachedData
         $cachedData = $this->clustersDashboardCacheDataService->getData();
         $serializedData = array_map(fn (ClusterDashboardData $dto): array => $dto->toArray(), $cachedData);
 
         // If cache is empty, initialize it before returning
         if ($cachedData === []) {
-            $this->clustersDashboardCacheDataService->setData();
-            /** @var array<ClusterDashboardData> $cachedData */
-            $cachedData = $this->clustersDashboardCacheDataService->getData();
-            $serializedData = array_map(fn (ClusterDashboardData $dto): array => $dto->toArray(), $cachedData);
-        }
+        */
+
+        $this->clustersDashboardCacheDataService->setData();
+        // @var array<ClusterDashboardData> $cachedData
+        $cachedData = $this->clustersDashboardCacheDataService->getData();
+        $serializedData = array_map(fn(ClusterDashboardData $dto): array => $dto->toArray(), $cachedData);
+        // }
 
         return ApiResource::make($serializedData);
     }
 
-    public function show(int $clusterId): ApiResource {
+    public function show(int $clusterId): ApiResource
+    {
         /** @var array<ClusterDashboardData> $cachedData */
         $cachedData = $this->clustersDashboardCacheDataService->getDataById($clusterId);
-        $serializedData = array_map(fn (ClusterDashboardData $dto): array => $dto->toArray(), $cachedData);
+        $serializedData = array_map(fn(ClusterDashboardData $dto): array => $dto->toArray(), $cachedData);
 
         return ApiResource::make($serializedData);
     }
@@ -39,7 +45,8 @@ class ClustersDashboardCacheDataController extends Controller {
     /**
      * @return array<string, mixed>
      */
-    public function update(Request $request): array {
+    public function update(Request $request): array
+    {
         $fromDate = $request->query('from');
         $toDate = $request->query('to');
 
@@ -51,7 +58,7 @@ class ClustersDashboardCacheDataController extends Controller {
 
         /** @var array<ClusterDashboardData> $cachedData */
         $cachedData = $this->clustersDashboardCacheDataService->getData();
-        $serializedData = array_map(fn (ClusterDashboardData $dto): array => $dto->toArray(), $cachedData);
+        $serializedData = array_map(fn(ClusterDashboardData $dto): array => $dto->toArray(), $cachedData);
 
         return ['data' => $serializedData];
     }
