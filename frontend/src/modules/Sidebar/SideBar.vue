@@ -32,7 +32,8 @@
                   {{ menu.meta.sidebar.icon }}
                 </md-icon>
                 <span class="md-list-item-text c-white">
-                  {{ $tc("menu." + menu.meta?.sidebar?.name ?? menu.path) }}
+                  <!-- {{ $tc("menu." + menu.meta?.sidebar?.name ?? menu.path) }} -->
+                  {{ $tc( menu.meta?.sidebar?.name ?? menu.path) }}
                 </span>
               </md-list-item>
             </router-link>
@@ -64,7 +65,7 @@
                         <span class="md-list-item-text c-white">
                           {{
                             $tc(
-                              "menu.subMenu." + sub.meta?.sidebar?.name ??
+                               sub.meta?.sidebar?.name ??
                                 sub.path,
                             )
                           }}

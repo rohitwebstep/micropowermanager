@@ -110,6 +110,8 @@ import EcreeeETenderOverview from "./plugins/ecreee-e-tender/modules/Overview/Ov
 
 import ImportExport from "@/modules/ImportExport/ImportExport.vue"
 import ImportList from "@/modules/ImportExport/ImportList.vue"
+import CustomersImport from "@/modules/ImportExport/CustomersImport.vue"
+import MeterImport from "@/modules/ImportExport/MeterImport.vue"
 import OrdersList from "@/modules/Orders/OrdersList.vue"
 import AddOrder from "@/modules/Orders/AddOrder.vue"
 import Analytics from "@/modules/Orders/Analytics.vue"
@@ -892,7 +894,7 @@ export const exportedRoutes = [
           layout: "default",
           sidebar: {
             enabled: true,
-            name: "Import File",
+            name: "Order Import",
           },
         },
       },
@@ -903,10 +905,23 @@ export const exportedRoutes = [
           layout: "default",
           sidebar: {
             enabled: true,
-            name: "Import List",
+            name: "Order Import List",
           },
         },
       },
+      {
+        path: "customersImport",
+        component: CustomersImport,
+        meta: {
+          layout: "default",
+          sidebar: {
+            enabled: true,
+            name: "Customers Import",
+          },
+        },
+      },
+      
+      
     ],
   },
 
