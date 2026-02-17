@@ -222,6 +222,7 @@ Route::group(['prefix' => 'people', 'middleware' => 'jwt.verify'], static functi
     // https://github.com/EnAccess/micropowermanager-customer-registration-app/issues/5
     Route::get('/all', [PersonController::class, 'index'])->middleware('permission:customers');
     Route::post('/', [PersonController::class, 'store'])->middleware('permission:customers');
+    Route::post('/import/csv', [PersonController::class, 'importFromCsv'])->middleware('permission:customers');
     Route::get('/search', [PersonController::class, 'search'])->middleware('permission:customers');
     Route::get('/{personId}', [PersonController::class, 'show'])->middleware('permission:customers');
     Route::get('/{personId}/transactions', [PersonController::class, 'transactions'])->middleware('permission:transactions');

@@ -12,6 +12,7 @@ use App\Models\Base\BaseModel;
 use App\Models\Country;
 use App\Models\Device;
 use App\Models\MiniGrid;
+use App\Models\Order\Order;
 use App\Models\PaymentHistory;
 use App\Models\PersonDocument;
 use App\Models\Ticket\Ticket;

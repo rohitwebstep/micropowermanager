@@ -307,6 +307,7 @@ class PersonService implements IBaseService {
 
     public function createFromRequest(Request $request): Person {
         $person = $this->person->newQuery()->create($request->only([
+            'external_customer_id',
             'title',
             'education',
             'name',

@@ -19,6 +19,7 @@ class AndroidAppRequest extends FormRequest {
      */
     public function rules(): array {
         return [
+            'external_customer_id' => ['nullable', 'string'],
             'name' => ['required', 'min:3'],
             'surname' => ['required', 'min:3'],
             'phone' => ['required', 'min:11', 'regex:(^\+)', 'numeric'],

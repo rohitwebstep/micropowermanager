@@ -13,6 +13,7 @@ return new class extends Migration {
     public function up() {
         Schema::connection('tenant')->create('people', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('external_customer_id')->nullable();
             $table->string('title', 50)->nullable();
             $table->string('education', 90)->nullable();
             $table->string('name', 60);

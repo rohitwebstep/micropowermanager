@@ -11,7 +11,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 /**
  * @implements IBaseService<City>
  */
-class CityService implements IBaseService {
+class CityService implements IBaseService
+{
     public function __construct(
         private City $city,
     ) {}
@@ -19,25 +20,35 @@ class CityService implements IBaseService {
     /**
      * @return array<int, int>
      */
-    public function getCityIdsByMiniGridId(int $miniGridId): array {
+    public function getCityIdsByMiniGridId(int $miniGridId): array
+    {
         return $this->city->newQuery()->select('id')->where('mini_grid_id', $miniGridId)->get()->pluck('id')->toArray();
     }
 
     /**
      * @param string|array<string> $relation
      */
-    public function getByIdWithRelation(int $cityId, string|array $relation): ?City {
+    public function getByIdWithRelation(int $cityId, string|array $relation): ?City
+    {
         return $this->city->newQuery()->with($relation)->find($cityId);
     }
 
-    public function getById(int $cityId): ?Model {
+    public function getById(int $cityId): ?Model
+    {
         return $this->city->newQuery()->find($cityId);
+    }
+
+
+    public function getByName(string $cityName): ?Model
+    {
+        return $this->city->newQuery()->where('name', $cityName)->first();
     }
 
     /**
      * @param array<string, mixed> $cityData
      */
-    public function update(Model $model, array $cityData): Model {
+    public function update(Model $model, array $cityData): Model
+    {
         $model->update([
             'name' => $cityData['name'] ?? $model->name,
             'mini_grid_id' => $cityData['mini_grid_id'] ?? $model->mini_grid_id,
@@ -52,14 +63,16 @@ class CityService implements IBaseService {
     /**
      * @param array<string, mixed> $data
      */
-    public function create(array $data): Model {
+    public function create(array $data): Model
+    {
         return $this->city->newQuery()->create($data);
     }
 
     /**
      * @return Collection<int, City>|LengthAwarePaginator<int, City>
      */
-    public function getAll(?int $limit = null): Collection|LengthAwarePaginator {
+    public function getAll(?int $limit = null): Collection|LengthAwarePaginator
+    {
         if ($limit) {
             return $this->city->newQuery()->with('location')->paginate($limit);
         }
@@ -67,7 +80,8 @@ class CityService implements IBaseService {
         return $this->city->newQuery()->with('location')->get();
     }
 
-    public function delete(Model $model): ?bool {
+    public function delete(Model $model): ?bool
+    {
         throw new \Exception('not implemented');
     }
 }
