@@ -33,7 +33,7 @@ class OrderCreateRequest extends FormRequest
             'phone_number' => ['nullable', 'string', 'max:20'],
 
             // Product meta (array of products)
-            'product_meta' => ['required', 'array'],
+            'product_meta' => ['nullable', 'array'],
             'product_meta.*.product_name' => ['required', 'string', 'max:255'],
             'product_meta.*.quantity' => ['required', 'numeric', 'min:1'],
 
@@ -114,7 +114,7 @@ class OrderCreateRequest extends FormRequest
         });
 
         // Require product_meta for product orders
-        // $validator->sometimes('product_meta', 'required|array', fn($input) => $input->type === 'product_order');
+        $validator->sometimes('product_meta', 'required|array', fn($input) => $input->type === 'product_order');
     }
 
     public function prepareForValidation(): void
@@ -125,12 +125,10 @@ class OrderCreateRequest extends FormRequest
             ]);
         }
 
-        /*
         // Default product_meta and meter_id to null if not relevant
         if ($this->input('type') !== 'product_order') {
             $this->merge(['product_meta' => null]);
         }
-        */
 
         if (in_array($this->input('type'), ['meter_order'])) {
             $this->merge(['meter_id' => null]);

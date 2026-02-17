@@ -169,11 +169,7 @@ class PersonController extends Controller
         $clusterId  = (int) $request->cluster_id;
 
         $parsed = [];
-
-        // Helper to extract numeric values safely
-        $cleanNumber = fn($value) =>
-        $value !== null ? (float) preg_replace('/[^0-9.]/', '', $value) : null;
-
+        
         foreach ($data as $row) {
 
             DB::beginTransaction();

@@ -14,10 +14,18 @@ use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Http\Requests\MeterTypeCreateRequest;
+use App\Services\MeterService;
+use App\Services\PersonService;
 
 class OrderController extends Controller
 {
-    public function __construct(private OrderService $orderService) {}
+    public function __construct(
+        private MeterService $meterService,
+        private OrderService $orderService,
+        private PersonService $personService,
+    ) {}
 
     // List orders
     public function index(Request $request): ApiResource
@@ -40,6 +48,225 @@ class OrderController extends Controller
         $data = $this->orderService->analytics($from, $to);
 
         return ApiResource::make($data);
+    }
+
+    public function importFromCsv(Request $request): ApiResource
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,txt,xlsx,xls'
+        ]);
+
+        $file = $request->file('file');
+        $ext  = strtolower($file->getClientOriginalExtension());
+
+        // Parse file
+        if (in_array($ext, ['csv', 'txt'])) {
+            $rows = array_map('str_getcsv', file($file->getRealPath()));
+        } else {
+            $spreadsheet = IOFactory::load($file->getRealPath());
+            $rows = $spreadsheet->getActiveSheet()->toArray();
+        }
+
+        if (empty($rows)) {
+            return ApiResource::make([
+                'message' => 'No data found',
+                'data' => []
+            ]);
+        }
+
+        // Remove metadata rows with only 1 non-null cell
+        $rows = array_filter($rows, fn($r) => count(array_filter($r, fn($v) => $v !== null && $v !== '')) > 1);
+
+        if (empty($rows)) {
+            return ApiResource::make([
+                'message' => 'No valid data rows',
+                'data' => []
+            ]);
+        }
+
+        // HEADER
+        $header = array_map('trim', array_shift($rows));
+
+        // auto-generate header if empty
+        if (empty(array_filter($header))) {
+            $header = array_map(fn($i) => 'col_' . ($i + 1), array_keys($header));
+        }
+
+        // Map rows to associative arrays
+        $data = array_map(fn($r) => @array_combine($header, $r), $rows);
+
+        $parsed = [];
+
+        foreach ($data as $row) {
+
+            $externalCustomerId = $row['Customer No.'] ?? null;
+
+            if (!$externalCustomerId) {
+                $parsed[] = [
+                    'error' => 'Missing Customer No.',
+                    'row_data' => $row,
+                ];
+            }
+
+            $person = $this->personService->getByExternalCustomerId($externalCustomerId);
+
+            if (!$person) {
+                $parsed[] = [
+                    'error' => 'Person not found',
+                    'row_data' => $row,
+                ];
+                continue;
+            }
+
+            $phase = 1; // default value, replace with actual parsing logic if needed
+            $maxCurrent = 100; // default value, replace with actual parsing logic if needed
+            $meterTypeId = null;
+            $meterId = null;
+            $peopleId = $person->id;
+
+            // ===== Create / Get MeterType =====
+            try {
+
+                $existingMeterType = \App\Models\Meter\MeterType::where('max_current', $maxCurrent)
+                    ->where('phase', $phase)
+                    ->where('online', 1)
+                    ->first();
+
+                if ($existingMeterType) {
+                    $meterType = $existingMeterType->toArray();
+                    $meterTypeId = $existingMeterType->id;
+                } else {
+                    $meterTypeData = [
+                        'max_current' => $maxCurrent,
+                        'phase'       => $phase,
+                        'online'      => 1,
+                    ];
+                    $meterTypeRequest = MeterTypeCreateRequest::create('/fake-url', 'POST', $meterTypeData);
+                    $meterTypeController = app(\App\Http\Controllers\MeterTypeController::class);
+                    $meterTypeResponse = $meterTypeController->store($meterTypeRequest);
+
+                    // Resolve response
+                    $responseData = $meterTypeResponse->resolve() ?? null;
+
+                    if (!$responseData || !isset($responseData['id'])) {
+                        throw new \Exception('Failed to create MeterType via controller');
+                    }
+
+                    // Load the actual MeterType object from DB
+                    $meterTypeId = $responseData['id'];
+                    $meterType = \App\Models\Meter\MeterType::find($meterTypeId);
+
+                    if (!$meterType) {
+                        throw new \Exception("MeterType with ID $meterTypeId not found after creation");
+                    }
+                }
+            } catch (\Exception $e) {
+                $meterType = [
+                    'error' => $e->getMessage(),
+                    'data_attempted' => $meterTypeData ?? null,
+                ];
+            }
+
+            // ===== Create Customer =====
+            try {
+                $customerRequestData = [
+                    'name'                => $person->name,
+                    'serial_number'       => $row['Meter No.'],
+                    'meter_type'          => $meterTypeId ?? 0,
+                    'surname'             => $person->surname,
+                    'phone'               => $person->addresses[0]->phone,
+                    'tariff_id'           => 1,
+                    'geo_points'          => '0,0',
+                    'manufacturer'        => 1,
+                    'connection_type_id'  => 1,
+                    'connection_group_id' => 1,
+                    'city_id'             => 1,
+                ];
+
+                // build request object properly
+                $androidRequest = new \App\Http\Requests\AndroidAppRequest();
+                $androidRequest->merge($customerRequestData);
+
+                // validate using built-in validation pipeline
+                $validator = validator($customerRequestData, $androidRequest->rules());
+                $androidRequest->setValidator($validator);
+                $androidRequest->validated(); // throws if invalid
+
+                $meter = $this->meterService->getBySerialNumber($row['Meter No.']);
+                $meterId = $meter ? $meter->id : null;
+            } catch (\Throwable $e) {
+                $person = [
+                    'error' => $e->getMessage(),
+                    'data_attempted' => $customerRequestData ?? null,
+                ];
+            }
+
+            if (!$meterId) {
+                throw new \Exception("Failed to find or create meter for serial number: {$row['Meter No.']}");
+            }
+
+            // ===== Create Customer =====
+            try {
+                $orderGeneratedId = $orderId = 'MPM-ODR-' . now()->format('d-m-Y') . '-' . random_int(100000, 999999);
+                $orderRequestData = [
+                    'order_id'      => $orderGeneratedId,
+                    'customer_id'   => $peopleId,
+                    'type'          => 'meter_electricity_order',
+                    'meter_id'      => $meterId,
+                    'serial_number' => trim($row['Meter No.'] ?? ''),
+                    'amount'        => preg_replace('/[^0-9.]/', '', $row['Total Paid'] ?? 0),
+                    'token'         => $row['Token'] ?? null,
+                    'purchased_at'  => !empty($row['Created Date'])
+                        ? date('Y-m-d H:i:s', strtotime($row['Created Date']))
+                        : now(),
+
+                    'first_name'    => $person->name,
+                    'last_name'     => $person->surname ?? $person->name,
+                    'phone_number'  => $person->addresses[0]->phone ?? null,
+                ];
+
+                // Validate using OrderCreateRequest rules
+                $orderRequest = new \App\Http\Requests\OrderCreateRequest();
+
+                $validator = validator($orderRequestData, $orderRequest->rules());
+
+                if ($validator->fails()) {
+                    throw new \Exception($validator->errors()->first());
+                }
+
+                $validatedData = $validator->validated();
+
+                // ✅ PASS ARRAY (not Request object)
+                $order = $this->orderService->create($validatedData);
+
+                $orderId = $order->id;
+            } catch (\Throwable $e) {
+                $person = [
+                    'error' => $e->getMessage(),
+                    'data_attempted' => $orderRequestData ?? null,
+                ];
+            }
+
+            // ===== Vending / Transaction =====
+            $vend = [
+                'price'      => preg_replace('/[^0-9.]/', '', $row['Price'] ?? null),
+                'tax'        => preg_replace('/[^0-9.]/', '', $row['Tax'] ?? null),
+                'unit'       => preg_replace('/[^0-9.]/', '', $row['Total Unit'] ?? null),
+                'total_paid' => preg_replace('/[^0-9.]/', '', $row['Total Paid'] ?? null),
+                'token'      => $row['Token'] ?? null,
+                'date'       => isset($row['Create Date']) ? date('Y-m-d H:i:s', strtotime($row['Create Date'])) : null,
+                'operator'   => $row['Operator'] ?? null,
+            ];
+
+            $parsed[] = compact('meterType', 'person', 'order', 'vend');
+        }
+
+        return ApiResource::make([
+            'message'    => 'Parsed successfully',
+            'columns'    => $header,
+            'total_rows' => count($parsed),
+            'preview'    => array_slice($parsed, 0, 25),
+        ]);
     }
 
     public function exportExcel(Request $request)
