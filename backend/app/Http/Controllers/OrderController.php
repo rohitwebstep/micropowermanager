@@ -18,6 +18,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Http\Requests\MeterTypeCreateRequest;
 use App\Services\MeterService;
 use App\Services\PersonService;
+use ParagonIE\Sodium\Core\Curve25519\Ge\P2;
 
 class OrderController extends Controller
 {
@@ -207,6 +208,14 @@ class OrderController extends Controller
 
             // ===== Create Customer =====
             try {
+                $orderToken = $row['Token'] ?? null;
+                if ($orderToken) {
+                    $existingOrder = Order::where('token', $orderToken)->first();
+                    if ($existingOrder) {
+                        throw new \Exception("Order with token $orderToken already exists");
+                    }
+                }
+
                 $orderGeneratedId = $orderId = 'MPM-ODR-' . now()->format('d-m-Y') . '-' . random_int(100000, 999999);
                 $orderRequestData = [
                     'order_id'      => $orderGeneratedId,
