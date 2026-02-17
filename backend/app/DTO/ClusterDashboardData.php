@@ -9,7 +9,8 @@ use App\Models\Cluster;
  * This separates cached/computed data from the actual model to prevent
  * inconsistencies between cached and fresh model instances.
  */
-class ClusterDashboardData {
+class ClusterDashboardData
+{
     public function __construct(
         public Cluster $cluster,
         public int $deviceCount = 0,
@@ -32,7 +33,8 @@ class ClusterDashboardData {
      *
      * @return array<string, mixed>
      */
-    public function toArray(): array {
+    public function toArray(): array
+    {
         return [
             'id' => $this->cluster->id,
             'name' => $this->cluster->name,
@@ -41,14 +43,23 @@ class ClusterDashboardData {
             'updated_at' => $this->cluster->updated_at,
             'deviceCount' => $this->deviceCount,
             'meterCount' => $this->meterCount,
-            'revenue' => $this->revenue,
+            // 'revenue' => $this->revenue,
+            'revenue' => $this->cluster->miniGrids
+                ->flatMap(fn($mg) => $mg->people)
+                ->flatMap(fn($person) => $person->orders)
+                ->sum(fn($order) => (float) $order->amount),
             'population' => $this->population,
             'citiesRevenue' => $this->citiesRevenue,
             'revenueAnalysis' => $this->revenueAnalysis,
             'clusterData' => $this->cluster,
             'period' => $this->period,
             'periodWeekly' => $this->periodWeekly,
-            'totalRevenue' => $this->totalRevenue,
+            // 'totalRevenue' => $this->totalRevenue,
+            'totalRevenue' => $this->cluster->miniGrids
+                ->flatMap(fn($mg) => $mg->people)
+                ->flatMap(fn($person) => $person->orders)
+                ->sum(fn($order) => (float) $order->amount),
+
         ];
     }
 }

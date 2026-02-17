@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Base\BaseModel;
 use App\Models\Interfaces\ITargetAssignable;
+use App\Models\Person\Person;
 use Database\Factories\MiniGridFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,7 +26,8 @@ use Illuminate\Support\Carbon;
  * @property-read Cluster|null                 $cluster
  * @property-read GeographicalInformation|null $location
  */
-class MiniGrid extends BaseModel implements ITargetAssignable {
+class MiniGrid extends BaseModel implements ITargetAssignable
+{
     /** @use HasFactory<MiniGridFactory> */
     use HasFactory;
 
@@ -35,40 +37,55 @@ class MiniGrid extends BaseModel implements ITargetAssignable {
     /**
      * @return HasMany<City, $this>
      */
-    public function cities(): HasMany {
+    public function cities(): HasMany
+    {
         return $this->hasMany(City::class);
     }
 
     /**
      * @return BelongsTo<Cluster, $this>
      */
-    public function cluster(): BelongsTo {
+    public function cluster(): BelongsTo
+    {
         return $this->belongsTo(Cluster::class);
     }
 
     /**
      * @return MorphOne<GeographicalInformation, $this>
      */
-    public function location(): MorphOne {
+    public function location(): MorphOne
+    {
         return $this->morphOne(GeographicalInformation::class, 'owner');
     }
 
     /**
      * @return HasMany<Agent, $this>
      */
-    public function agents(): HasMany {
+    public function agents(): HasMany
+    {
         return $this->hasMany(Agent::class);
     }
 
-    public function setClusterId(int $clusterId): void {
+    public function setClusterId(int $clusterId): void
+    {
         $this->cluster_id = $clusterId;
     }
 
-    public function setName(string $name): void {
+    public function setName(string $name): void
+    {
         $this->name = $name;
     }
 
-    public function getClusterId(): int {
+    public function getClusterId(): int
+    {
         return $this->cluster_id;
+    }
+
+    /**
+     * @return HasMany<Person, $this>
+     */
+    public function people(): HasMany
+    {
+        return $this->hasMany(Person::class, 'mini_grid_id', 'id');
     }
 }

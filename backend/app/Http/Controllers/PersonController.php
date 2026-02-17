@@ -227,6 +227,7 @@ class PersonController extends Controller
                 $customerData = [
                     'national_id_number'      => $niNumber,
                     'external_customer_id'    => trim($row['Id']) ?? null,
+                    'mini_grid_id'            => $miniGridId,
                     'name'                    => $firstName,
                     'serial_number'           => null,
                     'meter_type'              => 0,

@@ -64,7 +64,7 @@ class ClusterService implements IBaseService {
     }
 
     public function getById(int $clusterId): Cluster {
-        return $this->cluster->newQuery()->with(['miniGrids.location', 'cities'])->find($clusterId);
+        return $this->cluster->newQuery()->with(['miniGrids.location', 'miniGrids.cities', 'miniGrids.people.orders.meter', 'cities'])->find($clusterId);
     }
 
     public function getByName(string $clusterName): Cluster {
