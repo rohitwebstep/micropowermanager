@@ -11,7 +11,8 @@ use App\Services\MiniGridGeographicalInformationService;
 use App\Services\MiniGridService;
 use Illuminate\Http\Request;
 
-class MiniGridController extends Controller {
+class MiniGridController extends Controller
+{
     public function __construct(
         private MiniGridService $miniGridService,
         private GeographicalInformationService $geographicalInformationService,
@@ -21,7 +22,8 @@ class MiniGridController extends Controller {
     /**
      * List.
      */
-    public function index(Request $request): ApiResource {
+    public function index(Request $request): ApiResource
+    {
         $limit = $request->input('per_page');
 
         return ApiResource::make($this->miniGridService->getAll($limit));
@@ -32,7 +34,8 @@ class MiniGridController extends Controller {
      *
      * @bodyParam id int required
      */
-    public function show(int $miniGridId, Request $request): ApiResource {
+    public function show(int $miniGridId, Request $request): ApiResource
+    {
         $relation = $request->get('relation');
 
         if ((int) $relation === 1) {
@@ -42,7 +45,8 @@ class MiniGridController extends Controller {
         }
     }
 
-    public function store(StoreMiniGridRequest $request): ApiResource {
+    public function store(StoreMiniGridRequest $request): ApiResource
+    {
         $data = $request->validationData();
         $miniGrid = $this->miniGridService->create($request->only(['name', 'cluster_id']));
         $geographicalInformation = $this->geographicalInformationService->make(['points' => $data['geo_data']]);
@@ -62,6 +66,10 @@ class MiniGridController extends Controller {
     public function update(int $miniGridId, UpdateMiniGridRequest $request): ApiResource
     {
         $miniGrid = $this->miniGridService->getById($miniGridId);
+
+        if (!$miniGrid) {
+            abort(404, 'MiniGrid not found');
+        }
 
         // Update MiniGrid basic data
         $updateData = $request->only(['name', 'cluster_id']);
