@@ -169,7 +169,7 @@ class PersonController extends Controller
         $clusterId  = (int) $request->cluster_id;
 
         $parsed = [];
-        
+
         foreach ($data as $row) {
 
             DB::beginTransaction();
@@ -200,10 +200,10 @@ class PersonController extends Controller
                 // ===============================
                 $phoneRaw = trim($row['Phone'] ?? '');
 
-                $niNumber = null;
-                if (str_contains($phoneRaw, '#')) {
-                    [$phoneRaw, $niNumber] = array_map('trim', explode('#', $phoneRaw, 2));
-                }
+                $parts = explode('#', $phoneRaw, 2);
+
+                $phone    = isset($parts[0]) ? trim($parts[0]) : null;
+                $niNumber = isset($parts[1]) ? trim($parts[1]) : null;
 
                 $phone = preg_replace('/[^0-9]/', '', $phoneRaw);
                 if (!$phone) {
