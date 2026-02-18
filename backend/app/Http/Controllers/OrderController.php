@@ -292,19 +292,19 @@ class OrderController extends Controller
         ]);
     }
 
-
     public function exportExcel(Request $request)
     {
         $debug = $request->boolean('debug', false);
+        $template = $request->input('template', 1);
+
         // You can also hardcode: $debug = true;
 
         $from = $request->input('from');
         $to   = $request->input('to');
 
-        $query = \App\Models\Order\Order::with(['meter.meter_type'])
+        $query = \App\Models\Order\Order::with(['meter.meter_type', 'shippingAddress', 'billingAddress'])
             ->where('type', 'meter_order')
             ->whereNull('meter_id');
-
 
         if ($from && $to) {
             $query->whereBetween('purchased_at', [
@@ -322,22 +322,46 @@ class OrderController extends Controller
     */
         if ($debug) {
 
-            $data = $orders->map(function ($order) {
-                return [
-                    'customer_no'   => '',
-                    'customer_name' => $order->first_name . ' ' . $order->last_name,
-                    'meter_no'      => '',
-                    'price'         => $order->amount,
-                    'tax'           => '',
-                    'total_unit'    => '',
-                    'total_paid'    => '',
-                    'operator'      => 'pos1',
-                    'token'         => '',
-                    'created_date'  => $order->purchased_at,
-                ];
-            });
+            if ($template == 2) {
+                return response()->json(
+                    $orders->map(function ($order) {
 
-            return response()->json($data);
+                        $address = $order->shippingAddress;
+
+                        return [
+                            'id'   => $order->id,
+                            'name' => trim($order->first_name . ' ' . $order->last_name),
+                            'address' => $address
+                                ? implode(', ', array_filter([
+                                    $address->address1,
+                                    $address->address2,
+                                    $address->city,
+                                    $address->state,
+                                ]))
+                                : '',
+                            'phone' => $order->phone_number ?? '',
+                        ];
+                    })
+                );
+            }
+
+            // Default Template 1 (existing)
+            return response()->json(
+                $orders->map(function ($order) {
+                    return [
+                        'customer_no'   => '',
+                        'customer_name' => $order->first_name . ' ' . $order->last_name,
+                        'meter_no'      => '',
+                        'price'         => $order->amount,
+                        'tax'           => '',
+                        'total_unit'    => '',
+                        'total_paid'    => '',
+                        'operator'      => 'pos1',
+                        'token'         => '',
+                        'created_date'  => $order->purchased_at,
+                    ];
+                })
+            );
         }
 
         /*
@@ -349,36 +373,69 @@ class OrderController extends Controller
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        $headers = [
-            'Customer No.',
-            'Customer Name',
-            'Meter No.',
-            'Price',
-            'Tax',
-            'Total Unit',
-            'Total Paid',
-            'Operator',
-            'Token',
-            'Created Date'
-        ];
+        /*
+    |--------------------------------------------------------------------------
+    | TEMPLATE 2 → Simple Export
+    |--------------------------------------------------------------------------
+    */
+        if ($template == 2) {
 
-        $sheet->fromArray($headers, null, 'A1');
-        $sheet->getStyle('A1:J1')->getFont()->setBold(true);
+            $headers = ['Id', 'Name', 'Address', 'Phone'];
+            $sheet->fromArray($headers, null, 'A1');
+            $sheet->getStyle('A1:D1')->getFont()->setBold(true);
 
-        $row = 2;
+            $row = 2;
 
-        foreach ($orders as $order) {
-            $sheet->setCellValue("A{$row}", "");
-            $sheet->setCellValue("B{$row}", $order->first_name . ' ' . $order->last_name);
-            $sheet->setCellValue("C{$row}", $order->meter->serial_number ?? '');
-            $sheet->setCellValue("D{$row}", $order->amount);
-            $sheet->setCellValue("E{$row}", "");
-            $sheet->setCellValue("F{$row}", $order->meter->meter_type->max_current ?? '');
-            $sheet->setCellValue("G{$row}", "");
-            $sheet->setCellValue("H{$row}", "pos1");
-            $sheet->setCellValue("I{$row}", $order->token);
-            $sheet->setCellValue("J{$row}", $order->purchased_at);
-            $row++;
+            foreach ($orders as $order) {
+                $sheet->setCellValue("A{$row}", '');
+                $sheet->setCellValue("B{$row}", $order->first_name . ' ' . $order->last_name);
+                $sheet->setCellValue("C{$row}", $order->address ?? '');
+                $sheet->setCellValue("D{$row}", $order->phone ?? '');
+                $row++;
+            }
+
+            $fileName = 'SimpleRecords.xlsx';
+        }
+
+        /*
+    |--------------------------------------------------------------------------
+    | TEMPLATE 1 → Existing Vending Format
+    |--------------------------------------------------------------------------
+    */ else {
+
+            $headers = [
+                'Customer No.',
+                'Customer Name',
+                'Meter No.',
+                'Price',
+                'Tax',
+                'Total Unit',
+                'Total Paid',
+                'Operator',
+                'Token',
+                'Created Date'
+            ];
+
+            $sheet->fromArray($headers, null, 'A1');
+            $sheet->getStyle('A1:J1')->getFont()->setBold(true);
+
+            $row = 2;
+
+            foreach ($orders as $order) {
+                $sheet->setCellValue("A{$row}", "");
+                $sheet->setCellValue("B{$row}", $order->first_name . ' ' . $order->last_name);
+                $sheet->setCellValue("C{$row}", $order->meter->serial_number ?? '');
+                $sheet->setCellValue("D{$row}", $order->amount);
+                $sheet->setCellValue("E{$row}", "");
+                $sheet->setCellValue("F{$row}", $order->meter->meter_type->max_current ?? '');
+                $sheet->setCellValue("G{$row}", "");
+                $sheet->setCellValue("H{$row}", "pos1");
+                $sheet->setCellValue("I{$row}", $order->token);
+                $sheet->setCellValue("J{$row}", $order->purchased_at);
+                $row++;
+            }
+
+            $fileName = 'VendingRecords.xlsx';
         }
 
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
