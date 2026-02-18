@@ -959,17 +959,17 @@ export const exportedRoutes = [
           },
         },
       },
-      {
-        path: "analytics",
-        component: Analytics,
-        meta: {
-          layout: "default",
-          sidebar: {
-            enabled: true,
-            name: "Analytics",
-          },
-        },
-      },
+      // {
+      //   path: "analytics",
+      //   component: Analytics,
+      //   meta: {
+      //     layout: "default",
+      //     sidebar: {
+      //       enabled: true,
+      //       name: "Analytics",
+      //     },
+      //   },
+      // },
     ],
   },
   // {

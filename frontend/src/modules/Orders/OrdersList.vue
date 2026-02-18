@@ -36,6 +36,7 @@
           <tr>
             <th>#</th>
             <th>Order</th>
+            <th>Meter Number</th>
             <th>Power Code</th>
             <th>Token</th>
             <th>First Name</th>
@@ -53,6 +54,7 @@
           <tr v-for="(o,i) in orders" :key="o.id">
             <td>{{ (currentPage-1)*perPage + i + 1 }}</td>
             <td><b>{{ o.order_id }}</b></td>
+            <td><b>{{ o.meter?.serial_number || '-' }}</b></td>
             <td>{{ o.power_code || '-' }}</td>
             <td>{{ o.token || '-' }}</td>
             <td>{{ o.first_name }}</td>
@@ -60,7 +62,7 @@
             <td>{{ o.email }}</td>
             <td>{{ o.product_meta?.[0]?.product_name }}</td>
             <td>{{ o.billing_address?.city }}</td>
-            <td class="amount">${{ Number(o.amount).toFixed(2) }}</td>
+            <td class="amount">{{ Number(o.amount) }}NGN</td>
             <td>
               <span class="status" :class="o.status">{{ o.status }}</span>
             </td>

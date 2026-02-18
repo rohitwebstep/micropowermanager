@@ -9,7 +9,7 @@ export default {
     const token = localStorage.getItem("token") // or wherever you store it
 
     return axios.post(
-      config.mpmBackendUrl + "/api/meters/import/csv",
+      config.mpmBackendUrl + "/api/orders/import/csv",
       formData,
       {
         headers: {
