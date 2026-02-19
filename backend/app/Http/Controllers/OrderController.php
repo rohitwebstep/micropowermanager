@@ -387,10 +387,23 @@ class OrderController extends Controller
             $row = 2;
 
             foreach ($orders as $order) {
-                $sheet->setCellValue("A{$row}", '');
-                $sheet->setCellValue("B{$row}", $order->first_name . ' ' . $order->last_name);
-                $sheet->setCellValue("C{$row}", $order->address ?? '');
-                $sheet->setCellValue("D{$row}", $order->phone ?? '');
+
+                $addressModel = $order->shippingAddress;
+
+                $fullAddress = $addressModel
+                    ? implode(', ', array_filter([
+                        $addressModel->address1,
+                        $addressModel->address2,
+                        $addressModel->city,
+                        $addressModel->state,
+                    ]))
+                    : '';
+
+                $sheet->setCellValue("A{$row}", $order->id);
+                $sheet->setCellValue("B{$row}", trim($order->first_name . ' ' . $order->last_name));
+                $sheet->setCellValue("C{$row}", $fullAddress);
+                $sheet->setCellValue("D{$row}", $order->phone_number ?? '');
+
                 $row++;
             }
 
