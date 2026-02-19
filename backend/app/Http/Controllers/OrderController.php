@@ -399,7 +399,7 @@ class OrderController extends Controller
                     ]))
                     : '';
 
-                $sheet->setCellValue("A{$row}", $order->id);
+                $sheet->setCellValue("A{$row}", '');
                 $sheet->setCellValue("B{$row}", trim($order->first_name . ' ' . $order->last_name));
                 $sheet->setCellValue("C{$row}", $fullAddress);
                 $sheet->setCellValue("D{$row}", $order->phone_number ?? '');
