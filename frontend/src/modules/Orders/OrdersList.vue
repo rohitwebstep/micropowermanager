@@ -4,23 +4,15 @@
     <!-- HEADER -->
     <div class="top-bar">
       <h2>Orders Management</h2>
-      <button class="export-btn" @click="exportCSV">Export CSV</button>
+      <div class="buttonsec">
+      <button class="export-btn" @click="exportCSVCustomer">Export Customers with Unallocated Meters</button>
+      &nbsp;&nbsp;<button class="export-btn" @click="exportCSVOrder">Unallocated Meters</button>
+      </div>
     </div>
 
     <!-- FILTERS -->
     <div class="filters">
       <input v-model="filters.search" placeholder="Search" @input="debouncedSearch"/>
-      <!-- <input v-model="filters.order_id" placeholder="Order ID" @input="debouncedSearch"/>
-      <input v-model="filters.first_name" placeholder="First Name" @input="debouncedSearch"/>
-      <input v-model="filters.last_name" placeholder="Last Name" @input="debouncedSearch"/>
-      <input v-model="filters.email" placeholder="Email" @input="debouncedSearch"/>
-      <input v-model="filters.phone_number" placeholder="Phone" @input="debouncedSearch"/>
-      <input v-model="filters.status" placeholder="Status" @input="debouncedSearch"/>
-      <input v-model="filters.type" placeholder="Type" @input="debouncedSearch"/>
-      <input v-model="filters.power_code" placeholder="Power Code" @input="debouncedSearch"/>
-      <input v-model="filters.token" placeholder="Token" @input="debouncedSearch"/>
-      <input v-model="filters.amount" placeholder="Amount" @input="debouncedSearch"/> -->
-
       <button class="reset-btn" @click="resetFilters">Reset</button>
     </div>
 
@@ -46,7 +38,7 @@
             <th>City</th>
             <th>Amount</th>
             <th>Status</th>
-            <th width="120">Action</th>
+            <th width="160">Action</th>
           </tr>
         </thead>
 
@@ -68,6 +60,14 @@
             </td>
             <td>
               <button class="view-btn" @click="openView(o)">View</button>
+
+              <button 
+                v-if="o.type === 'meter_order'"
+                class="assign-btn" 
+                @click="openAssign(o)">
+                Assign Meter
+              </button>
+
             </td>
           </tr>
         </tbody>
@@ -129,6 +129,50 @@
       </div>
     </div>
 
+    <!-- ASSIGN METER MODAL -->
+    <div v-if="showAssign" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Assign Meter</h3>
+          <span class="close" @click="closeAssign">×</span>
+        </div>
+
+        <div class="modal-body">
+
+          <label>
+            External Customer ID <span style="color:red">*</span>
+          </label>
+          <input v-model="assignForm.external_customer_id" />
+          <p v-if="assignError" class="error-msg">{{ assignError }}</p>
+
+          <label>Meter Number</label>
+          <input v-model="assignForm.serial_number" />
+
+          <label>Max Current</label>
+          <input type="number" v-model="assignForm.max_current" />
+
+          <label>Phase</label>
+          <select v-model="assignForm.phase">
+            <option :value="1">1</option>
+            <option :value="2">2</option>
+            <option :value="3">3</option>
+          </select>
+
+          <br/><br/>
+          <button 
+            class="save-btn" 
+            @click="assignMeter"
+            :disabled="assigning || !assignForm.external_customer_id">
+
+            <span v-if="assigning" class="btn-loader"></span>
+            <span v-else>Save</span>
+
+          </button>
+
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -151,21 +195,21 @@ export default {
       showView:false,
       selectedOrder:null,
 
-      filters:{
-        search:"",
-        // order_id:"",
-        // first_name:"",
-        // last_name:"",
-        // email:"",
-        // phone_number:"",
-        // status:"",
-        // notes:"",
-        // type:"",
-        // amount:"",
-        // power_code:"",
-        // token:""
-      }
+      showAssign:false,
+      assigning:false,
+      selectedAssignOrder:null,
+      assignError:"",
 
+      assignForm:{
+        external_customer_id:"",
+        serial_number:"",
+        max_current:null,
+        phase:1
+      },
+
+      filters:{
+        search:""
+      }
     }
   },
 
@@ -220,40 +264,126 @@ export default {
       this.showView=true
     },
 
-    async exportCSV(){
+    openAssign(order){
+      this.selectedAssignOrder = order
+
+      this.assignForm = {
+        external_customer_id: order.external_customer_id || "",
+        serial_number: order.meter?.serial_number || "",
+        max_current: order.meter?.max_current || null,
+        phase: order.meter?.phase || 1
+      }
+
+      this.assignError = ""
+      this.showAssign = true
+    },
+
+    closeAssign(){
+      this.showAssign = false
+      this.assignForm = {
+        external_customer_id:"",
+        serial_number:"",
+        max_current:null,
+        phase:1
+      }
+      this.assignError=""
+    },
+
+    async assignMeter(){
+
+      if(!this.assignForm.external_customer_id){
+        this.assignError = "External Customer ID is required"
+        return
+      }
+
+      this.assignError = ""
+
       try{
+        this.assigning = true
         const token = localStorage.getItem("token")
 
         const response = await fetch(
-          `http://139.59.181.1:8000/api/orders/export/excel`,
+          `http://139.59.181.1:8000/api/orders/${this.selectedAssignOrder.id}/assign-external-details`,
           {
-            method: "GET",
+            method: "POST",
             headers: {
+              "Content-Type":"application/json",
               Authorization: `Bearer ${token}`
-            }
+            },
+            body: JSON.stringify(this.assignForm)
           }
         )
 
+        const data = await response.json()
+
         if(!response.ok){
-          alert("Export failed")
+          alert(data.message || "Assignment failed")
+          this.assigning = false
           return
         }
 
-        const blob = await response.blob()
-        const downloadUrl = window.URL.createObjectURL(blob)
+        // SUCCESS MESSAGE FROM API
+        alert(data.message)
 
-        const a = document.createElement("a")
-        a.href = downloadUrl
-        a.download = "orders.xlsx"
+        // update table instantly
+        this.selectedAssignOrder.external_customer_id = data.order.external_customer_id
 
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
+        if(!this.selectedAssignOrder.meter){
+          this.selectedAssignOrder.meter = {}
+        }
 
-        window.URL.revokeObjectURL(downloadUrl)
+        this.selectedAssignOrder.meter.serial_number = this.assignForm.serial_number
+        this.selectedAssignOrder.meter.max_current = this.assignForm.max_current
+        this.selectedAssignOrder.meter.phase = this.assignForm.phase
+
+        this.showAssign = false
 
       }catch(e){
         console.log(e)
+        alert("Something went wrong")
+      }
+
+      this.assigning = false
+    },
+
+    async exportCSVOrder(){
+      try{
+        const token = localStorage.getItem("token")
+        const response = await fetch(
+          `http://139.59.181.1:8000/api/orders/export/excel/?debug=0&template=1`,
+          { method:"GET", headers:{ Authorization:`Bearer ${token}` } }
+        )
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = "orders.xlsx"
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+      }catch(e){
+        alert("Excel download failed")
+      }
+    },
+
+    async exportCSVCustomer(){
+      try{
+        const token = localStorage.getItem("token")
+        const response = await fetch(
+          `http://139.59.181.1:8000/api/orders/export/excel?debug=0&template=2`,
+          { method:"GET", headers:{ Authorization:`Bearer ${token}` } }
+        )
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = "customers.xlsx"
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+      }catch(e){
         alert("Excel download failed")
       }
     }
@@ -262,41 +392,51 @@ export default {
 }
 </script>
 
+
 <style scoped>
 .order-page{padding:25px;font-family:Arial}
 .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
 .export-btn{background:#6c2bd9;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer}
-
 .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
 .filters input{padding:8px;border:1px solid #ddd;border-radius:6px}
 .reset-btn{background:#f1f1f1;border:none;padding:8px 12px;border-radius:6px}
-
 .table-wrapper{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
 table{width:100%;border-collapse:collapse}
 th{background:#f7f7f7;padding:12px;text-align:left}
 td{padding:12px;border-top:1px solid #eee}
-
 .amount{font-weight:bold;color:#6c2bd9}
-
 .status{padding:4px 8px;border-radius:6px;font-size:12px;background:#eee}
 .status.pending{background:#fff3cd;color:#856404}
-
 .view-btn{background:#6c2bd9;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer}
-
+.assign-btn{background:#10b981;color:#fff;border:none;padding:6px 10px;border-radius:6px;cursor:pointer;margin-left:6px}
 .pagination{margin-top:20px;display:flex;gap:6px;align-items:center}
 .pagination button{padding:6px 10px;border:1px solid #ccc;background:#fff}
 .pagination button.active{background:#6c2bd9;color:#fff}
 .total{margin-left:10px;font-weight:bold}
-
-.loader .skeleton-row{
-height:45px;background:linear-gradient(90deg,#eee,#f7f7f7,#eee);
-margin-bottom:8px;border-radius:6px;animation:shimmer 1.2s infinite;
-}
+.loader .skeleton-row{height:45px;background:linear-gradient(90deg,#eee,#f7f7f7,#eee);margin-bottom:8px;border-radius:6px;animation:shimmer 1.2s infinite;}
 @keyframes shimmer{0%{background-position:-200px}100%{background-position:200px}}
-
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:999}
 .modal{background:#fff;width:450px;border-radius:10px;padding:20px}
 .modal-header{display:flex;justify-content:space-between;margin-bottom:10px}
 .close{cursor:pointer;font-size:22px}
 .no-data{text-align:center;margin-top:40px}
+.modal-body label{display:block;margin-top:10px;font-size:13px;font-weight:bold}
+.modal-body input,.modal-body select{width:100%;padding:8px;margin-top:4px;border:1px solid #ddd;border-radius:6px}
+.save-btn{background:#6c2bd9;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer}
+.error-msg{color:red;font-size:12px;margin-top:4px}
+
+.btn-loader{
+  width:16px;
+  height:16px;
+  border:2px solid #fff;
+  border-top:2px solid transparent;
+  border-radius:50%;
+  display:inline-block;
+  animation:spin 0.6s linear infinite;
+}
+
+@keyframes spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
 </style>
