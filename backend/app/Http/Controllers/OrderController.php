@@ -576,12 +576,10 @@ class OrderController extends Controller
                 } catch (\Throwable $e) {
                     throw new \Exception('Customer Error: ' . $e->getMessage());
                 }
-            }
 
-            // =============================
-            // Assign Meter to Order (Only if serial provided)
-            // =============================
-            if ($request->serial_number) {
+                // =============================
+                // Assign Meter to Order (Only if serial provided)
+                // =============================
                 $meter = \App\Models\Meter\Meter::where('serial_number', $request->serial_number)
                     ->firstOrFail();
 
