@@ -6,19 +6,16 @@ use App\Events\NewLogEvent;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderUpdateRequest;
 use App\Http\Resources\ApiResource;
-use App\Models\Meter\Meter;
 use App\Models\Order\Order;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Http\Requests\MeterTypeCreateRequest;
 use App\Services\MeterService;
 use App\Services\PersonService;
-use ParagonIE\Sodium\Core\Curve25519\Ge\P2;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
 class OrderController extends Controller
 {
@@ -399,10 +396,16 @@ class OrderController extends Controller
                     ]))
                     : '';
 
-                $sheet->setCellValue("A{$row}", '');
+                $sheet->setCellValue("A{$row}", $order->id);
                 $sheet->setCellValue("B{$row}", trim($order->first_name . ' ' . $order->last_name));
                 $sheet->setCellValue("C{$row}", $fullAddress);
-                $sheet->setCellValue("D{$row}", `'` . $order->phone_number ?? '');
+
+                // Force phone as string (prevents scientific notation)
+                $sheet->setCellValueExplicit(
+                    "D{$row}",
+                    $order->phone_number ?? '',
+                    DataType::TYPE_STRING
+                );
 
                 $row++;
             }
