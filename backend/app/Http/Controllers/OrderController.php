@@ -595,13 +595,13 @@ class OrderController extends Controller
             }
 
             return response()->json([
-                'message' => 'Meter assigned successfully.',
+                'message' => 'external details assigned successfully.',
                 'order'   => $order->fresh(),
             ]);
         } catch (\Throwable $e) {
 
             return response()->json([
-                'message' => 'Failed to assign meter.',
+                'message' => 'Failed to assign external details.',
                 'error'   => $e->getMessage(),
             ], 500);
         }

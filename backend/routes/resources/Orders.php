@@ -10,7 +10,7 @@ Route::group(['prefix' => 'orders'], function () {
     Route::get('/export/excel', [OrderController::class, 'exportExcel']);
     Route::post('/', [OrderController::class, 'store']);
     Route::post('/import/csv', [OrderController::class, 'importFromCsv']);
-    Route::post('/{orderId}/assign-meter', [OrderController::class, 'assignMeter']);
+    Route::post('/{orderId}/assign-external-details', [OrderController::class, 'assignExternalDetails']);
     Route::get('/{orderId}', [OrderController::class, 'show']);
     Route::put('/{order}', [OrderController::class, 'update']);
     Route::delete('/{order}', [OrderController::class, 'destroy']);
