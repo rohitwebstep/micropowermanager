@@ -478,10 +478,9 @@ class OrderController extends Controller
     {
         $request->validate([
             'external_customer_id' => ['required', 'string'],
-            'serial_number' => ['required', 'string'],
-            'max_current'   => ['required', 'numeric'],
-            'phase'         => ['required', 'numeric', 'in:1,3'],
-            'phone'         => ['required', 'string'],
+            'serial_number'        => ['nullable', 'string'],
+            'max_current'          => ['nullable', 'numeric'],
+            'phase'                => ['nullable', 'numeric', 'in:1,3'],
         ]);
 
         try {
@@ -491,100 +490,109 @@ class OrderController extends Controller
             // =============================
             $order = \App\Models\Order\Order::findOrFail($order_id);
 
+            $order->external_customer_id = $request->external_customer_id;
+            $order->save();
+
             $meterTypeId = null;
 
             // =============================
-            // Create / Get MeterType
+            // Create / Get MeterType (Only if provided)
             // =============================
-            try {
+            if ($request->filled('max_current') && $request->filled('phase')) {
+                try {
 
-                $maxCurrent = $request->max_current;
-                $phase = $request->phase;
+                    $maxCurrent = $request->max_current;
+                    $phase = $request->phase;
 
-                $existingMeterType = \App\Models\Meter\MeterType::where('max_current', $maxCurrent)
-                    ->where('phase', $phase)
-                    ->where('online', 1)
-                    ->first();
+                    $existingMeterType = \App\Models\Meter\MeterType::where('max_current', $maxCurrent)
+                        ->where('phase', $phase)
+                        ->where('online', 1)
+                        ->first();
 
-                if ($existingMeterType) {
+                    if ($existingMeterType) {
 
-                    $meterTypeId = $existingMeterType->id;
-                } else {
+                        $meterTypeId = $existingMeterType->id;
+                    } else {
 
-                    $meterTypeData = [
-                        'max_current' => $maxCurrent,
-                        'phase'       => $phase,
-                        'online'      => 1,
+                        $meterTypeData = [
+                            'max_current' => $maxCurrent,
+                            'phase'       => $phase,
+                            'online'      => 1,
+                        ];
+
+                        $meterTypeRequest = \App\Http\Requests\MeterTypeCreateRequest::create(
+                            '/fake-url',
+                            'POST',
+                            $meterTypeData
+                        );
+
+                        $meterTypeController = app(\App\Http\Controllers\MeterTypeController::class);
+                        $meterTypeResponse = $meterTypeController->store($meterTypeRequest);
+
+                        $responseData = $meterTypeResponse->getData(true);
+
+                        if (!$responseData || !isset($responseData['id'])) {
+                            throw new \Exception('Failed to create MeterType via controller');
+                        }
+
+                        $meterTypeId = $responseData['id'];
+                    }
+                } catch (\Exception $e) {
+                    throw new \Exception('MeterType Error: ' . $e->getMessage());
+                }
+            }
+
+            // =============================
+            // Create Customer (Only if serial_number provided)
+            // =============================
+            if ($request->filled('serial_number') && $request->filled('max_current') && $request->filled('phase')) {
+                try {
+
+                    $customerRequestData = [
+                        'name'                => $order->first_name,
+                        'surname'             => $order->last_name,
+                        'serial_number'       => $request->serial_number,
+                        'meter_type'          => $meterTypeId ?? 0,
+                        'phone'               => $order->phone_number,
+                        'tariff_id'           => 1,
+                        'geo_points'          => '0,0',
+                        'manufacturer'        => 1,
+                        'connection_type_id'  => 1,
+                        'connection_group_id' => 1,
+                        'city_id'             => 1,
                     ];
 
-                    $meterTypeRequest = \App\Http\Requests\MeterTypeCreateRequest::create(
-                        '/fake-url',
-                        'POST',
-                        $meterTypeData
-                    );
+                    $androidRequest = new \App\Http\Requests\AndroidAppRequest();
+                    $androidRequest->merge($customerRequestData);
 
-                    $meterTypeController = app(\App\Http\Controllers\MeterTypeController::class);
-                    $meterTypeResponse = $meterTypeController->store($meterTypeRequest);
+                    $validator = validator($customerRequestData, $androidRequest->rules());
+                    $androidRequest->setValidator($validator);
+                    $androidRequest->validated();
 
-                    $responseData = $meterTypeResponse->getData(true);
+                    $people = app(\App\Services\CustomerRegistrationAppService::class)
+                        ->createCustomer($androidRequest);
 
-                    if (!$responseData || !isset($responseData['id'])) {
-                        throw new \Exception('Failed to create MeterType via controller');
-                    }
-
-                    $meterTypeId = $responseData['id'];
+                    $peopleId = $people['id'] ?? null;
+                } catch (\Throwable $e) {
+                    throw new \Exception('Customer Error: ' . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                throw new \Exception('MeterType Error: ' . $e->getMessage());
             }
 
             // =============================
-            // Create Customer
+            // Assign Meter to Order (Only if serial provided)
             // =============================
-            try {
+            if ($request->serial_number) {
+                $meter = \App\Models\Meter\Meter::where('serial_number', $request->serial_number)
+                    ->firstOrFail();
 
-                $customerRequestData = [
-                    'name'                => $order->first_name,
-                    'surname'             => $order->last_name,
-                    'serial_number'       => $request->serial_number,
-                    'meter_type'          => $meterTypeId ?? 0,
-                    'phone'               => '+' . $request->phone,
-                    'tariff_id'           => 1,
-                    'geo_points'          => '0,0',
-                    'manufacturer'        => 1,
-                    'connection_type_id'  => 1,
-                    'connection_group_id' => 1,
-                    'city_id'             => 1,
-                ];
-
-                $androidRequest = new \App\Http\Requests\AndroidAppRequest();
-                $androidRequest->merge($customerRequestData);
-
-                $validator = validator($customerRequestData, $androidRequest->rules());
-                $androidRequest->setValidator($validator);
-                $androidRequest->validated();
-
-                $people = app(\App\Services\CustomerRegistrationAppService::class)
-                    ->createCustomer($androidRequest);
-
-                $peopleId = $people['id'] ?? null;
-            } catch (\Throwable $e) {
-                throw new \Exception('Customer Error: ' . $e->getMessage());
+                // =============================
+                // Assign meter to order
+                // =============================
+                $order->update([
+                    'meter_id'     => $meter->id,
+                    'external_customer_id' => $request->external_customer_id,
+                ]);
             }
-
-            // =============================
-            // Find Meter
-            // =============================
-            $meter = \App\Models\Meter\Meter::where('serial_number', $request->serial_number)
-                ->firstOrFail();
-
-            // =============================
-            // Assign meter to order
-            // =============================
-            $order->update([
-                'meter_id'     => $meter->id,
-                'external_customer_id' => $request->external_customer_id,
-            ]);
 
             return response()->json([
                 'message' => 'Meter assigned successfully.',
