@@ -299,7 +299,7 @@ class OrderController extends Controller
         $from = $request->input('from');
         $to   = $request->input('to');
 
-        $query = \App\Models\Order\Order::with(['meter.meter_type', 'shippingAddress', 'billingAddress'])
+        $query = \App\Models\Order\Order::with(['customer.addresses.city', 'meter.meter_type', 'shippingAddress', 'billingAddress'])
             ->where('type', 'meter_order')
             ->whereNull('meter_id');
 
@@ -328,15 +328,8 @@ class OrderController extends Controller
                         return [
                             'id'   => $order->id,
                             'name' => trim($order->first_name . ' ' . $order->last_name),
-                            'address' => $address
-                                ? implode(', ', array_filter([
-                                    $address->address1,
-                                    $address->address2,
-                                    $address->city,
-                                    $address->state,
-                                ]))
-                                : '',
-                            'phone' => $order->phone_number ?? '',
+                            'address' => $order->customer->addresses[0]->city->name ?? '',
+                            'phone' => $order->phone_number ?? ''
                         ];
                     })
                 );
@@ -396,20 +389,9 @@ class OrderController extends Controller
 
             foreach ($orders as $order) {
 
-                $addressModel = $order->shippingAddress;
-
-                $fullAddress = $addressModel
-                    ? implode(', ', array_filter([
-                        $addressModel->address1,
-                        $addressModel->address2,
-                        $addressModel->city,
-                        $addressModel->state,
-                    ]))
-                    : '';
-
-                $sheet->setCellValue("A{$row}", $order->id);
+                $sheet->setCellValue("A{$row}", '');
                 $sheet->setCellValue("B{$row}", trim($order->first_name . ' ' . $order->last_name));
-                $sheet->setCellValue("C{$row}", $fullAddress);
+                $sheet->setCellValue("C{$row}", $order->customer->addresses[0]->city->name ?? '');
 
                 // Force phone as string (prevents scientific notation)
                 $sheet->setCellValueExplicit(

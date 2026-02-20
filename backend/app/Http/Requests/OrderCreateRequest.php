@@ -29,6 +29,9 @@ class OrderCreateRequest extends FormRequest
             // Optional customer info
             'first_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['nullable', 'string', 'max:255'],
+            'cluster_id' => ['required', 'numeric', 'exists:tenant.clusters,id'],
+            'mini_grid_id' => ['required', 'numeric', 'exists:tenant.mini_grids,id'],
+            'city_name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'national_id_number' => ['nullable', 'string'],
             'phone_number' => ['nullable', 'string', 'max:20'],

@@ -179,6 +179,7 @@ class PersonController extends Controller
                 // CITY
                 // ===============================
                 $cityName = trim($row['Address'] ?? '');
+                $cityId = null;
 
                 if (!$cityName) {
                     throw new \Exception('City/Address missing');
@@ -187,12 +188,29 @@ class PersonController extends Controller
                 $city = $this->cityService->getByName($cityName);
 
                 if (!$city) {
-                    $city = \App\Models\City::create([
+                    $cityData = [
                         'name'         => trim($cityName),
                         'mini_grid_id' => $miniGridId,
                         'cluster_id'   => $clusterId,
                         'country_id'   => 160,
-                    ]);
+                    ];
+
+                    $cityRequest = \App\Http\Requests\CityRequest::create(
+                        '/fake-url',
+                        'POST',
+                        $cityData
+                    );
+
+                    $cityController = app(\App\Http\Controllers\CityController::class);
+                    $cityResponse = $cityController->store($cityRequest);
+
+                    $responseData = $cityResponse->getData(true);
+
+                    if (!$responseData || !isset($responseData['id'])) {
+                        throw new \Exception('Failed to create City via controller');
+                    }
+
+                    $cityId = $responseData['id'];
                 }
 
                 // ===============================
@@ -238,7 +256,7 @@ class PersonController extends Controller
                     'manufacturer'            => 1,
                     'connection_type_id'      => 1,
                     'connection_group_id'     => 1,
-                    'city_id'                 => (int) $city->id,
+                    'city_id'                 => $cityId,
                 ];
 
                 $androidRequest = new \App\Http\Requests\AndroidAppRequest();
@@ -254,7 +272,7 @@ class PersonController extends Controller
 
                 $parsed[] = [
                     'customer_id' => $people['id'] ?? null,
-                    'city_id'     => $city->id
+                    'city_id'     => $cityId
                 ];
             } catch (\Throwable $e) {
                 DB::rollBack();

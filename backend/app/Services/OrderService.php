@@ -16,7 +16,8 @@ class OrderService implements IBaseService
 {
     public function __construct(
         private Order $order,
-        private PersonService $personService
+        private PersonService $personService,
+        private CityService $cityService,
     ) {}
 
     /**
@@ -109,6 +110,44 @@ class OrderService implements IBaseService
      */
     public function create(array $data): Order
     {
+        // ===============================
+        // CITY
+        // ===============================
+        $cityName = trim($data['city_name'] ?? '');
+        $cityId = null;
+
+        if (!$cityName) {
+            throw new \Exception('city_name missing');
+        }
+
+        $city = $this->cityService->getByName($cityName);
+
+        if (!$city) {
+            $cityData = [
+                'name'         => trim($cityName),
+                'mini_grid_id' => $data['mini_grid_id'],
+                'cluster_id'   => $data['cluster_id'],
+                'country_id'   => 160,
+            ];
+
+            $cityRequest = \App\Http\Requests\CityRequest::create(
+                '/fake-url',
+                'POST',
+                $cityData
+            );
+
+            $cityController = app(\App\Http\Controllers\CityController::class);
+            $cityResponse = $cityController->store($cityRequest);
+
+            $responseData = $cityResponse->getData(true);
+
+            if (!$responseData || !isset($responseData['id'])) {
+                throw new \Exception('Failed to create City via controller');
+            }
+
+            $cityId = $responseData['id'];
+        }
+
         // Handle customer creation if customer_id is null
         if (empty($data['customer_id'])) {
             $phone = $data['phone_number'] ?? null;
@@ -117,16 +156,28 @@ class OrderService implements IBaseService
                 $person = $this->personService->getByPhoneNumber($phone);
 
                 if (!$person instanceof Person) {
-                    $person = $this->personService->createFromRequest(
-                        new Request([
-                            'national_id_number' => $data['national_id_number'] ?? null,
-                            'name'        => $data['first_name'] ?? null,
-                            'surname'     => $data['last_name'] ?? null,
-                            'email'       => $data['email'] ?? null,
-                            'phone'       => $phone,
-                            'is_customer' => 1,
-                        ])
-                    );
+                    $customerRequestData = [
+                        'name'                => $data['first_name'] ?? null,
+                        'serial_number'       => null,
+                        'meter_type'          => $meterTypeId ?? 0,
+                        'surname'             => $data['last_name'] ?? null,
+                        'phone'               => $phone,
+                        'tariff_id'           => 1,
+                        'geo_points'          => '0, 0',
+                        'manufacturer'        => 1,
+                        'connection_type_id'  => 1,
+                        'connection_group_id' => 1,
+                        'city_id'             => $cityId,
+                    ];
+
+                    $androidRequest = new \App\Http\Requests\AndroidAppRequest();
+                    $androidRequest->merge($customerRequestData);
+
+                    $validator = validator($customerRequestData, $androidRequest->rules());
+                    $validator->validate();
+
+                    $person = app(\App\Services\CustomerRegistrationAppService::class)
+                        ->createCustomer($androidRequest);
                 }
 
                 $data['customer_id'] = $person->id;
