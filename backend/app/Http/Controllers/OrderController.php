@@ -377,11 +377,22 @@ class OrderController extends Controller
     */
         if ($template == 2) {
 
-            $headers = ['Id', 'Name', 'Address', 'Phone'];
-            $sheet->fromArray($headers, null, 'A1');
-            $sheet->getStyle('A1:D1')->getFont()->setBold(true);
+            // ✅ Row 1 → Title
+            $sheet->setCellValue('A1', 'Customer Info Template');
 
-            $row = 2;
+            // Merge title across columns
+            $sheet->mergeCells('A1:D1');
+
+            // Style title
+            $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+            $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+            // ✅ Row 2 → Headers
+            $headers = ['Id', 'Name', 'Address', 'Phone'];
+            $sheet->fromArray($headers, null, 'A2');
+            $sheet->getStyle('A2:D2')->getFont()->setBold(true);
+
+            $row = 3; // Start data from row 3
 
             foreach ($orders as $order) {
 
