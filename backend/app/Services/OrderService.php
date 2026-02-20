@@ -18,6 +18,7 @@ class OrderService implements IBaseService
         private Order $order,
         private PersonService $personService,
         private CityService $cityService,
+        private ClusterService $clusterService
     ) {}
 
     /**
@@ -113,6 +114,17 @@ class OrderService implements IBaseService
         // ===============================
         // CITY
         // ===============================
+        $stateName = trim($data['state_name'] ?? '');
+
+        if (!$stateName) {
+            throw new \Exception('state_name missing');
+        }
+
+        $cluster = $this->clusterService->getByName($stateName);
+
+        // ===============================
+        // CITY
+        // ===============================
         $cityName = trim($data['city_name'] ?? '');
         $cityId = null;
 
@@ -126,7 +138,7 @@ class OrderService implements IBaseService
             $cityData = [
                 'name'         => trim($cityName),
                 'mini_grid_id' => $data['mini_grid_id'],
-                'cluster_id'   => $data['cluster_id'],
+                'cluster_id'   => $cluster->id,
                 'country_id'   => 160,
             ];
 
