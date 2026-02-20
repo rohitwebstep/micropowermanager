@@ -340,6 +340,7 @@ class PersonService implements IBaseService
     {
         $person = $this->person->newQuery()->create($request->only([
             'external_customer_id',
+            'national_id_number',
             'mini_grid_id',
             'title',
             'education',

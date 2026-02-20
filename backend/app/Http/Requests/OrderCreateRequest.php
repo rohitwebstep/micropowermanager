@@ -30,6 +30,7 @@ class OrderCreateRequest extends FormRequest
             'first_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
+            'national_id_number' => ['nullable', 'string'],
             'phone_number' => ['nullable', 'string', 'max:20'],
 
             // Product meta (array of products)
