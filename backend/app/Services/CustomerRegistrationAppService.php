@@ -25,6 +25,7 @@ class CustomerRegistrationAppService
     {
         $serialNumber = $request->input('serial_number');
         $phone = $request->input('phone');
+        $device = null;
 
         $person = $this->personService->getByPhoneNumber($phone);
         if (!$person instanceof Person) {
