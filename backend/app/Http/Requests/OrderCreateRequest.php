@@ -129,10 +129,12 @@ class OrderCreateRequest extends FormRequest
             ]);
         }
 
+        /*
         // Default product_meta and meter_id to null if not relevant
         if ($this->input('type') !== 'product_order') {
             $this->merge(['product_meta' => null]);
         }
+        */
 
         if (in_array($this->input('type'), ['meter_order'])) {
             $this->merge(['meter_id' => null]);
