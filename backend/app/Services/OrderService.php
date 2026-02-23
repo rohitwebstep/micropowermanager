@@ -169,6 +169,7 @@ class OrderService implements IBaseService
 
                 if (!$person instanceof Person) {
                     $customerRequestData = [
+                        'national_id_number'  => $data['national_id_number'] ?? null,
                         'name'                => $data['first_name'] ?? null,
                         'serial_number'       => null,
                         'meter_type'          => $meterTypeId ?? 0,
