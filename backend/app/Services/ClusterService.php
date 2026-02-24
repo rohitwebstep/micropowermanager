@@ -11,7 +11,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 /**
  * @implements IBaseService<Cluster>
  */
-class ClusterService implements IBaseService {
+class ClusterService implements IBaseService
+{
     public function __construct(
         private Cluster $cluster,
     ) {}
@@ -34,22 +35,26 @@ class ClusterService implements IBaseService {
         );
     }
 
-    public function getClusterCities(int $clusterId): ?Cluster {
+    public function getClusterCities(int $clusterId): ?Cluster
+    {
         return Cluster::query()->with('cities')->find($clusterId);
     }
 
-    public function getClusterMiniGrids(int $clusterId): ?Cluster {
+    public function getClusterMiniGrids(int $clusterId): ?Cluster
+    {
         return Cluster::query()->with('miniGrids')->find($clusterId);
     }
 
-    public function getGeoLocationById(int $clusterId): mixed {
+    public function getGeoLocationById(int $clusterId): mixed
+    {
         return $this->cluster->newQuery()->select('geo_json')->find($clusterId)->geo_json;
     }
 
     /**
      * @return array<int, string>
      */
-    public function getDateRangeFromRequest(?string $startDate, ?string $endDate): array {
+    public function getDateRangeFromRequest(?string $startDate, ?string $endDate): array
+    {
         $dateRange = [];
 
         if ($startDate !== null && $endDate !== null) {
@@ -63,25 +68,29 @@ class ClusterService implements IBaseService {
         return $dateRange;
     }
 
-    public function getById(int $clusterId): Cluster {
+    public function getById(int $clusterId): Cluster
+    {
         return $this->cluster->newQuery()->with(['miniGrids.location', 'miniGrids.cities', 'miniGrids.people.orders.meter', 'cities'])->find($clusterId);
     }
 
-    public function getByName(string $clusterName): Cluster {
-        return $this->cluster->newQuery()->with(['miniGrids.location', 'cities'])->where('name', $clusterName)->first();
+    public function getByName(string $clusterName): Cluster
+    {
+        return $this->cluster->newQuery()->with(['miniGrids.location', 'miniGrids.cities', 'miniGrids.people.orders.meter', 'cities'])->where('name', $clusterName)->first();
     }
 
     /**
      * @param array<string, mixed> $clusterData
      */
-    public function create(array $clusterData): Cluster {
+    public function create(array $clusterData): Cluster
+    {
         return $this->cluster->newQuery()->create($clusterData);
     }
 
     /**
      * @return Collection<int, Cluster>|LengthAwarePaginator<int, Cluster>
      */
-    public function getAll(?int $limit = null): Collection|LengthAwarePaginator {
+    public function getAll(?int $limit = null): Collection|LengthAwarePaginator
+    {
         if ($limit !== null) {
             return $this->cluster->newQuery()->with('miniGrids')->limit($limit)->get();
         }
@@ -92,18 +101,21 @@ class ClusterService implements IBaseService {
     /**
      * @param array<string, mixed> $data
      */
-    public function update($model, array $data): Cluster {
+    public function update($model, array $data): Cluster
+    {
         throw new \Exception('Method update() not yet implemented.');
     }
 
-    public function delete($model): ?bool {
+    public function delete($model): ?bool
+    {
         throw new \Exception('Method delete() not yet implemented.');
     }
 
     /**
      * @return Collection<int, Cluster>
      */
-    public function getAllForExport(): Collection {
+    public function getAllForExport(): Collection
+    {
         return $this->cluster->newQuery()->with([
             'miniGrids',
             'cities',
