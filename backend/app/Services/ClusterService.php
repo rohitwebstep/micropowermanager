@@ -89,14 +89,28 @@ class ClusterService implements IBaseService
     /**
      * @return Collection<int, Cluster>|LengthAwarePaginator<int, Cluster>
      */
-    public function getAll(?int $limit = null): Collection|LengthAwarePaginator
-    {
-        $query = $this->cluster->newQuery()
-            ->with([
+    public function getAll(
+        ?int $limit = null,
+        string $type = 'main'
+    ): Collection|LengthAwarePaginator {
+
+        $query = $this->cluster->newQuery();
+
+        if ($type === 'dropdown') {
+
+            $query->select('id', 'name', 'manager_id')
+                ->with([
+                    'miniGrids:id,cluster_id,name',
+                    'miniGrids.cities:id,name,country_id,cluster_id,mini_grid_id'
+                ]);
+        } else {
+            // MAIN (default - full data)
+            $query->with([
                 'cities',
                 'miniGrids',
                 'miniGrids.cities',
             ]);
+        }
 
         if ($limit !== null) {
             return $query->limit($limit)->get();

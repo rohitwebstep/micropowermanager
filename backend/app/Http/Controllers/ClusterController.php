@@ -10,7 +10,8 @@ use App\Services\ClusterService;
 use App\Services\ClusterTransactionService;
 use Illuminate\Http\Request;
 
-class ClusterController extends Controller {
+class ClusterController extends Controller
+{
     public function __construct(
         private ClusterService $clusterService,
         private ClusterMeterService $clusterMetersService,
@@ -21,14 +22,20 @@ class ClusterController extends Controller {
     /**
      * @throws \Exception
      */
-    public function index(Request $request): ApiResource {
-        return ApiResource::make($this->clusterService->getAll());
+    public function index(Request $request): ApiResource
+    {
+        $type = $request->get('type', 'main'); // default = main
+
+        return ApiResource::make(
+            $this->clusterService->getAll(type: $type)
+        );
     }
 
     /**
      * @throws \Exception
      */
-    public function show(int $clusterId, Request $request): ApiResource {
+    public function show(int $clusterId, Request $request): ApiResource
+    {
         $dateRange =
             $this->clusterService->getDateRangeFromRequest($request->get('start_date'), $request->get('end_date'));
         $cluster = $this->clusterService->getById($clusterId);
@@ -43,11 +50,13 @@ class ClusterController extends Controller {
         return ApiResource::make($clusterData->toArray());
     }
 
-    public function showGeo(int $clusterId): ApiResource {
+    public function showGeo(int $clusterId): ApiResource
+    {
         return ApiResource::make(['geo_json' => $this->clusterService->getGeoLocationById($clusterId)]);
     }
 
-    public function store(ClusterRequest $request): ApiResource {
+    public function store(ClusterRequest $request): ApiResource
+    {
         $clusterData = $request->getClusterData();
 
         return ApiResource::make($this->clusterService->create($clusterData));
