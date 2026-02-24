@@ -91,11 +91,18 @@ class ClusterService implements IBaseService
      */
     public function getAll(?int $limit = null): Collection|LengthAwarePaginator
     {
+        $query = $this->cluster->newQuery()
+            ->with([
+                'cities',
+                'miniGrids',
+                'miniGrids.cities',
+            ]);
+
         if ($limit !== null) {
-            return $this->cluster->newQuery()->with('miniGrids')->limit($limit)->get();
+            return $query->limit($limit)->get();
         }
 
-        return $this->cluster->newQuery()->with('miniGrids')->get();
+        return $query->get();
     }
 
     /**
