@@ -1,6 +1,14 @@
 <template>
   <div class="import-list-page">
-    <h2>People List</h2>
+    <div class="header">
+      <h2>People List</h2>
+      <button
+        class="refresh-btn"
+        @click="loadImports(meta?.current_page || 1)"
+      >
+        🔄 Refresh
+      </button>
+    </div>
 
     <!-- Loading -->
     <p v-if="loading">Loading...</p>
@@ -15,11 +23,15 @@
       <thead>
         <tr>
           <th>#</th>
+          <th>Customer No</th>
           <th>Name</th>
+          <th>NIN</th>
+          <th>Phone</th>
+          <th>Meter No</th>
           <th>Type</th>
-          <th>Active</th>
-          <th>Devices</th>
+          <!-- <th>Active</th> -->
           <th>City</th>
+          <th>Devices</th>
           <th>Created At</th>
         </tr>
       </thead>
@@ -28,22 +40,38 @@
         <tr v-for="(item, index) in imports" :key="item.id">
           <td>{{ index + 1 }}</td>
 
-          <td>
-            {{ item.name }} {{ item.surname }}
-          </td>
+          <!-- Customer Number -->
+          <td>{{ item.external_customer_id || "-" }}</td>
 
+          <!-- Name -->
+          <td>{{ item.name }} {{ item.surname }}</td>
+
+          <!-- NIN -->
+          <td>{{ item.national_id_number || "-" }}</td>
+
+          <!-- Phone -->
+          <td>{{ getPrimaryPhone(item.addresses) }}</td>
+
+          <!-- Meter Number -->
+          <td>{{ getMeterNumbers(item.devices) }}</td>
+
+          <!-- Type -->
           <td>{{ item.type }}</td>
 
-          <td>
+          <!-- Active -->
+          <!-- <td>
             <span :class="item.is_active ? 'active' : 'inactive'">
               {{ item.is_active ? "Active" : "Inactive" }}
             </span>
-          </td>
+          </td> -->
 
-          <td>{{ item.devices.length }}</td>
-
+          <!-- City -->
           <td>{{ getPrimaryCity(item.addresses) }}</td>
 
+          <!-- Total Devices -->
+          <td>{{ item.devices?.length || 0 }}</td>
+
+          <!-- Created -->
           <td>{{ formatDate(item.created_at) }}</td>
         </tr>
       </tbody>
@@ -123,12 +151,28 @@ export default {
     },
 
     formatDate(date) {
-      return new Date(date).toLocaleString()
+      return date ? new Date(date).toLocaleString() : "-"
     },
 
     getPrimaryCity(addresses = []) {
       const primary = addresses.find(a => a.is_primary)
       return primary?.city?.name || "-"
+    },
+
+    getPrimaryPhone(addresses = []) {
+      const primary = addresses.find(a => a.is_primary)
+      return primary?.phone || "-"
+    },
+
+    getMeterNumbers(devices = []) {
+      if (!devices.length) return "-"
+
+      return (
+        devices
+          .filter(d => d.device_type === "meter")
+          .map(d => d.device_serial)
+          .join(", ") || "-"
+      )
     },
   },
 }
@@ -137,6 +181,26 @@ export default {
 <style scoped>
 .import-list-page {
   padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.refresh-btn {
+  padding: 6px 12px;
+  background: #3498db;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.refresh-btn:hover {
+  background: #2980b9;
 }
 
 table {
@@ -149,6 +213,7 @@ th,
 td {
   border: 1px solid #ddd;
   padding: 10px;
+  text-align: left;
 }
 
 th {
@@ -168,11 +233,16 @@ th {
   color: red;
   font-weight: 600;
 }
- 
+
 .pagination {
   margin-top: 15px;
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

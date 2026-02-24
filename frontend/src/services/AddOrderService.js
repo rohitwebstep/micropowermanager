@@ -1,4 +1,3 @@
-import { ErrorHandler } from "@/Helpers/ErrorHandler"
 import AddOrderRepository from "@/repositories/AddOrderRepository"
 
 export class AddOrderService {
@@ -6,22 +5,24 @@ export class AddOrderService {
   async createOrder(payload) {
     try {
       const response = await AddOrderRepository.create(payload)
-
-      const { status, data } = response
-
-      if (status !== 200 && status !== 201) {
-        return new ErrorHandler("Failed to create order", "http", status)
-      }
-
-      // 🔥 RETURN ACTUAL ORDER DATA
-      return data
+      return response.data
 
     } catch (e) {
-      return new ErrorHandler(
-        e.response?.data?.message || "Something went wrong",
-        "http"
-      )
+
+      // 🔥 RETURN FULL VALIDATION RESPONSE
+      if (e.response && e.response.status === 422) {
+        return e.response.data
+      }
+
+      // 🔥 RETURN NORMAL ERROR RESPONSE
+      if (e.response && e.response.data) {
+        return e.response.data
+      }
+
+      // 🔥 NETWORK / UNKNOWN
+      return {
+        message: "Server error"
+      }
     }
   }
-
 }

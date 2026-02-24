@@ -34,7 +34,7 @@
                 </md-icon>
               </md-button>
             </div>
-            <div class="export-section">
+            <!-- <div class="export-section">
               <md-button
                 class="md-raised md-default export-csv-button"
                 @click="exportDebts"
@@ -61,7 +61,7 @@
                 <md-icon>download</md-icon>
                 {{ $tc("phrases.exportAllCustomers") }}
               </md-button>
-            </div>
+            </div> -->
           </div>
         </div>
 
