@@ -542,17 +542,18 @@ class OrderController extends Controller
                 try {
 
                     $customerRequestData = [
-                        'name'                => $order->first_name,
-                        'surname'             => $order->last_name,
-                        'serial_number'       => $request->serial_number,
-                        'meter_type'          => $meterTypeId ?? 0,
-                        'phone'               => $order->phone_number,
-                        'tariff_id'           => 1,
-                        'geo_points'          => '0,0',
-                        'manufacturer'        => 1,
-                        'connection_type_id'  => 1,
-                        'connection_group_id' => 1,
-                        'city_id'             => 1,
+                        'external_customer_id' => $request->external_customer_id,
+                        'name'                 => $order->first_name,
+                        'surname'              => $order->last_name,
+                        'serial_number'        => $request->serial_number,
+                        'meter_type'           => $meterTypeId ?? 0,
+                        'phone'                => $order->phone_number,
+                        'tariff_id'            => 1,
+                        'geo_points'           => '0,0',
+                        'manufacturer'         => 1,
+                        'connection_type_id'   => 1,
+                        'connection_group_id'  => 1,
+                        'city_id'              => 1,
                     ];
 
                     $androidRequest = new \App\Http\Requests\AndroidAppRequest();
@@ -584,6 +585,8 @@ class OrderController extends Controller
                     'external_customer_id' => $request->external_customer_id,
                 ]);
             }
+
+            $people = $this->personService->updateExternalCustomerIdByPhone($order->phone_number, $request->external_customer_id);
 
             return response()->json([
                 'message' => 'external details assigned successfully.',

@@ -127,6 +127,28 @@ class PersonService implements IBaseService
         )->whereIn('id', $peopleId);
     }
 
+    public function updateExternalCustomerIdByPhone(string $phone, ?int $externalCustomerId): ?Person
+    {
+        if (empty($phone)) {
+            return null;
+        }
+
+        // Find person by phone number using service method
+        $person = $this->getByPhoneNumber($phone);
+
+        if (!$person) {
+            return null; // Customer not found
+        }
+
+        // Only update if external_customer_id is provided and not empty
+        if (!empty($externalCustomerId)) {
+            $person->external_customer_id = $externalCustomerId;
+            $person->save();
+        }
+
+        return $person;
+    }
+
     public function updatePersonUpdatedDate(Person $person): void
     {
         $person->updated_at = Carbon::now();
