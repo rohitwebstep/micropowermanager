@@ -186,7 +186,7 @@ class PersonService implements IBaseService
     {
         return $this->person->newQuery()
             ->with([
-                'addresses.city',
+                'addresses.city.cluster',
                 'devices',
                 'agentSoldAppliance',
                 'latestPayment',
@@ -385,7 +385,8 @@ class PersonService implements IBaseService
         $address = $addressService->instantiate($addressParams);
         $addressService->assignAddressToOwner($person, $address);
 
-        return $person;
+
+        return $this->getDetails($person->id, true);
     }
 
     public function getByPhoneNumber(string $phoneNumber): ?Person

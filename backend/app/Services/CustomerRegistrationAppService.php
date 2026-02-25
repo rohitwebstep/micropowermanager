@@ -81,7 +81,7 @@ class CustomerRegistrationAppService
             event(new AccessRatePaymentInitialize($meter));
         }
 
-        $cityId = $request->input('city_id');
+        $cityId = $request->input('city_id') ?? $person->addresses[0]->city_id;
         $geoPoints = $request->input('geo_points');
 
         $addressData = [

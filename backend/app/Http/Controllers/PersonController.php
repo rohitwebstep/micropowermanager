@@ -111,8 +111,17 @@ class PersonController extends Controller
     {
         $request->validate([
             'file' => 'required|mimes:csv,txt,xlsx,xls',
-            'mini_grid_id' => 'required|integer',
-            'cluster_id' => 'required|integer',
+            'cluster_id' => [
+                'required',
+                'integer',
+                'exists:tenant.clusters,id'
+            ],
+
+            'mini_grid_id' => [
+                'required',
+                'integer',
+                'exists:tenant.mini_grids,id'
+            ],
         ]);
 
         $file = $request->file('file');
@@ -211,6 +220,8 @@ class PersonController extends Controller
                     }
 
                     $cityId = $responseData['id'];
+                } else {
+                    $cityId = $city->id;
                 }
 
                 // ===============================
@@ -223,10 +234,8 @@ class PersonController extends Controller
                 $phone    = isset($parts[0]) ? trim($parts[0]) : null;
                 $niNumber = isset($parts[1]) ? trim($parts[1]) : null;
 
-                $phone = preg_replace('/[^0-9]/', '', $phoneRaw);
-                if (!$phone) {
-                    $phone = rand(1000000000, 9999999999);
-                }
+                $phone = preg_replace('/[^0-9]/', '', $phone);
+                $phone = substr($phone, -10);
 
                 $fullName = trim((string)($row['Name'] ?? 'N/A'));
 
@@ -250,7 +259,7 @@ class PersonController extends Controller
                     'serial_number'           => null,
                     'meter_type'              => 0,
                     'surname'                 => $surname,
-                    'phone'                   => '+' . trim((string)$phone),
+                    'phone'                   => '+234' . trim((string)$phone),
                     'tariff_id'               => 1,
                     'geo_points'              => '0,0',
                     'manufacturer'            => 1,
@@ -271,7 +280,8 @@ class PersonController extends Controller
                 DB::commit();
 
                 $parsed[] = [
-                    'customer_id' => $people['id'] ?? null,
+                    'customer' => $people,
+                    'city_name' => $cityName,
                     'city_id'     => $cityId
                 ];
             } catch (\Throwable $e) {

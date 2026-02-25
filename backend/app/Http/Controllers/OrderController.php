@@ -126,11 +126,17 @@ class OrderController extends Controller
                 continue;
             }
 
+            $meterNumber = $row['Meter No.'];
             $phase = 1;
             $maxCurrent = 100;
             $meterTypeId = null;
             $meterId = null;
             $peopleId = $people->id;
+            $cityName = $people->addresses[0]->city->name;
+            $stateName = $people->addresses[0]->city->cluster->name;
+            $miniGridId = $people->mini_grid_id;
+            $order = null;
+            $meter = null;
 
             // ===== Create / Get MeterType =====
             try {
@@ -178,10 +184,9 @@ class OrderController extends Controller
 
             // ===== Validate Customer / Meter =====
             try {
-
                 $customerRequestData = [
                     'name'                => $people->name,
-                    'serial_number'       => $row['Meter No.'],
+                    'serial_number'       => $meterNumber,
                     'meter_type'          => $meterTypeId ?? 0,
                     'surname'             => $people->surname,
                     'phone'               => $people->addresses[0]->phone ?? null,
@@ -190,7 +195,7 @@ class OrderController extends Controller
                     'manufacturer'        => 1,
                     'connection_type_id'  => 1,
                     'connection_group_id' => 1,
-                    'city_id'             => 1,
+                    'city_id'             => $cityName,
                 ];
 
                 $androidRequest = new \App\Http\Requests\AndroidAppRequest();
@@ -202,66 +207,70 @@ class OrderController extends Controller
                 $people = app(\App\Services\CustomerRegistrationAppService::class)
                     ->createCustomer($androidRequest);
 
-                $meter = $this->meterService->getBySerialNumber($row['Meter No.'] ?? null);
-                $meterId = $meter ? $meter->id : null;
-
                 $person = [
-                    'Serial Number' => $row['Meter No.'],
+                    'Serial Number' => $meterNumber,
                     'meter' => $meter ?? null,
                 ];
             } catch (\Throwable $e) {
                 $person = [
-                    'error' => $e->getMessage(),
+                    'error 1' => $e->getMessage(),
                     'data_attempted' => $customerRequestData ?? null,
                 ];
             }
 
-            // ===== Create Order =====
-            if ($meterId) {
+            if ($meterNumber) {
+                $meter = $this->meterService->getBySerialNumber($meterNumber ?? null);
+                $meterId = $meter ? $meter->id : null;
 
-                try {
+                // ===== Create Order =====
+                if ($meterId) {
+                    try {
 
-                    $orderToken = $row['Token'] ?? null;
+                        $orderToken = $row['Token'] ?? null;
 
-                    if ($orderToken) {
-                        $existingOrder = Order::where('token', $orderToken)->first();
-                        if ($existingOrder) {
-                            throw new \Exception("Order with token {$orderToken} already exists");
+                        if ($orderToken) {
+                            $existingOrder = Order::where('token', $orderToken)->first();
+                            if ($existingOrder) {
+                                throw new \Exception("Order with token {$orderToken} already exists");
+                            }
                         }
+
+                        $orderGeneratedId = 'MPM-ODR-' . now()->format('d-m-Y') . '-' . random_int(100000, 999999);
+
+                        $orderRequestData = [
+                            'state_name'    => $stateName,
+                            'city_name'     => $cityName,
+                            'mini_grid_id'  => $miniGridId,
+                            'order_id'      => $orderGeneratedId,
+                            'customer_id'   => $peopleId,
+                            'type'          => 'meter_electricity_order',
+                            'meter_id'      => $meterId,
+                            'serial_number' => trim($meterNumber ?? ''),
+                            'amount'        => preg_replace('/[^0-9.]/', '', $row['Total Paid'] ?? 0),
+                            'token'         => $orderToken,
+                            'purchased_at'  => !empty($row['Created Date'])
+                                ? date('Y-m-d H:i:s', strtotime($row['Created Date']))
+                                : now(),
+                            'first_name'    => $people->name,
+                            'last_name'     => $people->surname ?? $people->name,
+                            'phone_number'  => $people->addresses[0]->phone ?? null,
+                        ];
+
+                        $orderRequest = new \App\Http\Requests\OrderCreateRequest();
+                        $validator = validator($orderRequestData, $orderRequest->rules());
+
+                        if ($validator->fails()) {
+                            throw new \Exception($validator->errors()->first());
+                        }
+
+                        $validatedData = $validator->validated();
+                        $order = $this->orderService->create($validatedData);
+                    } catch (\Throwable $e) {
+                        $order = [
+                            'error 2' => $e->getMessage(),
+                            'data_attempted' => $orderRequestData ?? null,
+                        ];
                     }
-
-                    $orderGeneratedId = 'MPM-ODR-' . now()->format('d-m-Y') . '-' . random_int(100000, 999999);
-
-                    $orderRequestData = [
-                        'order_id'      => $orderGeneratedId,
-                        'customer_id'   => $peopleId,
-                        'type'          => 'meter_electricity_order',
-                        'meter_id'      => $meterId,
-                        'serial_number' => trim($row['Meter No.'] ?? ''),
-                        'amount'        => preg_replace('/[^0-9.]/', '', $row['Total Paid'] ?? 0),
-                        'token'         => $orderToken,
-                        'purchased_at'  => !empty($row['Created Date'])
-                            ? date('Y-m-d H:i:s', strtotime($row['Created Date']))
-                            : now(),
-                        'first_name'    => $people->name,
-                        'last_name'     => $people->surname ?? $people->name,
-                        'phone_number'  => $people->addresses[0]->phone ?? null,
-                    ];
-
-                    $orderRequest = new \App\Http\Requests\OrderCreateRequest();
-                    $validator = validator($orderRequestData, $orderRequest->rules());
-
-                    if ($validator->fails()) {
-                        throw new \Exception($validator->errors()->first());
-                    }
-
-                    $validatedData = $validator->validated();
-                    $order = $this->orderService->create($validatedData);
-                } catch (\Throwable $e) {
-                    $person = [
-                        'error' => $e->getMessage(),
-                        'data_attempted' => $orderRequestData ?? null,
-                    ];
                 }
             }
 
@@ -279,6 +288,7 @@ class OrderController extends Controller
             ];
 
             $parsed[] = compact('meterType', 'person', 'vend');
+            // $parsed[] = compact('meterNumber', 'meter', 'people', 'order');
         }
 
         return ApiResource::make([
