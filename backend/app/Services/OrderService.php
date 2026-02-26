@@ -142,6 +142,7 @@ class OrderService implements IBaseService
                 'mini_grid_id' => $data['mini_grid_id'],
                 'cluster_id'   => $cluster->id,
                 'country_id'   => 160,
+                'points' => '0,0'
             ];
 
             $cityRequest = \App\Http\Requests\CityRequest::create(
@@ -153,13 +154,11 @@ class OrderService implements IBaseService
             $cityController = app(\App\Http\Controllers\CityController::class);
             $cityResponse = $cityController->store($cityRequest);
 
-            $responseData = $cityResponse->getData(true);
-
-            if (!$responseData || !isset($responseData['id'])) {
+            if (!$cityResponse || !isset($cityResponse['id'])) {
                 throw new \Exception('Failed to create City via controller');
             }
 
-            $cityId = $responseData['id'];
+            $cityId = $cityResponse['id'];
         }
 
         // Handle customer creation if customer_id is null

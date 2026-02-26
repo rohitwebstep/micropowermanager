@@ -202,6 +202,7 @@ class PersonController extends Controller
                         'mini_grid_id' => $miniGridId,
                         'cluster_id'   => $clusterId,
                         'country_id'   => 160,
+                        'points' => '0,0'
                     ];
 
                     $cityRequest = \App\Http\Requests\CityRequest::create(
@@ -213,13 +214,11 @@ class PersonController extends Controller
                     $cityController = app(\App\Http\Controllers\CityController::class);
                     $cityResponse = $cityController->store($cityRequest);
 
-                    $responseData = $cityResponse->getData(true);
-
-                    if (!$responseData || !isset($responseData['id'])) {
+                    if (!$cityResponse || !isset($cityResponse['id'])) {
                         throw new \Exception('Failed to create City via controller');
                     }
 
-                    $cityId = $responseData['id'];
+                    $cityId = $cityResponse['id'];
                 } else {
                     $cityId = $city->id;
                 }

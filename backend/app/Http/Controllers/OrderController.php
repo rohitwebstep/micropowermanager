@@ -133,6 +133,7 @@ class OrderController extends Controller
             $meterId = null;
             $peopleId = $people->id;
             $cityName = $people->addresses[0]->city->name;
+            $cityId = $people->addresses[0]->city_id;
             $stateName = $people->addresses[0]->city->cluster->name;
             $miniGridId = $people->mini_grid_id;
             $order = null;
@@ -195,7 +196,7 @@ class OrderController extends Controller
                     'manufacturer'        => 1,
                     'connection_type_id'  => 1,
                     'connection_group_id' => 1,
-                    'city_id'             => $cityName,
+                    'city_id'             => $cityId,
                 ];
 
                 $androidRequest = new \App\Http\Requests\AndroidAppRequest();
@@ -208,12 +209,11 @@ class OrderController extends Controller
                     ->createCustomer($androidRequest);
 
                 $person = [
-                    'Serial Number' => $meterNumber,
-                    'meter' => $meter ?? null,
+                    'person_id' => $people->id
                 ];
             } catch (\Throwable $e) {
                 $person = [
-                    'error 1' => $e->getMessage(),
+                    'error' => $e->getMessage(),
                     'data_attempted' => $customerRequestData ?? null,
                 ];
             }
@@ -267,7 +267,7 @@ class OrderController extends Controller
                         $order = $this->orderService->create($validatedData);
                     } catch (\Throwable $e) {
                         $order = [
-                            'error 2' => $e->getMessage(),
+                            'error' => $e->getMessage(),
                             'data_attempted' => $orderRequestData ?? null,
                         ];
                     }
