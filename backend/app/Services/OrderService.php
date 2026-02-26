@@ -69,6 +69,8 @@ class OrderService implements IBaseService
             });
         }
 
+        $query->orderBy('id', 'desc');
+
         return $query->paginate($limit);
     }
 
