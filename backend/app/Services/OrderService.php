@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ExternalPortalTransaction\ExternalPortalTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order\Order;
@@ -207,12 +208,24 @@ class OrderService implements IBaseService
 
             if ($orderType === 'meter_electricity_order') {
 
-                // 1️⃣ Transaction Data (ONLY existing columns)
+                // 1️⃣ Create External Portal Transaction FIRST
+                $externalPortalTransaction = ExternalPortalTransaction::create([
+                    'reference_id'   => 'EXT-' . Str::uuid(),
+                    'customer_id'    => $data['customer_id'] ?? null,
+                    'customer_name'  => $data['first_name'] ?? null,
+                    'customer_email' => null,
+                    'customer_phone' => $data['phone_number'] ?? null,
+                    'amount'         => $data['amount'] ?? 0,
+                    'payment_method' => 'external_portal',
+                    'status'         => 'success',
+                ]);
+
+                // 2️⃣ Transaction Data (ONLY existing columns) ✅ FIXED
                 $transactionData = [
-                    'original_transaction_id'   => 0, // since NOT NULL in DB
-                    'original_transaction_type' => 'meter_electricity_order',
+                    'original_transaction_id'   => $externalPortalTransaction->id, // ✅ REAL ID
+                    'original_transaction_type' => 'external_portal_transaction',   // ✅ must match morphMap
                     'amount'                    => $data['amount'] ?? 0,
-                    'type'                      => 'energy', // must match ENUM
+                    'type'                      => 'energy',
                     'sender'                    => 'system',
                     'message'                   => 'Electricity token purchase',
                     'created_at'                => now(),
