@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Device;
 use App\Models\ExternalPortalTransaction\ExternalPortalTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order\Order;
+use App\Models\PaymentHistory;
 use App\Models\Person\Person;
 use App\Models\Token;
 use App\Models\Transaction\Transaction;
@@ -121,6 +123,7 @@ class OrderService implements IBaseService
         // CITY
         // ===============================
         $stateName = trim($data['state_name'] ?? '');
+        $serialNumber = trim($data['serial_number'] ?? '');
 
         if (!$stateName) {
             throw new \Exception('state_name missing');
@@ -223,16 +226,33 @@ class OrderService implements IBaseService
                 // 2️⃣ Transaction Data (ONLY existing columns) ✅ FIXED
                 $transactionData = [
                     'original_transaction_id'   => $externalPortalTransaction->id, // ✅ REAL ID
-                    'original_transaction_type' => 'App\Models\ExternalPortalTransaction\ExternalPortalTransaction',   // ✅ must match morphMap
+                    'original_transaction_type' => ExternalPortalTransaction::class,   // ✅ must match morphMap
                     'amount'                    => $data['amount'] ?? 0,
                     'type'                      => 'energy',
                     'sender'                    => 'system',
-                    'message'                   => 'Electricity token purchase',
+                    'message'                   => $serialNumber ?? '',
                     'created_at'                => now(),
                     'updated_at'                => now(),
                 ];
 
                 $transaction = Transaction::create($transactionData);
+
+                // 3️⃣ Create Payment History
+                PaymentHistory::create([
+                    'amount'          => $data['amount'] ?? 0,
+                    'transaction_id'  => $transaction->id,
+                    'payment_service' => 'external_portal',
+                    'sender'          => 'system',
+                    'payment_type'    => 'energy',
+
+                    // Morph: paid_for (this payment is for the device)
+                    'paid_for_type'   => Device::class,
+                    'paid_for_id'     => $data['device_id'],
+
+                    // Morph: payer (this payment is made by customer/person)
+                    'payer_type'      => Person::class,
+                    'payer_id'        => $data['customer_id'],
+                ]);
 
                 // 2️⃣ Token Data (according to tokens table)
                 $tokenData = [

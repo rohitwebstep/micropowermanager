@@ -219,7 +219,7 @@ class OrderController extends Controller
             }
 
             if ($meterNumber) {
-                $meter = $this->meterService->getBySerialNumber($meterNumber ?? null);
+                $meter = $this->meterService->getBySerialNumber($meterNumber);
                 $meterId = $meter ? $meter->id : null;
                 $deviceId = $meter ? $meter->device->id : null;
 
