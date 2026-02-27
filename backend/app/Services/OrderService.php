@@ -223,7 +223,7 @@ class OrderService implements IBaseService
                 // 2️⃣ Transaction Data (ONLY existing columns) ✅ FIXED
                 $transactionData = [
                     'original_transaction_id'   => $externalPortalTransaction->id, // ✅ REAL ID
-                    'original_transaction_type' => 'external_portal_transaction',   // ✅ must match morphMap
+                    'original_transaction_type' => 'App\Models\ExternalPortalTransaction\ExternalPortalTransaction',   // ✅ must match morphMap
                     'amount'                    => $data['amount'] ?? 0,
                     'type'                      => 'energy',
                     'sender'                    => 'system',
