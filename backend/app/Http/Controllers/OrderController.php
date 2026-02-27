@@ -221,6 +221,7 @@ class OrderController extends Controller
             if ($meterNumber) {
                 $meter = $this->meterService->getBySerialNumber($meterNumber ?? null);
                 $meterId = $meter ? $meter->id : null;
+                $deviceId = $meter ? $meter->device->id : null;
 
                 // ===== Create Order =====
                 if ($meterId) {
@@ -244,8 +245,10 @@ class OrderController extends Controller
                             'order_id'      => $orderGeneratedId,
                             'customer_id'   => $peopleId,
                             'type'          => 'meter_electricity_order',
+                            'device_id'      => $deviceId,
                             'meter_id'      => $meterId,
                             'serial_number' => trim($meterNumber ?? ''),
+                            'total_units'   => preg_replace('/[^0-9.]/', '', $row['Total Unit'] ?? 0),
                             'amount'        => preg_replace('/[^0-9.]/', '', $row['Total Paid'] ?? 0),
                             'token'         => $orderToken,
                             'purchased_at'  => !empty($row['Created Date'])

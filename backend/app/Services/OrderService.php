@@ -6,8 +6,11 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order\Order;
 use App\Models\Person\Person;
+use App\Models\Token;
+use App\Models\Transaction\Transaction;
 use App\Services\Interfaces\IBaseService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Str;
 
 /**
  * @implements IBaseService<Order>
@@ -195,6 +198,42 @@ class OrderService implements IBaseService
                 }
 
                 $data['customer_id'] = $person->id;
+            }
+        }
+
+        $orderType = $data['type'];
+
+        if (!empty($orderType) && ($orderType === 'meter_electricity_order') && !empty($data['device_id']) && !empty($data['total_units'])) {
+
+            if ($orderType === 'meter_electricity_order') {
+
+                // 1️⃣ Transaction Data (ONLY existing columns)
+                $transactionData = [
+                    'original_transaction_id'   => 0, // since NOT NULL in DB
+                    'original_transaction_type' => 'meter_electricity_order',
+                    'amount'                    => $data['amount'] ?? 0,
+                    'type'                      => 'energy', // must match ENUM
+                    'sender'                    => 'system',
+                    'message'                   => 'Electricity token purchase',
+                    'created_at'                => now(),
+                    'updated_at'                => now(),
+                ];
+
+                $transaction = Transaction::create($transactionData);
+
+                // 2️⃣ Token Data (according to tokens table)
+                $tokenData = [
+                    'transaction_id' => $transaction->id,
+                    'token'          => strtoupper(Str::random(12)),
+                    'token_amount'   => $data['total_units'],
+                    'device_id'      => $data['device_id'],
+                    'token_type'     => 'electricity',
+                    'token_unit'     => 'kWh',
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ];
+
+                $token = Token::create($tokenData);
             }
         }
 
