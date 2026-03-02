@@ -237,7 +237,24 @@ class OrderService implements IBaseService
 
                 $transaction = Transaction::create($transactionData);
 
-                // 3️⃣ Token Data (according to tokens table)
+                // 3️⃣ Create Payment History
+                PaymentHistory::create([
+                    'amount'          => $data['amount'] ?? 0,
+                    'transaction_id'  => $transaction->id,
+                    'payment_service' => 'external_portal',
+                    'sender'          => 'system',
+                    'payment_type'    => 'energy',
+
+                    // Morph: paid_for (this payment is for the device)
+                    'paid_for_type'   => Device::class,
+                    'paid_for_id'     => $data['device_id'],
+
+                    // Morph: payer (this payment is made by customer/person)
+                    'payer_type'      => Person::class,
+                    'payer_id'        => $data['customer_id'],
+                ]);
+
+                // 2️⃣ Token Data (according to tokens table)
                 $tokenData = [
                     'transaction_id' => $transaction->id,
                     'token'          => strtoupper(Str::random(12)),
@@ -250,24 +267,6 @@ class OrderService implements IBaseService
                 ];
 
                 $token = Token::create($tokenData);
-
-                // 2️⃣ Create Payment History
-                PaymentHistory::create([
-                    'amount'          => $data['amount'] ?? 0,
-                    'transaction_id'  => $transaction->id,
-                    'payment_service' => 'external_portal',
-                    'sender'          => 'system',
-                    'payment_type'    => 'energy',
-
-                    // Morph: paid_for (this payment is for the device)
-                    'paid_for_type'   => Token::class,
-                    'paid_for_id'     => $token->id,
-
-                    // Morph: payer (this payment is made by customer/person)
-                    'payer_type'      => Person::class,
-                    'payer_id'        => $data['customer_id'],
-                ]);
-
             }
         }
 
