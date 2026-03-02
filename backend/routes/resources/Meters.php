@@ -16,6 +16,7 @@ Route::group(['prefix' => 'meters'], function () {
     Route::post('/import/csv', [MeterController::class, 'importFromCsv']);
     Route::get('/connection-types', [MeterController::class, 'showConnectionTypes']);
     Route::put('/{meter}', [MeterController::class, 'update']);
+    Route::post('/{serialNumber}/external-portal-data', [MeterController::class, 'getExternalPortalData']);
     Route::get('/search', [MeterController::class, 'search']);
     Route::get('/{serialNumber}', [MeterController::class, 'show']);
     Route::delete('/{meterId}', [MeterController::class, 'destroy']);

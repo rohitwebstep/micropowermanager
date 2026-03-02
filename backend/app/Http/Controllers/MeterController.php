@@ -11,8 +11,7 @@ use App\Services\MeterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use App\Http\Requests\MeterTypeCreateRequest;
+use Illuminate\Support\Facades\Http;
 
 class MeterController extends Controller
 {
@@ -124,5 +123,86 @@ class MeterController extends Controller
     public function showConnectionTypes(): ApiResource
     {
         return ApiResource::make($this->meterService->getNumberOfConnectionTypes());
+    }
+
+    public function getExternalPortalData(Request $request, string $serialNumber)
+    {
+        // Get meter
+        $meter = $this->meterService->getBySerialNumber($serialNumber);
+
+        if (!$meter) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Meter not found.'
+            ], 404);
+        }
+
+        // Validate request
+        $request->validate([
+            'type' => 'required|in:monthly,daily,hourly',
+            'Year' => 'required|integer|min:2000',
+            'Month' => 'required|integer|between:1,12',
+            'Day' => 'required_if:type,hourly|integer|between:1,31'
+        ]);
+
+        $type = $request->type;
+
+        // Base URL (better to move to .env)
+        $baseUrl = 'http://47.90.189.157:6001/api';
+
+        switch ($type) {
+
+            case 'monthly':
+                $endpoint = '/COMM_MonthlyData';
+                $queryList = [[
+                    "MeterNo" => $meter->serial_number,
+                    "Year" => $request->Year,
+                    "Month" => $request->Month,
+                ]];
+                break;
+
+            case 'daily':
+                $endpoint = '/COMM_DailyData';
+                $queryList = [[
+                    "MeterNo" => $meter->serial_number,
+                    "Year" => $request->Year,
+                    "Month" => $request->Month,
+                ]];
+                break;
+
+            case 'hourly':
+                $endpoint = '/COMM_HourlyData';
+                $queryList = [[
+                    "MeterNo" => $meter->serial_number,
+                    "Year" => $request->Year,
+                    "Month" => $request->Month,
+                    "Day" => $request->Day,
+                ]];
+                break;
+        }
+
+        try {
+
+            $response = Http::timeout(30)
+                ->acceptJson()
+                ->post($baseUrl . $endpoint, [
+                    "CompanyName" => 'Sandstream',
+                    "UserName" => 'pos1',
+                    "Password" => 'Sandstream@@25',
+                    "QueryList" => $queryList
+                ]);
+
+            return response()->json([
+                'success' => $response->successful(),
+                'data' => $response->json()
+            ], $response->status());
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'success' => false,
+                'message' => 'External portal connection failed.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
