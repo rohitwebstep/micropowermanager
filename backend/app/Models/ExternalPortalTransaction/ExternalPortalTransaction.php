@@ -28,6 +28,8 @@ class ExternalPortalTransaction extends BaseModel
 
     protected $table = 'external_portal_transactions';
 
+    public const RELATION_NAME = 'external_portal_transaction';
+    
     protected $guarded = [];
 
     /*

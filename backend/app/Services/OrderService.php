@@ -226,7 +226,7 @@ class OrderService implements IBaseService
                 // 2️⃣ Transaction Data (ONLY existing columns) ✅ FIXED
                 $transactionData = [
                     'original_transaction_id'   => $externalPortalTransaction->id, // ✅ REAL ID
-                    'original_transaction_type' => ExternalPortalTransaction::class,   // ✅ must match morphMap
+                    'original_transaction_type' => 'external_portal_transaction',   // ✅ must match morphMap
                     'amount'                    => $data['amount'] ?? 0,
                     'type'                      => 'energy',
                     'sender'                    => 'system',
@@ -260,11 +260,11 @@ class OrderService implements IBaseService
                     'payment_type'    => 'energy',
 
                     // Morph: paid_for (this payment is for the device)
-                    'paid_for_type'   => Token::class,
+                    'paid_for_type'   => 'token',
                     'paid_for_id'     => $token->id,
 
                     // Morph: payer (this payment is made by customer/person)
-                    'payer_type'      => Person::class,
+                    'payer_type'      => 'person',
                     'payer_id'        => $data['customer_id'],
                 ]);
 

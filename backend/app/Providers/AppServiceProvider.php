@@ -20,6 +20,7 @@ use App\Models\City;
 use App\Models\Cluster;
 use App\Models\Device;
 use App\Models\EBike;
+use App\Models\ExternalPortalTransaction\ExternalPortalTransaction;
 use App\Models\MainSettings;
 use App\Models\Manufacturer;
 use App\Models\Meter\Meter;
@@ -66,6 +67,7 @@ class AppServiceProvider extends ServiceProvider {
         Relation::morphMap(
             [
                 Person::RELATION_NAME => Person::class,
+                ExternalPortalTransaction::RELATION_NAME => ExternalPortalTransaction::class,
                 Manufacturer::RELATION_NAME => Manufacturer::class,
                 Transaction::RELATION_NAME => Transaction::class,
                 AgentTransaction::RELATION_NAME => AgentTransaction::class,
