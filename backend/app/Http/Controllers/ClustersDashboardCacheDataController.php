@@ -13,8 +13,17 @@ class ClustersDashboardCacheDataController extends Controller
         private ClustersDashboardCacheDataService $clustersDashboardCacheDataService,
     ) {}
 
-    public function index(): ApiResource
+    public function index(Request $request): ApiResource
     {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $dateRange = [];
+
+        if ($startDate && $endDate) {
+            $dateRange = [$startDate, $endDate];
+        }
+        
         /*
         // @var array<ClusterDashboardData> $cachedData
         $cachedData = $this->clustersDashboardCacheDataService->getData();
@@ -24,7 +33,7 @@ class ClustersDashboardCacheDataController extends Controller
         if ($cachedData === []) {
         */
 
-        $this->clustersDashboardCacheDataService->setData();
+        $this->clustersDashboardCacheDataService->setData($dateRange);
         // @var array<ClusterDashboardData> $cachedData
         $cachedData = $this->clustersDashboardCacheDataService->getData();
         $serializedData = array_map(fn(ClusterDashboardData $dto): array => $dto->toArray(), $cachedData);
