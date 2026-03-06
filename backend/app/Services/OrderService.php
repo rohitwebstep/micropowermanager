@@ -220,7 +220,7 @@ class OrderService implements IBaseService
                     'customer_phone' => $data['phone_number'] ?? null,
                     'amount'         => $data['amount'] ?? 0,
                     'payment_method' => 'external_portal',
-                    'status'         => 'success',
+                    'status'         => 1
                 ]);
 
                 // 2️⃣ Transaction Data (ONLY existing columns) ✅ FIXED
@@ -250,7 +250,7 @@ class OrderService implements IBaseService
                 ];
 
                 $token = Token::create($tokenData);
-                
+
                 // 3️⃣ Create Payment History
                 PaymentHistory::create([
                     'amount'          => $data['amount'] ?? 0,
@@ -267,8 +267,6 @@ class OrderService implements IBaseService
                     'payer_type'      => 'person',
                     'payer_id'        => $data['customer_id'],
                 ]);
-
-                
             }
         }
 

@@ -27,12 +27,7 @@ return new class extends Migration {
             $table->string('payment_method')->nullable();
 
             // Status control
-            $table->enum('status', [
-                'pending',
-                'success',
-                'failed',
-                'cancelled'
-            ])->default('pending');
+            $table->integer('status')->unsigned();
 
             $table->timestamps();
 
