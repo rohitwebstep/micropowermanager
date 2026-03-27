@@ -140,11 +140,15 @@
               style="cursor: pointer"
             >
               <md-table-cell :md-label="$tc('words.name')" md-sort-by="name">
+                
                 {{ item.name }} {{ item.surname }}
               </md-table-cell>
 
               <md-table-cell :md-label="$tc('words.phone')">
                 {{ item.addresses.length > 0 ? item.addresses[0].phone : "-" }}
+              </md-table-cell>
+               <md-table-cell :md-label="'NIN'">
+                {{ item.nin }}
               </md-table-cell>
 
               <md-table-cell

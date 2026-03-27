@@ -899,17 +899,6 @@ export const exportedRoutes = [
         },
       },
       {
-        path: "importList",
-        component: ImportList,
-        meta: {
-          layout: "default",
-          sidebar: {
-            enabled: true,
-            name: "Order Import List",
-          },
-        },
-      },
-      {
         path: "customersImport",
         component: CustomersImport,
         meta: {
@@ -920,7 +909,17 @@ export const exportedRoutes = [
           },
         },
       },
-      
+      // {
+      //   path: "importList",
+      //   component: ImportList,
+      //   meta: {
+      //     layout: "default",
+      //     sidebar: {
+      //       enabled: true,
+      //       name: "Customers List",
+      //     },
+      //   },
+      // },
       
     ],
   },

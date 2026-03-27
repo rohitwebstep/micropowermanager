@@ -14,6 +14,7 @@ export class Person {
     this.id = null
     this.title = null
     this.education = null
+    this.nin = null
     this.birthDate = null
     this.name = null
     this.surname = null
@@ -28,6 +29,7 @@ export class Person {
     this.id = personData.id
     this.title = personData.title
     this.education = personData.education
+    this.nin = personData.national_id_number
     this.birthDate = personData.birth_date
     this.name = personData.name
     this.surname = personData.surname
@@ -59,6 +61,7 @@ export class Person {
     this.id = data.id
     this.title = data.title
     this.education = data.education
+    this.nin = data.national_id_number
     this.birthDate = data.birth_date
     this.name = data.name
     this.surname = data.surname
@@ -84,6 +87,7 @@ export class Person {
       birth_date: this.birthDate,
       gender: this.gender,
       education: this.education,
+      nin: this.national_id_number,
     }
   }
 

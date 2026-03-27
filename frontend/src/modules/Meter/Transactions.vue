@@ -8,6 +8,12 @@
     :subscriber="subscriber"
     color="primary"
   >
+  <md-card>
+      <md-card-content>
+        <!-- <div>CHK >> {{ transactions }}</div> -->
+        <!-- <div>{{ transactions.tokens }}</div> -->
+        </md-card-content>
+        </md-card>
     <md-card>
       <md-card-content>
         <md-table>
