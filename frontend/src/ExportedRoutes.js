@@ -116,6 +116,15 @@ import OrdersList from "@/modules/Orders/OrdersList.vue"
 import AddOrder from "@/modules/Orders/AddOrder.vue"
 import Analytics from "@/modules/Orders/Analytics.vue"
 
+// ExportedRoutes.js mein ye imports add karo
+import BluettiDeviceList from "@/modules/Bluetti/DeviceList.vue"
+import BluettiAddDevice from "@/modules/Bluetti/AddDevice.vue"
+import BluettiUserList from "@/modules/Bluetti/BluettiUserList.vue"
+
+import BluettiDevicePage from "@/modules/Bluetti/BluettiDevicePage.vue"
+
+
+
 export const exportedRoutes = [
   // Welcome and login routes
   {
@@ -1829,7 +1838,63 @@ export const exportedRoutes = [
   },
   // NEW PLUGIN PLACEHOLDER (DO NOT REMOVE THIS LINE)
 
+  // Add BLUETTI route
+  {
+    path: "/dashboards",
+    component: ChildRouteWrapper,
+    meta: {
+      layout: "default",
+      sidebar: {
+        enabled: true,
+        name: "BLUETTI",
+        icon: "bolt",
+      },
+    },
+    children: [
+      {
+        path: "bluetti/device-list",
+        component: BluettiDeviceList,
+        meta: {
+          layout: "default",
+          sidebar: { enabled: true, name: "Device List" },
+        },
+      },
+      {
+        path: "bluetti/add-device",
+        component: BluettiAddDevice,
+        meta: {
+          layout: "default",
+          sidebar: { enabled: true, name: "Add Device" },
+        },
+      },
 
- 
+      // ✅ CustomerList
+      {
+        path: "bluetti/users",
+        component: BluettiUserList,
+        meta: {
+          layout: "default",
+          sidebar: { enabled: true, name: "Users" },
+        },
+      },
+      {
+        path: "bluetti/users/:id",
+        component: CustomerDetail,
+        meta: {
+          layout: "default",
+          sidebar: { enabled: false },
+        },
+      },
+      {
+        path: "bluetti/device/:deviceId",
+        name: "BluettiDevicePage",
+        component: BluettiDevicePage,
+        meta: {
+          layout: "default",
+          sidebar: { enabled: false },
+        },
+      },
+    ],
+  }
 
 ]
