@@ -85,6 +85,9 @@ require __DIR__.'/resources/CustomerRegistrationApp.php';
 // Routes for Ticket Web panel routes
 require __DIR__.'/resources/TicketWeb.php';
 
+require __DIR__.'/resources/BluettiDevices.php';
+
+
 // JWT authentication
 Route::group(['middleware' => 'api', 'prefix' => 'auth'], static function () {
     Route::post('login', [AuthController::class, 'login']);

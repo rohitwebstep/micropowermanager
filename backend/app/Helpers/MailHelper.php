@@ -23,7 +23,7 @@ class MailHelper {
 
         try {
             $mailable = new PlainEmail($title, $body, $attachment);
-            Mail::to($to)->queue($mailable);
+            Mail::to($to)->send($mailable);
 
             Log::info("Email sent successfully to: {$to} with subject: {$title}");
         } catch (TransportExceptionInterface $e) {
@@ -52,7 +52,7 @@ class MailHelper {
             $html = View::make($templatePath, array_merge($variables ?? [], ['title' => $title]))->render();
 
             $mailable = new HtmlEmail($title, $html, $attachmentPath);
-            Mail::to($to)->queue($mailable);
+            Mail::to($to)->send($mailable);
             Log::info("Template email sent successfully to: {$to} with subject: {$title}");
         } catch (TransportExceptionInterface $e) {
             Log::error("Failed to send template email to {$to}: ".$e->getMessage());
