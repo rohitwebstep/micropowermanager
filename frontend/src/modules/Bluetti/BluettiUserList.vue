@@ -89,7 +89,7 @@
                     </button>
 
                     <!-- Customer No -->
-                    <span
+                    <!--  <span
                       v-if="d.customer_no"
                       class="badge-cno"
                       @click="openCnoModal(d)"
@@ -103,7 +103,7 @@
                       @click.stop="openCnoModal(d)"
                     >
                       + Customer No
-                    </button>
+                    </button> -->
                   </div>
                 </div>
               </md-table-cell>

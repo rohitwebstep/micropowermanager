@@ -200,9 +200,11 @@ class BluettiDeviceService
             throw new \Exception('Customer No not assigned to this device. Please assign Customer No first.');
         }
 
+        $customerNo = config('bluetti.customer_no');
+
         // STEP 1: requestCode — pura response
         $requestCodeResponse = $this->requestCode(
-            customerNo:     $device->customer_no,
+            customerNo:     $customerNo,
             sn:             $device->serial_number,
             daysToActivate: $txn->days_to_activate ?? 1,
             tokenType:      $txn->token_type       ?? 1,
@@ -239,9 +241,11 @@ class BluettiDeviceService
             throw new \Exception('Customer No not assigned. Cannot deactivate.');
         }
 
+        $customerNo = config('bluetti.customer_no');
+        
         // BLUETTI API call — tokenType=2 (Set the days), daysToActivate=0 (lock)
         $requestCodeResponse = $this->requestCode(
-            customerNo:     $device->customer_no,
+            customerNo:     $customerNo,
             sn:             $device->serial_number,
             daysToActivate: 0,   // 0 = device lock/deactivate
             tokenType:      2,   // "Set the days" mode
