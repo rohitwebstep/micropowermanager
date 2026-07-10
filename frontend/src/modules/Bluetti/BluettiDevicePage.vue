@@ -34,6 +34,7 @@
         <div class="txn-table-head">
           <span>Month / Year</span>
           <span>Transaction ID</span>
+          <span>Token Number</span>
           <span>Status</span>
           <span>Action</span>
         </div>
@@ -48,6 +49,7 @@
           </span>
 
           <span class="txn-id-val">{{ t.transaction_id }}</span>
+          <span class="txn-id-val">#{{ t.token }}</span>
 
           <span :class="t.is_active ? 'status-badge status-active' : 'status-badge status-inactive'">
             {{ t.is_active ? 'Active' : 'Inactive' }}
@@ -319,7 +321,7 @@ export default {
 /* Transaction Table */
 .txn-table-head {
   display: grid;
-  grid-template-columns: 130px 1fr 90px auto;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   gap: 12px;
   padding: 8px 14px;
   font-size: 11px;
@@ -333,7 +335,7 @@ export default {
 
 .txn-table-row {
   display: grid;
-  grid-template-columns: 130px 1fr 90px auto;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   gap: 12px;
   align-items: center;
   padding: 14px;
