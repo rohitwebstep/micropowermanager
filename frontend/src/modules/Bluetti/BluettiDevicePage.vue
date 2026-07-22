@@ -18,6 +18,32 @@
       </div>
     </div>
 
+    <!-- ── Payment Plan Summary ── -->
+      <div class="bdp-card" v-if="devicePrice">
+        <div class="bdp-card-title">Payment Plan</div>
+        <div class="plan-summary">
+          <div class="plan-stat">
+            <span class="plan-stat-label">Device Price</span>
+            <span class="plan-stat-value">₦{{ Number(devicePrice).toLocaleString() }}</span>
+          </div>
+          <div class="plan-stat">
+            <span class="plan-stat-label">EMI Plan</span>
+            <span class="plan-stat-value">{{ emiMonths }} Months</span>
+          </div>
+          <div class="plan-stat">
+            <span class="plan-stat-label">Installments Paid</span>
+            <span class="plan-stat-value">{{ paidInstallments }} / {{ emiMonths }}</span>
+          </div>
+          <div class="plan-stat">
+            <span class="plan-stat-label">Remaining Balance</span>
+            <span class="plan-stat-value plan-stat-remaining">₦{{ Number(remainingBalance).toLocaleString() }}</span>
+          </div>
+        </div>
+        <div class="plan-progress-track">
+          <div class="plan-progress-fill" :style="{ width: progressPercent + '%' }"></div>
+        </div>
+      </div>
+
     <!-- ── Transaction History ── -->
     <div class="bdp-card">
       <div class="bdp-card-title">Transaction History</div>
@@ -119,6 +145,9 @@ export default {
       deviceId:     null,
       deviceName:   "",
       serialNumber: "",
+      devicePrice:      null,
+      emiMonths:        null,
+      installmentAmount: null,
 
       transactions: [],
       loadingList:  false,
@@ -138,6 +167,23 @@ export default {
       for (let i = y - 3; i <= y + 1; i++) arr.push(i)
       return arr
     },
+    paidInstallments() {
+      return this.transactions.length
+    },
+    totalPaidAmount() {
+      if (!this.installmentAmount) return 0
+      return this.paidInstallments * this.installmentAmount
+    },
+    remainingBalance() {
+      if (!this.devicePrice) return 0
+      const remaining = this.devicePrice - this.totalPaidAmount
+      return remaining > 0 ? remaining : 0
+    },
+    progressPercent() {
+      if (!this.emiMonths) return 0
+      const pct = (this.paidInstallments / this.emiMonths) * 100
+      return Math.min(pct, 100).toFixed(0)
+    },
   },
 
   async created() {
@@ -154,8 +200,11 @@ export default {
       try {
         const { data } = await BluettiDeviceRepository.getById(this.deviceId)
         const d = data?.data ?? data
-        this.deviceName   = d.device_name   || this.deviceName
-        this.serialNumber = d.serial_number || this.serialNumber
+        this.deviceName        = d.device_name        || this.deviceName
+        this.serialNumber      = d.serial_number       || this.serialNumber
+        this.devicePrice        = d.price               ?? null   // ✅ new
+        this.emiMonths          = d.emi_months           ?? null   // ✅ new
+        this.installmentAmount  = d.installment_amount   ?? null   // ✅ new
       } catch (e) {
         console.error("fetchDevice error:", e)
       }
@@ -460,4 +509,31 @@ export default {
 }
 .btn-save:hover:not(:disabled) { background: #5a23b8; }
 .btn-save:disabled { opacity: 0.5; cursor: default; }
+.plan-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.plan-stat { display: flex; flex-direction: column; gap: 4px; }
+.plan-stat-label {
+  font-size: 11px;
+  color: #9e9e9e;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.plan-stat-value { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+.plan-stat-remaining { color: #c62828; }
+
+.plan-progress-track {
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.plan-progress-fill {
+  height: 100%;
+  background: #6c2bd9;
+  transition: width 0.3s ease;
+}
 </style>

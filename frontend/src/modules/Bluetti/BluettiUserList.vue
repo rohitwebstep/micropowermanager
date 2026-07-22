@@ -49,8 +49,8 @@
               </md-table-cell>
 
               <md-table-cell :md-label="$tc('words.isActive')">
-                <span :class="item.is_active ? 'badge-active' : 'badge-inactive'">
-                  {{ item.is_active ? $tc("words.yes") : $tc("words.no") }}
+                <span :class="customerIsActive(item.id) ? 'badge-active' : 'badge-inactive'">
+                  {{ customerIsActive(item.id) ? $tc("words.yes") : $tc("words.no") }}
                 </span>
               </md-table-cell>
 
@@ -87,23 +87,6 @@
                     >
                       + Assign TXN
                     </button>
-
-                    <!-- Customer No -->
-                    <!--  <span
-                      v-if="d.customer_no"
-                      class="badge-cno"
-                      @click="openCnoModal(d)"
-                      title="Click to edit Customer No"
-                    >
-                      #{{ d.customer_no }}
-                    </span>
-                    <button
-                      v-else
-                      class="chip-action-btn cno-btn"
-                      @click.stop="openCnoModal(d)"
-                    >
-                      + Customer No
-                    </button> -->
                   </div>
                 </div>
               </md-table-cell>
@@ -203,6 +186,21 @@
           </div>
         </div>
 
+        <!-- PAYMENT PLAN -->
+        <div class="modal-section" v-if="selectedDeviceId">
+          <div class="section-label">Payment Plan</div>
+          <p class="info-line">
+            Device Price: <b>₦{{ selectedFreeDevicePrice }}</b>
+          </p>
+          <select v-model.number="assignEmiMonths" class="field-select">
+            <option :value="12">12 Months</option>
+            <option :value="18">18 Months</option>
+          </select>
+          <div v-if="selectedFreeDevicePrice" class="info-line" style="margin-top:10px">
+            Monthly Installment: <b>₦{{ (selectedFreeDevicePrice / assignEmiMonths).toFixed(2) }}</b>
+          </div>
+        </div>
+
         <div class="modal-footer">
           <button class="btn-cancel" @click="closeModal">Cancel</button>
           <button
@@ -248,13 +246,11 @@
         </div>
 
         <div class="modal-section" v-if="txnDevice">
-          <!-- Device info -->
           <p class="info-line">
             Device: <b>{{ txnDevice.device_name }}</b> &nbsp;|&nbsp;
             S/N: <b>{{ txnDevice.serial_number }}</b>
           </p>
 
-          <!-- Transaction history list -->
           <div class="section-label">Past Transactions</div>
           <div v-if="txnLoadingList" class="loading-msg">Loading...</div>
           <div v-else-if="txnTransactions.length === 0" class="empty-msg">
@@ -273,12 +269,10 @@
             </div>
           </div>
 
-          <!-- Add / Update section -->
           <div class="section-label" style="margin-top: 20px">
             Add / Update Transaction
           </div>
 
-          <!-- Month + Year selectors -->
           <div class="txn-date-row">
             <select v-model="txnMonth" class="field-select">
               <option v-for="m in 12" :key="m" :value="m">
@@ -290,7 +284,6 @@
             </select>
           </div>
 
-          <!-- Transaction ID input -->
           <input
             v-model="txnInput"
             placeholder="Enter Transaction ID"
@@ -383,6 +376,7 @@ export default {
       loadingFreeDevices: false,
       assigning: false,
       unassigningId: null,
+      assignEmiMonths: 12, // ✅ EMI plan selected in assign modal
 
       // Device detail modal
       deviceDetailModal: false,
@@ -417,6 +411,12 @@ export default {
         years.push(y)
       }
       return years
+    },
+
+    // ✅ Price of the currently selected free device (for EMI preview)
+    selectedFreeDevicePrice() {
+      const d = this.freeDevices.find((d) => d.id === this.selectedDeviceId)
+      return d ? d.price : null
     },
   },
 
@@ -476,6 +476,7 @@ export default {
         const { data } = await BluettiDeviceRepository.byCustomer(customerId)
         let devices = data?.data ?? data ?? []
         if (!Array.isArray(devices)) devices = [devices]
+        console.log('DEVICES FOR', customerId, devices)   // ✅ temp debug
         this.$set(this.assignedDevicesMap, customerId, devices)
       } catch (e) {
         this.$set(this.assignedDevicesMap, customerId, [])
@@ -486,11 +487,6 @@ export default {
       return this.assignedDevicesMap[customerId] || []
     },
 
-    /**
-     * Device ki latest transaction return karo
-     * Backend already desc sorted (year desc, month desc) return karta hai
-     * Agar koi bhi transaction hai toh badge show hoga
-     */
     getLatestTxn(device) {
       const transactions = device.transactions
       if (!transactions || !transactions.length) return null
@@ -507,6 +503,7 @@ export default {
     async openAssignModal(customer) {
       this.selectedCustomer = customer
       this.selectedDeviceId = null
+      this.assignEmiMonths = 12
       this.showAssignModal = true
       await this.loadFreeDevices()
     },
@@ -516,6 +513,7 @@ export default {
       this.selectedCustomer = null
       this.selectedDeviceId = null
       this.freeDevices = []
+      this.assignEmiMonths = 12
     },
 
     async loadFreeDevices() {
@@ -532,12 +530,13 @@ export default {
     },
 
     async confirmAssign() {
-      if (!this.selectedDeviceId || !this.selectedCustomer) return
+      if (!this.selectedDeviceId || !this.selectedCustomer || !this.assignEmiMonths) return
       this.assigning = true
       try {
         await BluettiDeviceRepository.assignCustomer(
           this.selectedDeviceId,
-          this.selectedCustomer.id
+          this.selectedCustomer.id,
+          this.assignEmiMonths
         )
         await this.fetchAssignedForCustomer(this.selectedCustomer.id)
         this.$swal({
@@ -548,7 +547,8 @@ export default {
         })
         this.closeModal()
       } catch (e) {
-        this.$swal("Error", "Could not assign device. Please try again.", "error")
+        const msg = e?.response?.data?.error || "Could not assign device. Please try again."
+        this.$swal("Error", msg, "error")
       } finally {
         this.assigning = false
       }
@@ -584,16 +584,16 @@ export default {
 
     // ─── TRANSACTION ID — MONTHLY ─────────────────────────────────────────────
     openTxnModal(device) {
-  this.$router.push({
-    name: 'BluettiDevicePage',
-    params: { deviceId: device.id },
-    query: {
-      device_name:   device.device_name,
-      serial_number: device.serial_number,
-      customer_id:   device.customer_id,
+      this.$router.push({
+        name: 'BluettiDevicePage',
+        params: { deviceId: device.id },
+        query: {
+          device_name:   device.device_name,
+          serial_number: device.serial_number,
+          customer_id:   device.customer_id,
+        },
+      })
     },
-  })
-},
 
     async loadTxnList(deviceId) {
       this.txnLoadingList = true
@@ -616,9 +616,7 @@ export default {
           month: this.txnMonth,
           year:  this.txnYear,
         })
-        // Modal list refresh
         await this.loadTxnList(this.txnDevice.id)
-        // Table badge refresh — customer ke devices dobara fetch
         const customerId = this.txnDevice.customer_id
         if (customerId) await this.fetchAssignedForCustomer(customerId)
         this.txnInput = ""
@@ -670,6 +668,19 @@ export default {
     monthName(m) {
       return new Date(2000, m - 1, 1).toLocaleString("default", { month: "short" })
     },
+
+    /**
+     * Customer "active" assigned device ka
+     * latest transaction is_active = true ho
+     */
+    customerIsActive(customerId) {
+      const devices = this.getAssignedDevices(customerId)
+      return devices.some((d) => {
+        const latest = this.getLatestTxn(d)
+        return latest && latest.is_active
+      })
+    },
+
   },
 }
 </script>
@@ -686,7 +697,6 @@ export default {
 .badge-active   { background: #e8f5e9; color: #2e7d32; }
 .badge-inactive { background: #fce4ec; color: #c62828; }
 
-/* ── Device list inside cell ── */
 .device-list {
   display: flex;
   flex-direction: column;
@@ -720,7 +730,6 @@ export default {
 
 .no-device { color: #bbb; }
 
-/* TXN / CNo badges (already assigned) */
 .badge-txn {
   display: inline-block;
   background: #f3eeff;
@@ -736,21 +745,6 @@ export default {
 }
 .badge-txn:hover { background: #e0d0ff; }
 
-.badge-cno {
-  display: inline-block;
-  background: #e3f2fd;
-  color: #0d47a1;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid #90caf9;
-  transition: background 0.15s;
-}
-.badge-cno:hover { background: #bbdefb; }
-
-/* TXN / CNo buttons (not yet assigned) */
 .chip-action-btn {
   border: none;
   padding: 3px 9px;
@@ -768,14 +762,6 @@ export default {
 }
 .txn-btn:hover { background: #d1c4e9; }
 
-.cno-btn {
-  background: #e3f2fd;
-  color: #0d47a1;
-  border: 1px dashed #90caf9;
-}
-.cno-btn:hover { background: #bbdefb; }
-
-/* Assign Device button */
 .assign-btn {
   display: inline-flex;
   align-items: center;
@@ -801,7 +787,6 @@ export default {
   color: #666;
 }
 
-/* ── Modals ── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -885,7 +870,6 @@ export default {
 }
 .field-input:focus { border-color: #6c2bd9; }
 
-/* ── Transaction history list ── */
 .txn-history-list {
   display: flex;
   flex-direction: column;
@@ -926,7 +910,6 @@ export default {
   word-break: break-all;
 }
 
-/* ── Month/Year picker row ── */
 .txn-date-row {
   display: flex;
   gap: 10px;
@@ -945,7 +928,6 @@ export default {
 }
 .field-select:focus { border-color: #6c2bd9; }
 
-/* ── Assigned devices in modal ── */
 .assigned-list { display: flex; flex-direction: column; gap: 8px; }
 .assigned-item {
   display: flex;
@@ -974,7 +956,6 @@ export default {
 .unassign-btn:hover:not(:disabled) { background: #e53935; color: #fff; }
 .unassign-btn:disabled { opacity: 0.5; cursor: default; }
 
-/* ── Free device grid in assign modal ── */
 .device-grid {
   display: flex;
   flex-direction: column;
@@ -1022,7 +1003,6 @@ export default {
   font-size: 14px;
 }
 
-/* ── Modal footer ── */
 .modal-footer {
   display: flex;
   justify-content: flex-end;

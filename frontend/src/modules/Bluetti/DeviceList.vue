@@ -30,6 +30,7 @@
             <th>Client</th>
             <th>Assigned To</th>
             <th>Style</th>
+            <th>Price</th>
             <th>Created Date</th>
             <th width="140">Action</th>
           </tr>
@@ -47,6 +48,7 @@
               <span v-else class="badge-free">Free</span>
             </td>
             <td>{{ d.style }}</td>
+            <td>{{ formatPrice(d.price) }}</td>          
             <td>{{ formatDate(d.created_date || d.created_at) }}</td>
             <td>
               <button class="view-btn" @click="openView(d)">View</button>
@@ -132,6 +134,10 @@ export default {
     formatDate(dt) {
       if (!dt) return "-"
       return new Date(dt).toLocaleDateString()
+    },
+    formatPrice(price) {                     
+      if (price === null || price === undefined) return "-"
+      return "₦" + Number(price).toLocaleString()
     },
 
     async loadDevices(page = 1) {

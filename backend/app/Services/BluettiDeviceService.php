@@ -69,7 +69,6 @@ class BluettiDeviceService
             throw new \Exception($json['message'] ?? 'BLUETTI API error');
         }
 
-        // ✅ Pura response return karo, sirf 'data' nahi
         return $json;
     }
 
@@ -90,7 +89,6 @@ class BluettiDeviceService
             throw new \Exception('BLUETTI queryCodeHistory error: ' . ($json['error'] ?? 'Unknown'));
         }
 
-        // ✅ Pura response return karo
         return $json;
     }
 
@@ -135,28 +133,43 @@ class BluettiDeviceService
         $device->delete();
     }
 
-    public function assignCustomer(int $deviceId, int $customerId): BluettiDevice
+    public function assignCustomer(int $id, int $customerId, int $emiMonths): BluettiDevice
     {
-        $device = $this->getById($deviceId);
-        $device->update(['customer_id' => $customerId]);
+        $device = $this->getById($id);
+
+        if (!$device->price) {
+            throw new \Exception('Device has no price set — cannot assign EMI plan.');
+        }
+
+        $device->update([
+            'customer_id'        => $customerId,
+            'emi_months'         => $emiMonths,
+            'installment_amount' => round($device->price / $emiMonths, 2),
+            'plan_start_date'    => now()->toDateString(),
+        ]);
+
         return $device->fresh();
     }
 
-    public function unassignCustomer(int $deviceId): BluettiDevice
+    public function unassignCustomer(int $id): BluettiDevice
     {
-        $device = $this->getById($deviceId);
-        $device->update(['customer_id' => null]);
+        $device = $this->getById($id);
+        $device->update([
+            'customer_id'        => null,
+            'emi_months'         => null,
+            'installment_amount' => null,
+            'plan_start_date'    => null,
+        ]);
         return $device->fresh();
     }
 
-    public function getByCustomer(int $customerId): \Illuminate\Database\Eloquent\Collection
+    public function getByCustomer(int $customerId)
     {
         return BluettiDevice::on('mysql')
+            ->where('customer_id', $customerId)
             ->with(['transactions' => function ($q) {
                 $q->orderByDesc('year')->orderByDesc('month');
             }])
-            ->where('customer_id', $customerId)
-            ->latest()
             ->get();
     }
 
@@ -189,6 +202,9 @@ class BluettiDeviceService
         );
     }
 
+
+    
+
     // ─── Activate Transaction — BLUETTI API call + DB save ───────────────────
 
     public function activateTransaction(int $transactionId): BluettiDeviceTransaction
@@ -196,13 +212,17 @@ class BluettiDeviceService
         $txn    = BluettiDeviceTransaction::on('mysql')->findOrFail($transactionId);
         $device = BluettiDevice::on('mysql')->findOrFail($txn->device_id);
 
-        if (!$device->customer_no) {
-            throw new \Exception('Customer No not assigned to this device. Please assign Customer No first.');
-        }
+        
 
         $customerNo = config('bluetti.customer_no');
 
-        // STEP 1: requestCode — pura response
+        if (!$customerNo) {
+            throw new \Exception('Customer No not assigned to this device. Please assign Customer No first.');
+        }
+
+        
+
+        // STEP 1: requestCode — full response
         $requestCodeResponse = $this->requestCode(
             customerNo:     $customerNo,
             sn:             $device->serial_number,
@@ -214,7 +234,7 @@ class BluettiDeviceService
         $codeSerialNumber = $codeData['codeSerialNumber'];
         $token            = $codeData['token'];
 
-        // STEP 2: queryCodeHistory — pura response
+        // STEP 2: queryCodeHistory — full response
         $queryCodeHistoryResponse = $this->queryCodeHistory($codeSerialNumber);
         $historyData = $queryCodeHistoryResponse['data'];
 
@@ -237,11 +257,13 @@ class BluettiDeviceService
         $txn    = BluettiDeviceTransaction::on('mysql')->findOrFail($transactionId);
         $device = BluettiDevice::on('mysql')->findOrFail($txn->device_id);
 
-        if (!$device->customer_no) {
-            throw new \Exception('Customer No not assigned. Cannot deactivate.');
-        }
+        
 
         $customerNo = config('bluetti.customer_no');
+
+        if (!$customerNo) {
+            throw new \Exception('Customer No not assigned. Cannot deactivate.');
+        }
         
         // BLUETTI API call — tokenType=2 (Set the days), daysToActivate=0 (lock)
         $requestCodeResponse = $this->requestCode(
@@ -255,7 +277,7 @@ class BluettiDeviceService
         $codeSerialNumber = $codeData['codeSerialNumber'];
         $token            = $codeData['token'];
 
-        // queryCodeHistory bhi call karo (activate jaisa hi pattern)
+        
         $queryCodeHistoryResponse = $this->queryCodeHistory($codeSerialNumber);
 
         $txn->update([

@@ -54,14 +54,23 @@ class BluettiDeviceController extends Controller
         return response()->json(null, 204);
     }
 
-    public function assignCustomer(Request $request, int $id): ApiResource
+    public function assignCustomer(Request $request, int $id): ApiResource|JsonResponse
     {
-        $request->validate(['customer_id' => ['required', 'integer']]);
-        $device = $this->bluettiDeviceService->assignCustomer(
-            $id,
-            $request->integer('customer_id')
-        );
-        return ApiResource::make($device);
+        $request->validate([
+            'customer_id' => ['required', 'integer'],
+            'emi_months'  => ['required', 'integer', 'in:12,18'],
+        ]);
+
+        try {
+            $device = $this->bluettiDeviceService->assignCustomer(
+                $id,
+                $request->integer('customer_id'),
+                $request->integer('emi_months'),
+            );
+            return ApiResource::make($device);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
     }
 
     public function unassignCustomer(int $id): ApiResource

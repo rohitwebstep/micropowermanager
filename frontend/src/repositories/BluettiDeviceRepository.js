@@ -1,4 +1,6 @@
-
+/**
+  * micropowermanager-main\frontend\src\repositories\BluettiDeviceRepository.js
+*/
 
 import Client from "@/repositories/Client/AxiosClient"
 
@@ -11,6 +13,10 @@ export default {
     })
   },
 
+  getById(deviceId) {
+    return Client.get(`${resource}/${deviceId}`)
+  },
+
   delete(id) {
     return Client.delete(`${resource}/${id}`)
   },
@@ -19,9 +25,10 @@ export default {
     return Client.post(resource, payload)
   },
 
-  assignCustomer(deviceId, customerId) {
+  assignCustomer(deviceId, customerId, emiMonths) {
     return Client.post(`${resource}/${deviceId}/assign-customer`, {
       customer_id: customerId,
+      emi_months: emiMonths,
     })
   },
 

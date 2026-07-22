@@ -9,7 +9,7 @@ export class DeviceListService {
   async fetchDeviceList(page = 1, filters = {}) {
     try {
       const { data } = await this.repository.getList(page, filters)
-      return data?.data ?? data  // ✅ paginated data nikalo
+      return data?.data ?? data  
     } catch (e) {
       console.log(e)
       return null
@@ -19,7 +19,7 @@ export class DeviceListService {
   async deleteDevice(id) {
     try {
       await this.repository.delete(id)
-      return true  // ✅ 204 No Content aata hai, data nahi hota
+      return true  
     } catch (e) {
       console.log(e)
       return null

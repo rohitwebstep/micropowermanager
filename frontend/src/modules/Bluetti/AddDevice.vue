@@ -43,6 +43,15 @@
       </md-field>
     </div>
 
+    <!-- PRICE -->
+    <div class="md-layout-item md-size-50">
+      <md-field :class="{ 'md-invalid': submitted && errors.price }">
+        <label>Price (₦)</label>
+        <md-input v-model.number="form.price" type="number" min="0" />
+        <span class="md-error" v-if="errors.price">{{ errors.price }}</span>
+      </md-field>
+    </div>
+
     <!-- CREATED DATE -->
     <div class="md-layout-item md-size-50">
       <md-datepicker v-model="form.created_date">
@@ -81,6 +90,7 @@ export default {
         client: "",
         style: "",
         created_date: new Date(),
+        price: null, 
       },
     }
   },
@@ -92,7 +102,8 @@ export default {
         this.form.serial_number &&
         this.form.client &&
         this.form.style &&
-        this.form.created_date
+        this.form.created_date &&
+        (this.form.price || this.form.price === 0)
       )
     },
   },
@@ -104,6 +115,7 @@ export default {
       if (!this.form.serial_number) this.errors.serial_number = "Serial Number is required"
       if (!this.form.client)        this.errors.client        = "Client is required"
       if (!this.form.style)         this.errors.style         = "Style is required"
+      if (!this.form.price && this.form.price !== 0) this.errors.price = "Price is required"
       return !Object.keys(this.errors).length
     },
 
@@ -128,6 +140,7 @@ export default {
         client:        this.form.client,
         style:         this.form.style,
         created_date:  this.formatDateTime(this.form.created_date),
+        price:         this.form.price,   // ✅ new
       }
 
       try {

@@ -20,6 +20,10 @@ class BluettiDevice extends BaseModel
         'customer_id',
         'transaction_id',
         'customer_no',
+        'price',               
+        'emi_months',            
+        'installment_amount',    
+        'plan_start_date',       
     ];
 
     protected $casts = [
@@ -34,9 +38,10 @@ class BluettiDevice extends BaseModel
     // ✅ NEW — Monthly transactions relationship
     public function transactions()
     {
-        return $this->hasMany(
-            BluettiDeviceTransaction::class,
-            'device_id'
-        );
+        $related = new BluettiDeviceTransaction();
+        $related->setConnection('mysql');
+
+        return $this->hasMany($related::class, 'device_id')
+            ->setModel($related);
     }
 }

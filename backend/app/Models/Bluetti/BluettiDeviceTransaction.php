@@ -1,7 +1,4 @@
 <?php
-/*
-    micropowermanager-main\backend\app\Models\Bluetti\BluettiDeviceTransaction.php
-*/
 namespace App\Models\Bluetti;
 
 use App\Models\Base\BaseModel;
@@ -34,6 +31,13 @@ class BluettiDeviceTransaction extends BaseModel
         'request_code_response'        => 'array',
         'query_code_history_response'  => 'array',
     ];
+
+    
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->setConnection('mysql');
+    }
 
     public function device()
     {
