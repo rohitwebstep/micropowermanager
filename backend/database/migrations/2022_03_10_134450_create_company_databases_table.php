@@ -4,30 +4,27 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    // ✅ Force main DB (micro_power_manager), NOT tenant
-    protected $connection = 'mysql';
-
-    public function up(): void
-    {
-        if (Schema::connection('mysql')->hasTable('bluetti_devices')) {
-            return;
-        }
-
-        Schema::connection('mysql')->create('bluetti_devices', function (Blueprint $table) {
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up() {
+        Schema::create('company_databases', function (Blueprint $table) {
             $table->id();
-            $table->string('device_name');
-            $table->string('serial_number')->unique();
-            $table->string('client');
-            $table->string('style');
-            $table->timestamp('created_date')->nullable();
+            $table->integer('company_id')->unsigned();
+            $table->string('database_name');
             $table->timestamps();
         });
     }
 
-    public function down(): void
-    {
-        Schema::connection('mysql')->dropIfExists('bluetti_devices');
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down() {
+        Schema::dropIfExists('company_databases');
     }
 };
