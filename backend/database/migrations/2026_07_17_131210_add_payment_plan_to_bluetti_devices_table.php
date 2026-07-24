@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::connection('mysql')->table('bluetti_devices', function (Blueprint $table) {
-            $table->decimal('price', 12, 2)->nullable()->after('customer_id');
+            $table->decimal('price', 12, 2)->nullable();
             $table->unsignedSmallInteger('emi_months')->nullable()->after('price');
             $table->decimal('installment_amount', 12, 2)->nullable()->after('emi_months');
             $table->date('plan_start_date')->nullable()->after('installment_amount');
