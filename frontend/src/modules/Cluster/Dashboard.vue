@@ -125,7 +125,7 @@ export default {
       miniGridsOfCluster.map((miniGrid) => {
 
         if (!miniGrid.location || !miniGrid.location.points) {
-          console.warn("Skipping mini-grid due to missing location data:", miniGrid.id);
+          console.warn("Skipping mini-grid due to missing location data:", miniGrid);
           return;
         }
 

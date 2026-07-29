@@ -295,7 +295,7 @@ export default {
       const miniGridWithGeoData = await this.miniGridService.getMiniGridGeoData(miniGridId)
       
       if (!miniGridWithGeoData.location || !miniGridWithGeoData.location.points) {
-        console.warn("Skipping mini-grid due to missing location data:", miniGrid.id);
+        console.warn("Skipping mini-grid due to missing location data:", miniGridWithGeoData);
         return;
       }
 
