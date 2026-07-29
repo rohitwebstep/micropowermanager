@@ -20,10 +20,11 @@ class BluettiDevice extends BaseModel
         'customer_id',
         'transaction_id',
         'customer_no',
-        'price',               
-        'emi_months',            
-        'installment_amount',    
-        'plan_start_date',       
+        'price',
+        'emi_months',
+        'plan_type',           
+        'installment_amount',
+        'plan_start_date',
     ];
 
     protected $casts = [

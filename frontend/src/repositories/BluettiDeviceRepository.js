@@ -78,4 +78,8 @@ export default {
   deactivateTransaction(deviceId, txnId) {
     return Client.post(`${resource}/${deviceId}/transactions/${txnId}/deactivate`)
   },
+
+  deleteTransaction(deviceId, txnId) {
+    return Client.delete(`${resource}/${deviceId}/transactions/${txnId}`)
+  },
 }

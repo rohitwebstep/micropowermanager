@@ -19,30 +19,30 @@
     </div>
 
     <!-- ── Payment Plan Summary ── -->
-      <div class="bdp-card" v-if="devicePrice">
-        <div class="bdp-card-title">Payment Plan</div>
-        <div class="plan-summary">
-          <div class="plan-stat">
-            <span class="plan-stat-label">Device Price</span>
-            <span class="plan-stat-value">₦{{ Number(devicePrice).toLocaleString() }}</span>
-          </div>
-          <div class="plan-stat">
-            <span class="plan-stat-label">EMI Plan</span>
-            <span class="plan-stat-value">{{ emiMonths }} Months</span>
-          </div>
-          <div class="plan-stat">
-            <span class="plan-stat-label">Installments Paid</span>
-            <span class="plan-stat-value">{{ paidInstallments }} / {{ emiMonths }}</span>
-          </div>
-          <div class="plan-stat">
-            <span class="plan-stat-label">Remaining Balance</span>
-            <span class="plan-stat-value plan-stat-remaining">₦{{ Number(remainingBalance).toLocaleString() }}</span>
-          </div>
+    <div class="bdp-card" v-if="devicePrice">
+      <div class="bdp-card-title">Payment Plan</div>
+      <div class="plan-summary">
+        <div class="plan-stat">
+          <span class="plan-stat-label">Device Price</span>
+          <span class="plan-stat-value">₦{{ Number(devicePrice).toLocaleString() }}</span>
         </div>
-        <div class="plan-progress-track">
-          <div class="plan-progress-fill" :style="{ width: progressPercent + '%' }"></div>
+        <div class="plan-stat">
+          <span class="plan-stat-label">Payment Plan</span>
+          <span class="plan-stat-value">{{ planType }}</span>
+        </div>
+        <div class="plan-stat">
+          <span class="plan-stat-label">Installments Paid</span>
+          <span class="plan-stat-value">{{ paidInstallments }} / {{ emiMonths }}</span>
+        </div>
+        <div class="plan-stat">
+          <span class="plan-stat-label">Remaining Balance</span>
+          <span class="plan-stat-value plan-stat-remaining">₦{{ Number(remainingBalance).toLocaleString() }}</span>
         </div>
       </div>
+      <div class="plan-progress-track">
+        <div class="plan-progress-fill" :style="{ width: progressPercent + '%' }"></div>
+      </div>
+    </div>
 
     <!-- ── Transaction History ── -->
     <div class="bdp-card">
@@ -100,14 +100,25 @@
               <md-icon>power_off</md-icon>
               {{ togglingId === t.id ? '...' : 'Deactivate' }}
             </button>
+
+            <button
+              class="act-btn btn-delete sm"
+              :disabled="deletingId === t.id"
+              @click="deleteTransaction(t)"
+            >
+              <md-icon>delete</md-icon>
+              {{ deletingId === t.id ? '...' : 'Delete' }}
+            </button>
           </div>
         </div>
       </template>
     </div>
 
     <!-- ── Add / Update Transaction ── -->
-    <div class="bdp-card">
-      <div class="bdp-card-title">Add / Update Transaction</div>
+    <div class="bdp-card" v-if="!isPlanComplete">
+      <div class="bdp-card-title">
+        {{ emiMonths === 1 ? 'Full Payment' : 'Add / Update Transaction' }}
+      </div>
       <div class="txn-form-row">
         <select v-model="txnMonth" class="field-select">
           <option v-for="m in 12" :key="m" :value="m">{{ monthName(m) }}</option>
@@ -131,6 +142,12 @@
       </div>
     </div>
 
+    <div class="bdp-card" v-else>
+      <div class="plan-complete-msg">
+        ✅ {{ emiMonths === 1 ? 'Fully Paid' : 'EMI Plan Completed' }} — no further transactions can be added.
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -147,6 +164,7 @@ export default {
       serialNumber: "",
       devicePrice:      null,
       emiMonths:        null,
+      planType:         null,
       installmentAmount: null,
 
       transactions: [],
@@ -157,6 +175,7 @@ export default {
       txnMonth:  new Date().getMonth() + 1,
       txnYear:   new Date().getFullYear(),
       savingTxn: false,
+      deletingId: null,
     }
   },
 
@@ -184,6 +203,11 @@ export default {
       const pct = (this.paidInstallments / this.emiMonths) * 100
       return Math.min(pct, 100).toFixed(0)
     },
+
+    isPlanComplete() {
+      if (!this.emiMonths) return false
+      return this.paidInstallments >= this.emiMonths
+    },
   },
 
   async created() {
@@ -202,9 +226,10 @@ export default {
         const d = data?.data ?? data
         this.deviceName        = d.device_name        || this.deviceName
         this.serialNumber      = d.serial_number       || this.serialNumber
-        this.devicePrice        = d.price               ?? null   // ✅ new
-        this.emiMonths          = d.emi_months           ?? null   // ✅ new
-        this.installmentAmount  = d.installment_amount   ?? null   // ✅ new
+        this.devicePrice        = d.price               ?? null
+        this.emiMonths          = d.emi_months           ?? null
+        this.planType            = d.plan_type           ?? null
+        this.installmentAmount  = d.installment_amount   ?? null
       } catch (e) {
         console.error("fetchDevice error:", e)
       }
@@ -228,12 +253,11 @@ export default {
       try {
         let response
         if (activate) {
-          response = await BluettiDeviceRepository.activateTransaction(this.deviceId, txn.id)
+          response = await BluettiDeviceRepository.activateTransaction(this.deviceId, txn.id, this.planType)
         } else {
-          response = await BluettiDeviceRepository.deactivateTransaction(this.deviceId, txn.id)
+          response = await BluettiDeviceRepository.deactivateTransaction(this.deviceId, txn.id, this.planType)
         }
 
-        // DB se fresh data local mein update karo
         const updated = response?.data?.data ?? null
         if (updated) {
           txn.is_active          = updated.is_active
@@ -296,6 +320,36 @@ export default {
     monthName(m) {
       return new Date(2000, m - 1, 1).toLocaleString("default", { month: "short" })
     },
+
+    async deleteTransaction(txn) {
+      const ok = await this.$swal({
+        title: "Delete this transaction?",
+        text: `Transaction "${txn.transaction_id}" for ${this.monthName(txn.month)} ${txn.year} will be permanently removed.`,
+        type: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Yes, delete",
+      })
+      if (!ok) return
+
+      this.deletingId = txn.id
+      try {
+        await BluettiDeviceRepository.deleteTransaction(this.deviceId, txn.id)
+        await this.loadTransactions()
+        await this.fetchDevice()
+        this.$swal({
+          type: "success",
+          title: "Transaction deleted",
+          timer: 1200,
+          showConfirmButton: false,
+        })
+      } catch (e) {
+        const msg = e?.response?.data?.error || "Could not delete transaction."
+        this.$swal("Error", msg, "error")
+      } finally {
+        this.deletingId = null
+      }
+    },
   },
 }
 </script>
@@ -307,7 +361,6 @@ export default {
   padding: 0 20px;
 }
 
-/* Header */
 .bdp-header {
   display: flex;
   align-items: center;
@@ -342,7 +395,6 @@ export default {
 }
 .bdp-sub { font-size: 13px; color: #888; margin-top: 3px; }
 
-/* Cards */
 .bdp-card {
   background: #fff;
   border-radius: 14px;
@@ -367,7 +419,6 @@ export default {
   font-size: 14px;
 }
 
-/* Transaction Table */
 .txn-table-head {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
@@ -413,7 +464,6 @@ export default {
   word-break: break-all;
 }
 
-/* Status badges */
 .status-badge {
   padding: 3px 10px;
   border-radius: 12px;
@@ -426,7 +476,6 @@ export default {
 .status-badge.status-active   { background: #e8f5e9; color: #2e7d32; }
 .status-badge.status-inactive { background: #fce4ec; color: #c62828; }
 
-/* Action buttons */
 .txn-row-actions {
   display: flex;
   gap: 6px;
@@ -463,7 +512,6 @@ export default {
 }
 .act-btn.btn-deactivate:hover:not(:disabled) { background: #ffcdd2; }
 
-/* Add form */
 .txn-form-row {
   display: flex;
   gap: 10px;
@@ -509,6 +557,7 @@ export default {
 }
 .btn-save:hover:not(:disabled) { background: #5a23b8; }
 .btn-save:disabled { opacity: 0.5; cursor: default; }
+
 .plan-summary {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -536,4 +585,22 @@ export default {
   background: #6c2bd9;
   transition: width 0.3s ease;
 }
+
+.plan-complete-msg {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.act-btn.btn-delete {
+  background: #fce4ec;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+.act-btn.btn-delete:hover:not(:disabled) { background: #ffcdd2; }
 </style>

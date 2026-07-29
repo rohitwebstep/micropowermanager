@@ -49,8 +49,9 @@ class PersonController extends Controller
         $perPage = $request->input('per_page', config('settings.paginate'));
         $agentId = $request->input('agent_id');
         $activeCustomer = $request->has('active_customer') ? (bool) $request->input('active_customer') : null;
-
-        return ApiResource::make($this->personService->getAll($perPage, $customerType, $agentId, $activeCustomer));
+        $bluettiType = $request->input('bluetti_type');
+        
+        return ApiResource::make($this->personService->getAll($perPage, $customerType, $agentId, $activeCustomer, $bluettiType));
     }
 
     /**

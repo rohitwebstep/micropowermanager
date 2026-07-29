@@ -1,6 +1,12 @@
 <!-- micropowermanager-main\frontend\src\modules\Bluetti\BluettiUserList.vue -->
 <template>
   <div>
+    <div class="page-header">
+      <button class="add-user-btn" @click="showAddUserModal = true">
+        + Add User
+      </button>
+    </div>
+
     <widget
       :id="'bluetti-user-list-widget'"
       :title="'BLUETTI Users'"
@@ -193,11 +199,17 @@
             Device Price: <b>₦{{ selectedFreeDevicePrice }}</b>
           </p>
           <select v-model.number="assignEmiMonths" class="field-select">
-            <option :value="12">12 Months</option>
-            <option :value="18">18 Months</option>
+            <option :value="12">12 Months (EMI)</option>
+            <option :value="18">18 Months (EMI)</option>
+            <option :value="1">Full Payment (One-time)</option>   <!-- ✅ new -->
           </select>
           <div v-if="selectedFreeDevicePrice" class="info-line" style="margin-top:10px">
-            Monthly Installment: <b>₦{{ (selectedFreeDevicePrice / assignEmiMonths).toFixed(2) }}</b>
+            <template v-if="assignEmiMonths === 1">
+              Full Amount Due: <b>₦{{ Number(selectedFreeDevicePrice).toLocaleString() }}</b> (single payment)
+            </template>
+            <template v-else>
+              Monthly Installment: <b>₦{{ (selectedFreeDevicePrice / assignEmiMonths).toFixed(2) }}</b>
+            </template>
           </div>
         </div>
 
@@ -343,6 +355,11 @@
       </div>
     </div>
 
+    <BluettiClientModal
+      :show="showAddUserModal"
+      @close="showAddUserModal = false"
+      @saved="onUserSaved"
+    />
   </div>
 </template>
 
@@ -355,11 +372,12 @@ import { People } from "@/services/PersonService"
 import { timing } from "@/mixins/timing"
 import { notify } from "@/mixins/notify"
 import BluettiDeviceRepository from "@/repositories/BluettiDeviceRepository"
+import BluettiClientModal from "@/modules/Bluetti/BluettiClientModal.vue"
 
 export default {
   name: "BluettiUserList",
   mixins: [timing, notify],
-  components: { Widget },
+  components: { Widget, BluettiClientModal },
 
   data() {
     return {
@@ -400,6 +418,8 @@ export default {
 
       // customerId -> [devices] cache
       assignedDevicesMap: {},
+
+      showAddUserModal: false,
     }
   },
 
@@ -439,7 +459,7 @@ export default {
     async getClientList(pageNumber = 1) {
       this.loading = true
       try {
-        const response = await this.paginator.loadPage(pageNumber)
+        const response = await this.paginator.loadPage(pageNumber, { bluetti_type: 'BLUETTI' })   
         this.people.updateList(response.data)
         EventBus.$emit("widgetContentLoaded", this.subscriber, this.people.list.length)
         this.prefetchAssignedDevices(this.people.list)
@@ -679,6 +699,17 @@ export default {
         const latest = this.getLatestTxn(d)
         return latest && latest.is_active
       })
+    },
+
+    onUserSaved() {
+      this.showAddUserModal = false
+      this.$swal({
+        type: "success",
+        title: "User added successfully!",
+        timer: 1500,
+        showConfirmButton: false,
+      })
+      this.getClientList() // list refresh
     },
 
   },
@@ -1040,4 +1071,21 @@ export default {
 .btn-assign:disabled { opacity: 0.5; cursor: default; }
 .btn-assign.cno-save { background: #1565c0; }
 .btn-assign.cno-save:hover:not(:disabled) { background: #0d47a1; }
+.page-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  height:auto;
+}
+.add-user-btn {
+  background: #6c2bd9;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+.add-user-btn:hover { background: #5a23b8; }
 </style>

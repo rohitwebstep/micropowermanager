@@ -251,8 +251,8 @@ class OrderController extends Controller
                             'total_units'   => preg_replace('/[^0-9.]/', '', $row['Total Unit'] ?? 0),
                             'amount'        => preg_replace('/[^0-9.]/', '', $row['Total Paid'] ?? 0),
                             'token'         => $orderToken,
-                            'purchased_at'  => !empty($row['Created Date'])
-                                ? date('Y-m-d H:i:s', strtotime($row['Created Date']))
+                            'purchased_at'  => !empty($row['Create Date'])
+                                ? date('Y-m-d H:i:s', strtotime($row['Create Date']))
                                 : now(),
                             'first_name'    => $people->name,
                             'last_name'     => $people->surname ?? $people->name,
@@ -435,7 +435,7 @@ class OrderController extends Controller
                 'Total Paid',
                 'Operator',
                 'Token',
-                'Created Date'
+                'Create Date'
             ];
 
             $sheet->fromArray($headers, null, 'A1');

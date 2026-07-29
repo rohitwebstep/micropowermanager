@@ -174,6 +174,7 @@ class PersonService implements IBaseService
             'gender' => $request->get('gender'),
             'is_customer' => $request->get('is_customer') ?? 0,
             'mini_grid_id' => $request->get('mini_grid_id'),
+            'bluetti_type' => $request->get('bluetti_type'),
         ];
     }
 
@@ -226,7 +227,7 @@ class PersonService implements IBaseService
     /**
      * @return LengthAwarePaginator<int, Person>
      */
-    public function getAll(?int $limit = null, ?int $customerType = 1, ?int $agentId = null, ?bool $activeCustomer = null): LengthAwarePaginator
+    public function getAll(?int $limit = null, ?int $customerType = 1, ?int $agentId = null, ?bool $activeCustomer = null, ?string $bluettiType = null): LengthAwarePaginator
     {
         $query = $this->person->newQuery()
             ->with([
@@ -236,6 +237,10 @@ class PersonService implements IBaseService
                 'latestPayment',
             ])
             ->where('people.is_customer', $customerType);
+
+        if ($bluettiType) {
+            $query->where('people.bluetti_type', $bluettiType);
+        }
 
         if ($agentId) {
             $query->whereHas('agentSoldAppliance.assignedAppliance.agent', function ($q) use ($agentId) {

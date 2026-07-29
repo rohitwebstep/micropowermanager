@@ -43,6 +43,7 @@ class PersonRequest extends FormRequest {
             'email' => ['sometimes', 'nullable', 'email'],
             'phone' => ['sometimes', 'min:11'],
             'country_code' => ['sometimes', 'nullable', 'string'],
+            'bluetti_type' => ['sometimes', 'nullable', 'string'],
         ];
     }
 }

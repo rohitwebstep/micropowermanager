@@ -141,9 +141,12 @@ class BluettiDeviceService
             throw new \Exception('Device has no price set — cannot assign EMI plan.');
         }
 
+        $planType = $emiMonths === 1 ? 'Full Payment' : "{$emiMonths} Months";
+
         $device->update([
             'customer_id'        => $customerId,
             'emi_months'         => $emiMonths,
+            'plan_type'          => $planType,                              // ✅ new
             'installment_amount' => round($device->price / $emiMonths, 2),
             'plan_start_date'    => now()->toDateString(),
         ]);
@@ -157,6 +160,7 @@ class BluettiDeviceService
         $device->update([
             'customer_id'        => null,
             'emi_months'         => null,
+            'plan_type'          => null,   // ✅ new
             'installment_amount' => null,
             'plan_start_date'    => null,
         ]);
@@ -208,49 +212,52 @@ class BluettiDeviceService
     // ─── Activate Transaction — BLUETTI API call + DB save ───────────────────
 
     public function activateTransaction(int $transactionId): BluettiDeviceTransaction
-    {
-        $txn    = BluettiDeviceTransaction::on('mysql')->findOrFail($transactionId);
-        $device = BluettiDevice::on('mysql')->findOrFail($txn->device_id);
+{
+    $txn    = BluettiDeviceTransaction::on('mysql')->findOrFail($transactionId);
+    $device = BluettiDevice::on('mysql')->findOrFail($txn->device_id);
 
-        
+    $customerNo = config('bluetti.customer_no');
 
-        $customerNo = config('bluetti.customer_no');
-
-        if (!$customerNo) {
-            throw new \Exception('Customer No not assigned to this device. Please assign Customer No first.');
-        }
-
-        
-
-        // STEP 1: requestCode — full response
-        $requestCodeResponse = $this->requestCode(
-            customerNo:     $customerNo,
-            sn:             $device->serial_number,
-            daysToActivate: $txn->days_to_activate ?? 1,
-            tokenType:      $txn->token_type       ?? 1,
-        );
-
-        $codeData         = $requestCodeResponse['data'];
-        $codeSerialNumber = $codeData['codeSerialNumber'];
-        $token            = $codeData['token'];
-
-        // STEP 2: queryCodeHistory — full response
-        $queryCodeHistoryResponse = $this->queryCodeHistory($codeSerialNumber);
-        $historyData = $queryCodeHistoryResponse['data'];
-
-        // STEP 3: DB update
-        $txn->update([
-            'code_serial_number'           => $codeSerialNumber,
-            'token'                        => $token,
-            'days_to_activate'             => $historyData['daysToActivate'] ?? $txn->days_to_activate,
-            'token_type'                   => $historyData['tokenType']      ?? $txn->token_type,
-            'is_active'                    => true,
-            'request_code_response'        => $requestCodeResponse,
-            'query_code_history_response'  => $queryCodeHistoryResponse,
-        ]);
-
-        return $txn->fresh();
+    if (!$customerNo) {
+        throw new \Exception('Customer No not assigned to this device. Please assign Customer No first.');
     }
+
+    // ✅ Full Payment (emi_months = 1) => permanently unlocked
+    $isFullPayment = $device->emi_months === 1;
+
+    $daysToActivate = $isFullPayment ? 998 : ($txn->days_to_activate ?? 1);
+    $tokenType       = $isFullPayment ? 3   : ($txn->token_type       ?? 1);
+
+    // STEP 1: requestCode — full response
+    $requestCodeResponse = $this->requestCode(
+        customerNo:     $customerNo,
+        sn:             $device->serial_number,
+        daysToActivate: $daysToActivate,
+        tokenType:      $tokenType,
+    );
+
+    $codeData         = $requestCodeResponse['data'];
+    $codeSerialNumber = $codeData['codeSerialNumber'];
+    $token            = $codeData['token'];
+
+    // STEP 2: queryCodeHistory — full response
+    $queryCodeHistoryResponse = $this->queryCodeHistory($codeSerialNumber);
+    $historyData = $queryCodeHistoryResponse['data'];
+
+    // STEP 3: DB update
+    $txn->update([
+        'code_serial_number'           => $codeSerialNumber,
+        'token'                        => $token,
+        'days_to_activate'             => $historyData['daysToActivate'] ?? $daysToActivate,
+        'token_type'                   => $historyData['tokenType']      ?? $tokenType,
+        'is_active'                    => true,
+        'request_code_response'        => $requestCodeResponse,
+        'query_code_history_response'  => $queryCodeHistoryResponse,
+    ]);
+
+    return $txn->fresh();
+}
+
 
     public function deactivateTransaction(int $transactionId): BluettiDeviceTransaction
     {
@@ -305,5 +312,18 @@ class BluettiDeviceService
         $device = $this->getById($deviceId);
         $device->update(['customer_no' => $customerNo]);
         return $device->fresh();
+    }
+
+    public function deleteTransaction(int $transactionId): void
+    {
+        $txn = BluettiDeviceTransaction::on('mysql')->findOrFail($transactionId);
+
+        $device = BluettiDevice::on('mysql')->find($txn->device_id);
+
+        if ($device && $device->is_fully_paid) {
+            throw new \Exception('Cannot delete transaction — device is marked as fully paid.');
+        }
+
+        $txn->delete();
     }
 }

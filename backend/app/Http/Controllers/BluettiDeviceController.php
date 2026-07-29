@@ -58,7 +58,7 @@ class BluettiDeviceController extends Controller
     {
         $request->validate([
             'customer_id' => ['required', 'integer'],
-            'emi_months'  => ['required', 'integer', 'in:12,18'],
+            'emi_months'  => ['required', 'integer', 'in:1,12,18'], 
         ]);
 
         try {
@@ -166,6 +166,19 @@ class BluettiDeviceController extends Controller
         try {
             $txn = $this->bluettiDeviceService->deactivateTransaction($txnId);
             return response()->json(['data' => $txn]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
+    /**
+     * DELETE /bluetti-devices/{id}/transactions/{txnId}
+     */
+    public function deleteTransaction(int $id, int $txnId): JsonResponse
+    {
+        try {
+            $this->bluettiDeviceService->deleteTransaction($txnId);
+            return response()->json(null, 204);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }

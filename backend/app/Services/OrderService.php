@@ -229,8 +229,8 @@ class OrderService implements IBaseService
                 'type'                      => 'imported',
                 'sender'                    => 'system',
                 'message'                   => $serialNumber ?? '',
-                'created_at'                => now(),
-                'updated_at'                => now(),
+                'created_at'                => $data['purchased_at'],
+                'updated_at'                => $data['purchased_at']
             ];
 
             $transaction = Transaction::create($transactionData);
@@ -292,8 +292,8 @@ class OrderService implements IBaseService
                 'type'                      => 'imported',
                 'sender'                    => 'system',
                 'message'                   => $serialNumber ?? '',
-                'created_at'                => now(),
-                'updated_at'                => now(),
+                'created_at'                => $data['purchased_at'],
+                'updated_at'                => $data['purchased_at']
             ];
 
             $transaction = Transaction::create($transactionData);

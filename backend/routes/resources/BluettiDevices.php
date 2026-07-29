@@ -49,4 +49,5 @@ Route::group([
     Route::get('/{id}',    [BluettiDeviceController::class, 'show']);
     Route::put('/{id}',    [BluettiDeviceController::class, 'update']);
     Route::delete('/{id}', [BluettiDeviceController::class, 'destroy']);
+    Route::delete('/{id}/transactions/{txnId}', [BluettiDeviceController::class, 'deleteTransaction']);
 });
