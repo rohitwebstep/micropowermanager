@@ -120,11 +120,18 @@ export default {
 
           const miniGridsOfCluster = data.clusterData?.mini_grids || []
           miniGridsOfCluster.map((miniGrid) => {
+
+            if (!miniGrid.location || !miniGrid.location.points) {
+              console.warn("Skipping mini-grid due to missing location data:", miniGrid.id);
+              return; // अगर डेटा नहीं है, तो आगे मत बढ़ें, क्रैश होने से बचें
+            }
+
             const points = miniGrid.location.points.split(",")
             if (points.length !== 2) {
               this.alertNotify("error", "Mini-Grid has no location")
               return
             }
+            
             const lat = parseFloat(points[0])
             const lon = parseFloat(points[1])
             markingInfos.push({
