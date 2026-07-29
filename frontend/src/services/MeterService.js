@@ -16,13 +16,11 @@ export class Meter {
     this.lastUpdate = jsonData.updated_at
     this.manufacturerId = jsonData.manufacturer_id
     this.manufacturer = null
-    this.type =
-      jsonData.meter_type.max_current +
-      " A " +
-      jsonData.meter_type.phase +
-      " P "
-    this.online = jsonData.meter_type.online
-    this.tariff = jsonData.tariff.name
+    this.type = (jsonData.meter_type) 
+    ? jsonData.meter_type.max_current + " A " + jsonData.meter_type.phase + " P " 
+    : "N/A";
+    this.online = jsonData.meter_type ? jsonData.meter_type.online : 0;
+    this.tariff = (jsonData.tariff) ? jsonData.tariff.name : 'No Tariff';
     return this
   }
 }

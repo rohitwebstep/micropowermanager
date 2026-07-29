@@ -110,6 +110,8 @@ class PersonController extends Controller
 
     public function importFromCsv(Request $request): ApiResource
     {
+        set_time_limit(0);
+
         $request->validate([
             'file' => 'required|mimes:csv,txt,xlsx,xls',
             'cluster_id' => [
@@ -280,9 +282,11 @@ class PersonController extends Controller
                 DB::commit();
 
                 $parsed[] = [
-                    'customer' => $people,
-                    'city_name' => $cityName,
-                    'city_id'     => $cityId
+                    'external_customer_id'  => trim($row['Id']) ?? null,
+                    'name'                  => $firstName,
+                    'city_name'             => $cityName,
+                    'city_id'               => $cityId,
+                    'customer'              => $people
                 ];
             } catch (\Throwable $e) {
                 DB::rollBack();

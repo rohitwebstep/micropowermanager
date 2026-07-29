@@ -1,8 +1,9 @@
 import Client from "@/repositories/Client/AxiosClient"
 
 export class Paginator {
-  constructor(resource) {
+  constructor(resource, extraParams = {}) {
     this.resource = resource
+    this.extraParams = extraParams 
     this._initialize()
     this.postData = null
   }
@@ -35,7 +36,7 @@ export class Paginator {
   loadPage(page, param = {}) {
     // take a local, shallow copy of params to prevent
     // unintended route changes
-    const localParam = { ...param }
+    const localParam = { ...this.extraParams, ...param }
 
     localParam["page"] = page
     localParam["per_page"] = this.perPage

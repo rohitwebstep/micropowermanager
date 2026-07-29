@@ -109,6 +109,15 @@
               <md-icon>delete</md-icon>
               {{ deletingId === t.id ? '...' : 'Delete' }}
             </button>
+
+            <button
+              v-if="t.request_code_response || t.query_code_history_response"
+              class="act-btn btn-view-response sm"
+              @click="viewResponse(t)"
+            >
+              <md-icon>visibility</md-icon>
+              View Response
+            </button>
           </div>
         </div>
       </template>
@@ -148,6 +157,44 @@
       </div>
     </div>
 
+    <!-- ── API Response Modal ── -->
+    <div
+      v-if="showResponseModal"
+      class="resp-modal-overlay"
+      @click.self="showResponseModal = false; selectedResponseTxn = null"
+    >
+      <div class="resp-modal-box" v-if="selectedResponseTxn">
+        <div class="resp-modal-head">
+          <div class="resp-modal-title">
+            BLUETTI API Response — {{ monthName(selectedResponseTxn.month) }} {{ selectedResponseTxn.year }}
+          </div>
+          <button
+            class="resp-modal-close"
+            @click="showResponseModal = false; selectedResponseTxn = null"
+          >×</button>
+        </div>
+
+        <div class="resp-modal-body">
+          <div v-if="selectedResponseTxn.request_code_response" class="resp-section">
+            <div class="resp-section-label">Get Code Serial Number Response</div>
+            <pre class="resp-json">{{ JSON.stringify(selectedResponseTxn.request_code_response, null, 2) }}</pre>
+          </div>
+
+          <div v-if="selectedResponseTxn.query_code_history_response" class="resp-section">
+            <div class="resp-section-label">Code History Response</div>
+            <pre class="resp-json">{{ JSON.stringify(selectedResponseTxn.query_code_history_response, null, 2) }}</pre>
+          </div>
+
+          <div
+            v-if="!selectedResponseTxn.request_code_response && !selectedResponseTxn.query_code_history_response"
+            class="resp-empty"
+          >
+            No API response recorded for this transaction yet.
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -176,6 +223,9 @@ export default {
       txnYear:   new Date().getFullYear(),
       savingTxn: false,
       deletingId: null,
+
+      showResponseModal: false,
+      selectedResponseTxn: null,
     }
   },
 
@@ -203,7 +253,6 @@ export default {
       const pct = (this.paidInstallments / this.emiMonths) * 100
       return Math.min(pct, 100).toFixed(0)
     },
-
     isPlanComplete() {
       if (!this.emiMonths) return false
       return this.paidInstallments >= this.emiMonths
@@ -260,9 +309,11 @@ export default {
 
         const updated = response?.data?.data ?? null
         if (updated) {
-          txn.is_active          = updated.is_active
-          txn.code_serial_number = updated.code_serial_number
-          txn.token              = updated.token
+          txn.is_active                    = updated.is_active
+          txn.code_serial_number           = updated.code_serial_number
+          txn.token                        = updated.token
+          txn.request_code_response        = updated.request_code_response
+          txn.query_code_history_response  = updated.query_code_history_response
         } else {
           txn.is_active = activate
         }
@@ -350,6 +401,12 @@ export default {
         this.deletingId = null
       }
     },
+
+    // ✅ Fixed — this now lives in methods (was incorrectly under computed before)
+    viewResponse(txn) {
+      this.selectedResponseTxn = txn
+      this.showResponseModal = true
+    },
   },
 }
 </script>
@@ -421,7 +478,7 @@ export default {
 
 .txn-table-head {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 0.8fr 1fr 1fr 0.8fr 2fr;  
   gap: 12px;
   padding: 8px 14px;
   font-size: 11px;
@@ -435,7 +492,7 @@ export default {
 
 .txn-table-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 0.8fr 1fr 1fr 0.8fr 2fr; 
   gap: 12px;
   align-items: center;
   padding: 14px;
@@ -480,24 +537,30 @@ export default {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+  flex-wrap: wrap;              
 }
 
 .act-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   border: none;
-  border-radius: 7px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;               
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 5px 9px;               
   transition: background 0.2s, opacity 0.2s;
   white-space: nowrap;
 }
-.act-btn.sm { padding: 5px 10px; font-size: 12px; }
+.act-btn .md-icon {
+  font-size: 15px !important;     
+  width: 15px !important;
+  height: 15px !important;
+  margin: 0 !important;
+}
+.act-btn.sm { padding: 5px 9px; font-size: 11px; }
 .act-btn:disabled { opacity: 0.5; cursor: default; }
-
 .act-btn.btn-activate {
   background: #e8f5e9;
   color: #2e7d32;
@@ -603,4 +666,84 @@ export default {
   border: 1px solid #ef9a9a;
 }
 .act-btn.btn-delete:hover:not(:disabled) { background: #ffcdd2; }
+
+.act-btn.btn-view-response {
+  background: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #90caf9;
+}
+.act-btn.btn-view-response:hover:not(:disabled) { background: #bbdefb; }
+
+.resp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+}
+
+.resp-modal-box {
+  background: #fff;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.resp-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+.resp-modal-title { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+.resp-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #aaa;
+}
+.resp-modal-close:hover { color: #333; }
+
+.resp-modal-body { padding: 18px 22px; }
+.resp-section { margin-bottom: 20px; }
+.resp-section:last-child { margin-bottom: 0; }
+.resp-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9e9e9e;
+  margin-bottom: 8px;
+}
+.resp-json {
+  background: #1a1a2e;
+  color: #a5d6ff;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+}
+.resp-empty {
+  text-align: center;
+  padding: 24px;
+  color: #bbb;
+  font-size: 14px;
+}
 </style>

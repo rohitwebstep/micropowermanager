@@ -383,7 +383,7 @@ export default {
     return {
       subscriber: "bluetti.user.list",
       people: new People(),
-      paginator: new Paginator(resources.person.list),
+      paginator: new Paginator(resources.person.list, { bluetti_type: 'BLUETTI' }),
       loading: false,
 
       // Assign device modal
@@ -441,7 +441,6 @@ export default {
   },
 
   mounted() {
-    this.getClientList()
     EventBus.$on("pageLoaded", this.reloadList)
     EventBus.$on("searching", this.onSearchEvent)
     EventBus.$on("end_searching", this.onEndSearchEvent)
@@ -480,7 +479,7 @@ export default {
     onSearchEvent() {},
 
     onEndSearchEvent() {
-      this.paginator = new Paginator(resources.person.list)
+      this.paginator = new Paginator(resources.person.list, { bluetti_type: 'BLUETTI' })
       this.getClientList()
     },
 
