@@ -28,7 +28,7 @@ class ClustersDashboardCacheDataService extends AbstractDashboardCacheDataServic
     public function setData(array $dateRange = []): void {
         if ($dateRange === []) {
             // Set $startDate to 3 months ago
-            $startDate = date('Y-m-d', strtotime('-3 months'));
+            $startDate = date('Y-m-d', strtotime('-1 months'));
             $endDate = date('Y-m-d H:i:s', strtotime('today'));
             $dateRange[0] = $startDate;
             $dateRange[1] = $endDate;

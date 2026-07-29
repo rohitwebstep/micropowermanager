@@ -292,13 +292,19 @@ export default {
     },
     async setMiniGridMapData(miniGridId) {
       const markingInfos = []
-      const miniGridWithGeoData =
-        await this.miniGridService.getMiniGridGeoData(miniGridId)
+      const miniGridWithGeoData = await this.miniGridService.getMiniGridGeoData(miniGridId)
+      
+      if (!miniGridWithGeoData.location || !miniGridWithGeoData.location.points) {
+        console.warn("Skipping mini-grid due to missing location data:", miniGrid.id);
+        return;
+      }
+
       const points = miniGridWithGeoData.location.points.split(",")
       if (points.length !== 2) {
         this.alertNotify("error", "Mini-Grid has no location")
         return
       }
+
       const lat = parseFloat(points[0])
       const lon = parseFloat(points[1])
       const clusterId = miniGridWithGeoData.cluster_id

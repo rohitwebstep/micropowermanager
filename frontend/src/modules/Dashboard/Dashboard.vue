@@ -123,7 +123,7 @@ export default {
 
             if (!miniGrid.location || !miniGrid.location.points) {
               console.warn("Skipping mini-grid due to missing location data:", miniGrid.id);
-              return; // अगर डेटा नहीं है, तो आगे मत बढ़ें, क्रैश होने से बचें
+              return;
             }
 
             const points = miniGrid.location.points.split(",")
