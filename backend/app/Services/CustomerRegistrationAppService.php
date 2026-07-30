@@ -7,6 +7,7 @@ use App\Http\Requests\AndroidAppRequest;
 use App\Models\Meter\Meter;
 use App\Models\Order\Order;
 use App\Models\Person\Person;
+use App\Models\Person\PersonExternalId;
 
 class CustomerRegistrationAppService
 {
@@ -25,12 +26,32 @@ class CustomerRegistrationAppService
     {
         $serialNumber = $request->input('serial_number');
         $phone = $request->input('phone');
+        $externalId = $request->input('external_customer_id');
         $device = null;
+
+        if ($externalId) {
+            $exists = PersonExternalId::where('portal_name', 'external')
+                ->where('external_id', $externalId)
+                ->exists();
+
+            if ($exists) {
+                throw new \Exception('External customer ID already exists');
+            }
+        }
 
         $person = $this->personService->getByPhoneNumber($phone);
         if (!$person instanceof Person) {
             $request->attributes->add(['is_customer' => 1]);
             $person = $this->personService->createFromRequest($request);
+        } else {
+            // update person
+            if ($externalId) {
+                PersonExternalId::create([
+                    'person_id'   => $person->id,
+                    'portal_name' => 'external',
+                    'external_id' => $externalId,
+                ]);
+            }
         }
 
         if (!empty($serialNumber)) {

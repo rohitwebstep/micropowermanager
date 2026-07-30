@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Country;
 use App\Models\Person\Person;
+use App\Models\Person\PersonExternalId;
 use App\Services\Interfaces\IBaseService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -183,7 +184,7 @@ class PersonService implements IBaseService
         return $this->person->newQuery()->find($personId);
     }
 
-    public function getByExternalCustomerId(int $externalCustomerId): ?Person
+    public function getByExternalCustomerId($externalCustomerId): ?Person
     {
         return $this->person->newQuery()
             ->with([
@@ -192,7 +193,8 @@ class PersonService implements IBaseService
                 'agentSoldAppliance',
                 'latestPayment',
             ])
-            ->where('external_customer_id', $externalCustomerId)
+            // ->where('external_customer_id', $externalCustomerId)
+            ->withExternalId((string) $externalCustomerId)
             ->first();
     }
 
@@ -365,33 +367,60 @@ class PersonService implements IBaseService
 
     public function createFromRequest(Request $request): Person
     {
-        $person = $this->person->newQuery()->create($request->only([
-            'external_customer_id',
-            'national_id_number',
-            'mini_grid_id',
-            'title',
-            'education',
-            'name',
-            'surname',
-            'birth_date',
-            'gender',
-            'is_customer',
-        ]));
+        // 1. External ID check karein
+        $externalId = $request->input('external_customer_id');
 
-        $addressService = app()->make(AddressesService::class);
-        $addressParams = [
-            'city_id' => $request->get('city_id') ?? 1,
-            'email' => $request->get('email') ?? '',
-            'phone' => $request->get('phone') ?? '',
-            'street' => $request->get('street') ?? '',
-            'is_primary' => 1,
-        ];
+        if ($externalId) {
+            $exists = PersonExternalId::where('portal_name', 'external')
+                ->where('external_id', $externalId)
+                ->exists();
 
-        $address = $addressService->instantiate($addressParams);
-        $addressService->assignAddressToOwner($person, $address);
+            if ($exists) {
+                if ($exists) {
+                    throw new \Exception('External customer ID already exists');
+                }
+            }
+        }
 
+        // 2. Perform actions inside a transaction
+        return DB::connection('tenant')->transaction(function () use ($request, $externalId) {
 
-        return $this->getDetails($person->id, true);
+            $person = $this->person->newQuery()->create($request->only([
+                'external_customer_id',
+                'national_id_number',
+                'mini_grid_id',
+                'title',
+                'education',
+                'name',
+                'surname',
+                'birth_date',
+                'gender',
+                'is_customer',
+            ]));
+
+            $addressService = app()->make(AddressesService::class);
+            $addressParams = [
+                'city_id' => $request->get('city_id') ?? 1,
+                'email' => $request->get('email') ?? '',
+                'phone' => $request->get('phone') ?? '',
+                'street' => $request->get('street') ?? '',
+                'is_primary' => 1,
+            ];
+
+            $address = $addressService->instantiate($addressParams);
+            $addressService->assignAddressToOwner($person, $address);
+
+            // 3. Save to people_external_ids table
+            if ($externalId) {
+                PersonExternalId::create([
+                    'person_id'   => $person->id,
+                    'portal_name' => 'external',
+                    'external_id' => $externalId,
+                ]);
+            }
+
+            return $this->getDetails($person->id, true);
+        });
     }
 
     public function getByPhoneNumber(string $phoneNumber): ?Person

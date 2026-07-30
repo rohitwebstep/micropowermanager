@@ -60,7 +60,8 @@ use Illuminate\Support\Facades\DB;
  * @property-read PersonDocument|null              $personDocument
  * @property-read Collection<int, Ticket>          $tickets
  */
-class Person extends BaseModel implements \Stringable, HasAddressesInterface {
+class Person extends BaseModel implements \Stringable, HasAddressesInterface
+{
     /** @use HasFactory<PersonFactory> */
     use HasFactory;
     use SoftDeletes;
@@ -79,57 +80,65 @@ class Person extends BaseModel implements \Stringable, HasAddressesInterface {
     /**
      * @return MorphMany<Ticket, $this>
      */
-    public function tickets(): MorphMany {
+    public function tickets(): MorphMany
+    {
         return $this->morphMany(Ticket::class, 'owner');
     }
 
     /**
      * @return BelongsTo<MiniGrid, $this>
      */
-    public function miniGrid(): BelongsTo {
+    public function miniGrid(): BelongsTo
+    {
         return $this->belongsTo(MiniGrid::class, 'mini_grid_id', 'id');
     }
 
     /**
      * Check if this person is a maintenance user.
      */
-    public function isMaintenanceUser(): bool {
+    public function isMaintenanceUser(): bool
+    {
         return $this->type === 'maintenance' && $this->mini_grid_id !== null;
     }
 
     /**
      * Check if this person is an agent.
      */
-    public function isAgent(): bool {
+    public function isAgent(): bool
+    {
         return $this->type === 'agent';
     }
 
-    public function saveAddress(Address $address): void {
+    public function saveAddress(Address $address): void
+    {
         $this->addresses()->save($address);
     }
 
     /**
      * @return MorphMany<Address, $this>
      */
-    public function addresses(): MorphMany {
+    public function addresses(): MorphMany
+    {
         return $this->morphMany(Address::class, 'owner');
     }
 
     /**
      * @return BelongsTo<Country, $this>
      */
-    public function citizenship(): BelongsTo {
+    public function citizenship(): BelongsTo
+    {
         return $this->belongsTo(Country::class, 'nationality', 'id');
     }
 
     /**
      * @return HasMany<Device, $this>
      */
-    public function devices(): HasMany {
+    public function devices(): HasMany
+    {
         return $this->hasMany(Device::class);
     }
 
-        /** Orders relationship */
+    /** Orders relationship */
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'customer_id', 'id');
@@ -144,43 +153,50 @@ class Person extends BaseModel implements \Stringable, HasAddressesInterface {
     /**
      * @return MorphMany<PaymentHistory, $this>
      */
-    public function payments(): MorphMany {
+    public function payments(): MorphMany
+    {
         return $this->morphMany(PaymentHistory::class, 'payer');
     }
 
     /**
      * @return HasOne<Agent, $this>
      */
-    public function agent(): HasOne {
+    public function agent(): HasOne
+    {
         return $this->hasOne(Agent::class);
     }
 
     /**
      * @return HasOne<AgentSoldAppliance, $this>
      */
-    public function agentSoldAppliance(): HasOne {
+    public function agentSoldAppliance(): HasOne
+    {
         return $this->hasOne(AgentSoldAppliance::class);
     }
 
     /**
      * @return HasMany<AppliancePerson, $this>
      */
-    public function appliancePerson(): HasMany {
+    public function appliancePerson(): HasMany
+    {
         return $this->HasMany(AppliancePerson::class, 'person_id', 'id');
     }
 
     /**
      * @return HasOne<PersonDocument, $this>
      */
-    public function personDocument(): HasOne {
+    public function personDocument(): HasOne
+    {
         return $this->hasOne(PersonDocument::class, 'person_id', 'id');
     }
 
-    public function __toString(): string {
+    public function __toString(): string
+    {
         return sprintf('%s %s', $this->name, $this->surname);
     }
 
-    public function livingInClusterQuery(int $clusterId): Builder {
+    public function livingInClusterQuery(int $clusterId): Builder
+    {
         return DB::connection('tenant')->table($this->getTable())
             ->select('people.id')
             ->leftJoin('addresses', function (JoinClause $q) {
@@ -198,11 +214,13 @@ class Person extends BaseModel implements \Stringable, HasAddressesInterface {
             ->orderBy('cities.id');
     }
 
-    public function getId(): int {
+    public function getId(): int
+    {
         return $this->id;
     }
 
-    protected function getIsActiveAttribute(): bool {
+    protected function getIsActiveAttribute(): bool
+    {
         $lastPayment = $this->latestPayment;
 
         if (!$lastPayment) {
@@ -215,13 +233,29 @@ class Person extends BaseModel implements \Stringable, HasAddressesInterface {
     /**
      * @return HasOne<PaymentHistory, $this>
      */
-    public function latestPayment(): HasOne {
+    public function latestPayment(): HasOne
+    {
         return $this->hasOne(PaymentHistory::class, 'payer_id')->latestOfMany('created_at');
     }
 
-    protected function casts(): array {
+
+    protected function casts(): array
+    {
         return [
             'additional_json' => 'array',
         ];
+    }
+
+    public function externalCustomerIds(): HasMany
+    {
+        return $this->hasMany(PersonExternalId::class, 'person_id', 'id');
+    }
+
+    public function scopeWithExternalId($query, string $id)
+    {
+        return $query->where('external_customer_id', $id)
+            ->orWhereHas('externalCustomerIds', function ($q) use ($id) {
+                $q->where('external_id', $id);
+            });
     }
 }

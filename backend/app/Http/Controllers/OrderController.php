@@ -239,24 +239,25 @@ class OrderController extends Controller
                         $orderGeneratedId = 'MPM-ODR-' . now()->format('d-m-Y') . '-' . random_int(100000, 999999);
 
                         $orderRequestData = [
-                            'state_name'    => $stateName,
-                            'city_name'     => $cityName,
-                            'mini_grid_id'  => $miniGridId,
-                            'order_id'      => $orderGeneratedId,
-                            'customer_id'   => $peopleId,
-                            'type'          => 'meter_electricity_order',
-                            'device_id'      => $deviceId,
-                            'meter_id'      => $meterId,
-                            'serial_number' => trim($meterNumber ?? ''),
-                            'total_units'   => preg_replace('/[^0-9.]/', '', $row['Total Unit'] ?? 0),
-                            'amount'        => preg_replace('/[^0-9.]/', '', $row['Total Paid'] ?? 0),
-                            'token'         => $orderToken,
-                            'purchased_at'  => !empty($row['Create Date'])
+                            'state_name'            => $stateName,
+                            'city_name'             => $cityName,
+                            'mini_grid_id'          => $miniGridId,
+                            'order_id'              => $orderGeneratedId,
+                            'customer_id'           => $peopleId,
+                            'type'                  => 'meter_electricity_order',
+                            'external_customer_id'  => $externalCustomerId,
+                            'device_id'             => $deviceId,
+                            'meter_id'              => $meterId,
+                            'serial_number'         => trim($meterNumber ?? ''),
+                            'total_units'           => preg_replace('/[^0-9.]/', '', $row['Total Unit'] ?? 0),
+                            'amount'                => preg_replace('/[^0-9.]/', '', $row['Total Paid'] ?? 0),
+                            'token'                 => $orderToken,
+                            'purchased_at'          => !empty($row['Create Date'])
                                 ? date('Y-m-d H:i:s', strtotime($row['Create Date']))
                                 : now(),
-                            'first_name'    => $people->name,
-                            'last_name'     => $people->surname ?? $people->name,
-                            'phone_number'  => $people->addresses[0]->phone ?? null,
+                            'first_name'            => $people->name,
+                            'last_name'             => $people->surname ?? $people->name,
+                            'phone_number'          => $people->addresses[0]->phone ?? null,
                         ];
 
                         $orderRequest = new \App\Http\Requests\OrderCreateRequest();
