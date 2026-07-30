@@ -18,6 +18,7 @@ class OrderCreateRequest extends FormRequest
         return [
             'order_id' => ['nullable', 'string', 'unique:tenant.orders,order_id'],
             'customer_id' => ['nullable', 'numeric', 'exists:tenant.people,id'],
+            'external_customer_id' => ['nullable', 'string'],
             'type' => ['required', Rule::in(['meter_order', 'meter_electricity_order', 'product_order'])],
             'device_id' => ['nullable', 'numeric', 'exists:tenant.devices,id'],
             'meter_id' => ['nullable', 'numeric', 'exists:tenant.meters,id'],
