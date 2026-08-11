@@ -150,8 +150,13 @@ export default {
       })
       this.mappingService.setGeoData(clustersGeoData)
       this.mappingService.setMarkingInfos(markingInfos)
-      this.$refs.dashboardMapRef.drawClusters()
-      this.$refs.dashboardMapRef.setMiniGridMarkers()
+      
+      this.$nextTick(() => {
+        if (this.$refs.dashboardMapRef) {
+          this.$refs.dashboardMapRef.drawClusters()
+          this.$refs.dashboardMapRef.setMiniGridMarkers()
+        }
+      })
     },
     financialOverviewPeriodChanged(fromDate, toDate) {
       const cachedData = this.$store.getters["clusterDashboard/getClustersData"]
