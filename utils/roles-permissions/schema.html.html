@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roles & Permissions Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        <!-- Header -->
+        <div class="mb-10 text-center sm:text-left">
+            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">System Roles & Permissions</h1>
+            <p class="mt-2 text-gray-600">Complete documentation of access levels, roles hierarchy, and domain-level permissions based on the application rules.</p>
+        </div>
+
+        <!-- Role Hierarchy Cards -->
+        <div class="mb-12">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6 border-b pb-2">Roles Hierarchy</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Level 1: Owner -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 capitalize">Owner</h3>
+                        <span class="bg-purple-100 text-purple-700 text-xs font-semibold px-2.5 py-1 rounded">Level 1</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4 flex-grow">Full control over the entire system. Can manage all accounts including creating/removing administrators. Cannot delete other owners.</p>
+                    <div class="text-sm font-medium text-gray-900">Access: <span class="text-purple-600">All Permissions</span></div>
+                </div>
+
+                <!-- Level 2: Administrator -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 capitalize">Admin</h3>
+                        <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded">Level 2</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4 flex-grow">Manage all system data and settings. Can manage admin accounts and lower levels, but NOT owner accounts.</p>
+                    <div class="text-sm font-medium text-gray-900">Restriction: <span class="text-red-500">No Owner Management</span></div>
+                </div>
+
+                <!-- Level 3: Financial Manager -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 capitalize">Financial Manager</h3>
+                        <span class="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded">Level 3</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4 flex-grow">Manage customers + financial/transaction data. Cannot change system settings or manage users.</p>
+                    <div class="text-sm font-medium text-gray-900">Focus: <span class="text-green-600">Finance & Customers</span></div>
+                </div>
+
+                <!-- Level 4: User -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 capitalize">User</h3>
+                        <span class="bg-gray-100 text-gray-700 text-xs font-semibold px-2.5 py-1 rounded">Level 4</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-4 flex-grow">Manage customers and related data only. Cannot access financial information, transactions, or system administration.</p>
+                    <div class="text-sm font-medium text-gray-900">Focus: <span class="text-gray-600">Customer Data Only</span></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Permission Matrix -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-xl font-semibold text-gray-900">Permission Matrix</h2>
+                <p class="text-sm text-gray-500 mt-1">Detailed breakdown of which role has access to specific domain-level permissions.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="py-4 px-6 bg-white font-semibold text-gray-900 border-b border-gray-200 whitespace-nowrap">Permission Name</th>
+                            <th class="py-4 px-6 bg-purple-50 font-semibold text-purple-900 border-b border-gray-200 text-center w-32">Owner</th>
+                            <th class="py-4 px-6 bg-blue-50 font-semibold text-blue-900 border-b border-gray-200 text-center w-32">Admin</th>
+                            <th class="py-4 px-6 bg-green-50 font-semibold text-green-900 border-b border-gray-200 text-center w-40">Financial Mgr</th>
+                            <th class="py-4 px-6 bg-gray-50 font-semibold text-gray-900 border-b border-gray-200 text-center w-32">User</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <!-- User Management -->
+                        <tr class="bg-gray-50">
+                            <td colspan="5" class="py-2 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Account Management</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">users</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">users.manage-admin</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">users.manage-owner</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-red-500 bg-red-50/30"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+
+                        <!-- System Settings -->
+                        <tr class="bg-gray-50">
+                            <td colspan="5" class="py-2 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">System Administration</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">settings <span class="text-gray-400 text-xs ml-1">(incl. api-keys)</span></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">roles</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">horizon</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">plugins</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-gray-300"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+
+                        <!-- CRM Data -->
+                        <tr class="bg-gray-50">
+                            <td colspan="5" class="py-2 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">CRM Data (Customers, Appliances, Tickets)</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">customers, appliances, tickets</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                        </tr>
+
+                        <!-- Financial Data -->
+                        <tr class="bg-gray-50">
+                            <td colspan="5" class="py-2 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Financial & Reporting</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">payments, transactions</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-red-500 bg-red-50/30"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition border-b border-gray-200">
+                            <td class="py-3 px-6 text-sm text-gray-700 font-medium">reports, exports</td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-green-500"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></td>
+                            <td class="py-3 px-6 text-center text-red-500 bg-red-50/30"><svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 text-sm text-gray-500 flex items-center justify-between">
+                <span>Legend: 
+                    <span class="inline-flex items-center ml-2"><svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Allowed</span>
+                    <span class="inline-flex items-center ml-4"><svg class="w-4 h-4 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> Restricted</span>
+                    <span class="inline-flex items-center ml-4"><svg class="w-4 h-4 text-gray-300 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> No Access</span>
+                </span>
+                <span>Guard Name: <code class="bg-gray-200 px-1.5 py-0.5 rounded text-gray-800 text-xs">api</code></span>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
