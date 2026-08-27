@@ -22,3 +22,14 @@ HAVING
     COUNT(DISTINCT d.device_id) > 1
 ORDER BY 
     "Total Meters" DESC, p.id;
+
+
+==== Missing Meters
+SELECT t.serial_number
+FROM (
+  SELECT '47001877043' AS serial_number
+  UNION ALL SELECT '47001878371'
+) t
+LEFT JOIN meters mts 
+  ON t.serial_number = mts.serial_number
+WHERE mts.serial_number IS NULL;
