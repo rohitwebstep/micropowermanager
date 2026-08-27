@@ -229,12 +229,14 @@ class OrderController extends Controller
 
                         $orderToken = $row['Token'] ?? null;
 
-                        if ($orderToken) {
-                            $existingOrder = Order::where('token', $orderToken)->first();
-                            if ($existingOrder) {
-                                throw new \Exception("Order with token {$orderToken} already exists");
+                        /*
+                            if ($orderToken) {
+                                $existingOrder = Order::where('token', $orderToken)->first();
+                                if ($existingOrder) {
+                                    throw new \Exception("Order with token {$orderToken} already exists");
+                                }
                             }
-                        }
+                        */
 
                         $orderGeneratedId = 'MPM-ODR-' . now()->format('d-m-Y') . '-' . random_int(100000, 999999);
 

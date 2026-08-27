@@ -207,127 +207,190 @@ class OrderService implements IBaseService
 
         $orderType = $data['type'];
 
-        if (!empty($orderType) && ($orderType === 'meter_electricity_order') && !empty($data['device_id']) && !empty($data['total_units'])) {
-
-            // 1️⃣ Create External Portal Transaction FIRST
-            $externalPortalTransaction = ExternalPortalTransaction::create([
-                'reference_id'   => 'EXT-' . Str::uuid(),
-                'customer_id'    => $data['customer_id'] ?? null,
-                'customer_name'  => $data['first_name'] ?? null,
-                'customer_email' => null,
-                'customer_phone' => $data['phone_number'] ?? null,
-                'amount'         => $data['amount'] ?? 0,
-                'payment_method' => 'external_portal',
-                'status'         => 1
-            ]);
-
-            // 2️⃣ Transaction Data (ONLY existing columns) ✅ FIXED
-            $transactionData = [
-                'original_transaction_id'   => $externalPortalTransaction->id, // ✅ REAL ID
-                'original_transaction_type' => 'external_portal_transaction',   // ✅ must match morphMap
-                'amount'                    => $data['amount'] ?? 0,
-                'type'                      => 'imported',
-                'sender'                    => 'system',
-                'message'                   => $serialNumber ?? '',
-                'created_at'                => $data['purchased_at'],
-                'updated_at'                => $data['purchased_at']
-            ];
-
-            $transaction = Transaction::create($transactionData);
-
-            // 2️⃣ Token Data (according to tokens table)
-            $tokenData = [
-                'transaction_id' => $transaction->id,
-                'token'          => strtoupper(Str::random(12)),
-                'token_amount'   => $data['total_units'],
-                'device_id'      => $data['device_id'],
-                'token_type'     => 'electricity',
-                'token_unit'     => 'kWh',
-                'created_at'     => now(),
-                'updated_at'     => now(),
-            ];
-
-            $token = Token::create($tokenData);
-
-            // 3️⃣ Create Payment History
-            PaymentHistory::create([
-                'amount'          => $data['amount'] ?? 0,
-                'transaction_id'  => $transaction->id,
-                'payment_service' => 'external_portal',
-                'sender'          => 'system',
-                'payment_type'    => 'energy',
-
-                // Morph: paid_for (this payment is for the device)
-                'paid_for_type'   => 'token',
-                'paid_for_id'     => $token->id,
-
-                // Morph: payer (this payment is made by customer/person)
-                'payer_type'      => 'person',
-                'payer_id'        => $data['customer_id'],
-            ]);
+        // Create order
+        if (!empty($data['token'])) {
+            $order = $this->order->newQuery()->firstOrCreate(
+                ['token' => $data['token']], // Search condition
+                $data                        // Data to save if not found
+            );
+        } else {
+            $order = $this->order->newQuery()->create($data);
         }
 
-        // Create order
-        $order = $this->order->newQuery()->create($data);
+        $orderType = $data['type'] ?? null;
 
+        // 1️⃣ ORDER LOGIC: Agar token hai toh fetch/create karein, warna naya banayein
+        if (!empty($data['token'])) {
+            $order = $this->order->newQuery()->firstOrCreate(
+                ['token' => $data['token']], // Search condition
+                $data                        // Data to save if not found
+            );
+        } else {
+            $order = $this->order->newQuery()->create($data);
+        }
+
+        // ==========================================
+        // METER ELECTRICITY ORDER BLOCK
+        // ==========================================
+        if (!empty($orderType) && ($orderType === 'meter_electricity_order') && !empty($data['device_id']) && !empty($data['total_units'])) {
+
+            // 1️⃣ External Portal Transaction (Check by order_id)
+            $externalPortalTransaction = ExternalPortalTransaction::firstOrCreate(
+                ['order_id' => $order->id], // Search by order_id
+                [
+                    'reference_id'   => 'EXT-' . Str::uuid(),
+                    'customer_id'    => $data['customer_id'] ?? null,
+                    'customer_name'  => $data['first_name'] ?? null,
+                    'customer_email' => null,
+                    'customer_phone' => $data['phone_number'] ?? null,
+                    'amount'         => $data['amount'] ?? 0,
+                    'payment_method' => 'external_portal',
+                    'status'         => 1
+                ]
+            );
+
+            // 2️⃣ Transaction Data (Check by original_transaction_id)
+            $transaction = Transaction::firstOrCreate(
+                [
+                    'original_transaction_id'   => $externalPortalTransaction->id,
+                    'original_transaction_type' => 'external_portal_transaction',
+                ],
+                [
+                    'amount'     => $data['amount'] ?? 0,
+                    'type'       => 'imported',
+                    'sender'     => 'system',
+                    'message'    => $serialNumber ?? '',
+                    'created_at' => $data['purchased_at'] ?? now(),
+                    'updated_at' => $data['purchased_at'] ?? now(),
+                ]
+            );
+
+            // 3️⃣ Create Token
+            if (!empty($data['token'])) {
+                $token = Token::firstOrCreate(
+                    ['token' => $data['token']],
+                    [
+                        'transaction_id' => $transaction->id,
+                        'token_amount'   => $data['total_units'],
+                        'device_id'      => $data['device_id'],
+                        'token_type'     => 'electricity',
+                        'token_unit'     => 'kWh',
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ]
+                );
+            } else {
+                // Create Token
+                $token = Token::create([
+                    'transaction_id' => $transaction->id,
+                    'token'          => strtoupper(Str::random(12)),
+                    'token_amount'   => $data['total_units'],
+                    'device_id'      => $data['device_id'],
+                    'token_type'     => 'electricity',
+                    'token_unit'     => 'kWh',
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+            }
+
+            // 4️⃣ Create Payment History (Check by token ID)
+            PaymentHistory::firstOrCreate(
+                [
+                    'paid_for_type'   => 'token',
+                    'paid_for_id'     => $token->id,
+                ],
+                [
+                    'transaction_id'  => $transaction->id,
+                    'amount'          => $data['amount'] ?? 0,
+                    'payment_service' => 'external_portal',
+                    'sender'          => 'system',
+                    'payment_type'    => 'energy',
+                    'payer_type'      => 'person',
+                    'payer_id'        => $data['customer_id'] ?? null,
+                ]
+            );
+        }
+
+        // ==========================================
+        // METER ORDER BLOCK
+        // ==========================================
         if (!empty($orderType) && ($orderType === 'meter_order') && !empty($data['device_id'])) {
 
-            // 1️⃣ Create External Portal Transaction FIRST
-            $externalPortalTransaction = ExternalPortalTransaction::create([
-                'reference_id'   => 'EXT-' . Str::uuid(),
-                'customer_id'    => $data['customer_id'] ?? null,
-                'customer_name'  => $data['first_name'] ?? null,
-                'customer_email' => null,
-                'customer_phone' => $data['phone_number'] ?? null,
-                'amount'         => $data['amount'] ?? 0,
-                'payment_method' => 'external_portal',
-                'status'         => 1
-            ]);
+            // 1️⃣ External Portal Transaction
+            $externalPortalTransaction = ExternalPortalTransaction::firstOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'reference_id'   => 'EXT-' . Str::uuid(),
+                    'customer_id'    => $data['customer_id'] ?? null,
+                    'customer_name'  => $data['first_name'] ?? null,
+                    'customer_email' => null,
+                    'customer_phone' => $data['phone_number'] ?? null,
+                    'amount'         => $data['amount'] ?? 0,
+                    'payment_method' => 'external_portal',
+                    'status'         => 1
+                ]
+            );
 
-            // 2️⃣ Transaction Data (ONLY existing columns) ✅ FIXED
-            $transactionData = [
-                'original_transaction_id'   => $externalPortalTransaction->id, // ✅ REAL ID
-                'original_transaction_type' => 'external_portal_transaction',   // ✅ must match morphMap
-                'amount'                    => $data['amount'] ?? 0,
-                'type'                      => 'imported',
-                'sender'                    => 'system',
-                'message'                   => $serialNumber ?? '',
-                'created_at'                => $data['purchased_at'],
-                'updated_at'                => $data['purchased_at']
-            ];
+            // 2️⃣ Transaction Data
+            $transaction = Transaction::firstOrCreate(
+                [
+                    'original_transaction_id'   => $externalPortalTransaction->id,
+                    'original_transaction_type' => 'external_portal_transaction',
+                ],
+                [
+                    'amount'     => $data['amount'] ?? 0,
+                    'type'       => 'imported',
+                    'sender'     => 'system',
+                    'message'    => $serialNumber ?? '',
+                    'created_at' => $data['purchased_at'] ?? now(),
+                    'updated_at' => $data['purchased_at'] ?? now(),
+                ]
+            );
 
-            $transaction = Transaction::create($transactionData);
+            // 3️⃣ Create Token
+            if (!empty($data['token'])) {
+                $token = Token::firstOrCreate(
+                    ['token' => $data['token']],
+                    [
+                        'transaction_id' => $transaction->id,
+                        'token_amount'   => 1,
+                        'device_id'      => $data['device_id'],
+                        'token_type'     => 'meter',
+                        'token_unit'     => 'qty',
+                        'created_at'     => now(),
+                        'updated_at'     => now(),
+                    ]
+                );
+            } else {
+                // Create Token
+                $token = Token::create([
+                    'transaction_id' => $transaction->id,
+                    'token'          => strtoupper(Str::random(12)),
+                    'token_amount'   => 1,
+                    'device_id'      => $data['device_id'],
+                    'token_type'     => 'meter',
+                    'token_unit'     => 'qty',
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+            }
 
-            // 2️⃣ Token Data (according to tokens table)
-            $tokenData = [
-                'transaction_id' => $transaction->id,
-                'token'          => strtoupper(Str::random(12)),
-                'token_amount'   => 1,
-                'device_id'      => $data['device_id'],
-                'token_type'     => 'meter',
-                'token_unit'     => 'qty',
-                'created_at'     => now(),
-                'updated_at'     => now(),
-            ];
-
-            $token = Token::create($tokenData);
-
-            // 3️⃣ Create Payment History
-            PaymentHistory::create([
-                'amount'          => $data['amount'] ?? 0,
-                'transaction_id'  => $transaction->id,
-                'payment_service' => 'external_portal',
-                'sender'          => 'system',
-                'payment_type'    => 'energy',
-
-                // Morph: paid_for (this payment is for the device)
-                'paid_for_type'   => 'token',
-                'paid_for_id'     => $token->id,
-
-                // Morph: payer (this payment is made by customer/person)
-                'payer_type'      => 'person',
-                'payer_id'        => $data['customer_id'],
-            ]);
+            // 4️⃣ Create Payment History (Check by token ID)
+            PaymentHistory::firstOrCreate(
+                [
+                    'paid_for_type'   => 'token',
+                    'paid_for_id'     => $token->id,
+                ],
+                [
+                    'transaction_id'  => $transaction->id,
+                    'amount'          => $data['amount'] ?? 0,
+                    'payment_service' => 'external_portal',
+                    'sender'          => 'system',
+                    'payment_type'    => 'energy',
+                    'payer_type'      => 'person',
+                    'payer_id'        => $data['customer_id'] ?? null,
+                ]
+            );
         }
 
         // Billing address

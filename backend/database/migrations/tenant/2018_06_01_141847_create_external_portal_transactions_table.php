@@ -16,6 +16,9 @@ return new class extends Migration {
             // Reference details
             $table->string('reference_id')->unique();
 
+            // Order link
+            $table->unsignedInteger('order_id')->nullable();
+
             // Customer info snapshot
             $table->unsignedInteger('customer_id')->nullable();
             $table->string('customer_name')->nullable();
@@ -36,6 +39,11 @@ return new class extends Migration {
                 ->references('id')
                 ->on('people')
                 ->onDelete('cascade');
+
+            $table->foreign('order_id')
+                ->references('id')
+                ->on('orders')
+                ->onDelete('set null');
         });
     }
 
