@@ -33,3 +33,14 @@ FROM (
 LEFT JOIN meters mts 
   ON t.serial_number = mts.serial_number
 WHERE mts.serial_number IS NULL;
+
+
+==== Missing Orders
+SELECT t.token
+FROM (
+  SELECT '4414 1196 0115 2770 1258' AS token
+  UNION ALL SELECT '3569 5547 5102 2150 8411'
+) t
+LEFT JOIN orders o 
+  ON t.token = o.token
+WHERE o.token IS NULL;
